@@ -5,7 +5,7 @@ import type {
 } from './description.js'
 import type {
   Component,
-  VirtualElement,
+  ParentVirtualNode,
   VirtualNode,
   WebComponent,
 } from './nodes.js'
@@ -23,7 +23,7 @@ const Lifecycle = {
     }
   },
 
-  onElementCreated(element: VirtualElement | WebComponent) {
+  onElementCreated(element: ParentVirtualNode) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeCreated(child)
@@ -45,8 +45,9 @@ const Lifecycle = {
       root.onCreated!.call(root.sandbox)
       root.dispatcher.executeIncoming()
     }
-    if (root.children) {
-      for (const child of root.children) {
+    const { children } = root as unknown as ParentVirtualNode
+    if (children) {
+      for (const child of children) {
         this.onNodeCreated(child)
       }
     }
@@ -63,7 +64,7 @@ const Lifecycle = {
     }
   },
 
-  onElementAttached(element: VirtualElement | WebComponent) {
+  onElementAttached(element: ParentVirtualNode) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeAttached(child)
@@ -98,8 +99,9 @@ const Lifecycle = {
   },
 
   onRootAttached(root: WebComponent) {
-    if (root.children) {
-      for (const child of root.children) {
+    const { children } = root as unknown as ParentVirtualNode
+    if (children) {
+      for (const child of children) {
         this.onNodeAttached(child)
       }
     }
@@ -134,11 +136,11 @@ const Lifecycle = {
       this.onNodeDestroyed(component.content)
     }
     if (component.isRoot()) {
-      this.onElementDestroyed(component)
+      this.onElementDestroyed(component as unknown as ParentVirtualNode)
     }
   },
 
-  onElementDestroyed(element: VirtualElement | WebComponent) {
+  onElementDestroyed(element: ParentVirtualNode) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeDestroyed(child)
@@ -156,7 +158,7 @@ const Lifecycle = {
 
   onComponentDetached(component: Component) {
     if (component.isRoot()) {
-      this.onElementDetached(component)
+      this.onElementDetached(component as unknown as ParentVirtualNode)
     }
     if (component.content) {
       this.onNodeDetached(component.content)
@@ -167,7 +169,7 @@ const Lifecycle = {
     }
   },
 
-  onElementDetached(element: VirtualElement | WebComponent) {
+  onElementDetached(element: ParentVirtualNode) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeDetached(child)

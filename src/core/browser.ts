@@ -87,10 +87,10 @@ const SUPPORTED_EVENTS = [
   'onSearch',
   // toogle event
   'onToggle',
-]
+] as const
 
 /* Attribute names with the elements they are valid on, all when omitted. */
-const SUPPORTED_ATTRIBUTES: Array<[string, string[]?]> = [
+const SUPPORTED_ATTRIBUTES = [
   ['accept', ['form', 'input']],
   ['acceptCharset', ['form']],
   ['accessKey'],
@@ -333,7 +333,7 @@ const SUPPORTED_ATTRIBUTES: Array<[string, string[]?]> = [
   ['ariaValueMin'],
   ['ariaValueNow'],
   ['ariaValueText'],
-]
+] as const
 
 const SUPPORTED_STYLES = Object.keys(document.documentElement.style)
 
@@ -348,7 +348,7 @@ const SUPPORTED_FILTERS = [
   'opacity',
   'sepia',
   'saturate',
-]
+] as const
 
 const SUPPORTED_TRANSFORMS = [
   'matrix',
@@ -372,9 +372,9 @@ const SUPPORTED_TRANSFORMS = [
   'skewX',
   'skewY',
   'perspective',
-]
+] as const
 
-const supportedAttributes = new Map<string, string[] | '*'>()
+const supportedAttributes = new Map<string, readonly string[] | '*'>()
 for (const [key, whitelist] of SUPPORTED_ATTRIBUTES) {
   supportedAttributes.set(key, whitelist || '*')
 }
@@ -392,12 +392,15 @@ const Browser = {
     return false
   },
 
-  getValidElementNamesFor(this: void, key: string): string[] | '*' | undefined {
+  getValidElementNamesFor(
+    this: void,
+    key: string,
+  ): readonly string[] | '*' | undefined {
     return supportedAttributes.get(key)
   },
 
   isEventSupported(this: void, key: string): boolean {
-    return SUPPORTED_EVENTS.includes(key)
+    return (SUPPORTED_EVENTS as readonly string[]).includes(key)
   },
 
   isStyleSupported(this: void, key: string): boolean {
@@ -405,15 +408,25 @@ const Browser = {
   },
 
   isFilterSupported(this: void, key: string): boolean {
-    return SUPPORTED_FILTERS.includes(key)
+    return (SUPPORTED_FILTERS as readonly string[]).includes(key)
   },
 
   isTransformSupported(this: void, key: string): boolean {
-    return SUPPORTED_TRANSFORMS.includes(key)
+    return (SUPPORTED_TRANSFORMS as readonly string[]).includes(key)
   },
 
   SUPPORTED_FILTERS,
   SUPPORTED_TRANSFORMS,
 }
+
+/* Names of the element attributes supported in templates. */
+export type AttributeName = (typeof SUPPORTED_ATTRIBUTES)[number][0]
+
+/* Names of the event listeners supported in templates, e.g. onClick. */
+export type EventName = (typeof SUPPORTED_EVENTS)[number]
+
+export type FilterName = (typeof SUPPORTED_FILTERS)[number]
+
+export type TransformName = (typeof SUPPORTED_TRANSFORMS)[number]
 
 export default Browser

@@ -1,4 +1,4 @@
-import type { toolkit } from './core/toolkit.js'
+import type { ToolkitAPI } from './index.js'
 
 declare global {
   /**
@@ -15,10 +15,10 @@ declare global {
   /**
    * Global namespace exposing the Toolkit to non-module scripts.
    */
-  var opr: { Toolkit?: typeof toolkit } | undefined
+  var opr: { Toolkit?: ToolkitAPI } | undefined
 
   interface Window {
-    loadToolkit?(configureLoader?: () => void): Promise<typeof toolkit>
+    loadToolkit?(configureLoader?: () => void): Promise<ToolkitAPI>
   }
 }
 

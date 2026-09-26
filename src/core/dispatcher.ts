@@ -3,16 +3,22 @@ import Reducers, { type State } from './reducers.js'
 import Renderer from './renderer.js'
 import type { AnyFunction } from './utils.js'
 
+/* A state transformation returned by a command. */
+export type StateUpdate<S = State> = (state: S) => S
+
 /* A map of command names to functions creating state transformations. */
-export type CommandsAPI = Record<string, (...args: never[]) => StateUpdate>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- commands take any arguments
+export type CommandsAPI = Record<string, (...args: any[]) => StateUpdate<any>>
 
-export type StateUpdate = (state: State) => State
+/* The core commands available on every component. */
+export type Commands<S = State> = {
+  setState(state: S): unknown
+  update(overrides: Partial<S>): unknown
+}
 
-/* The commands available on components, core ones included. */
-export type Commands = {
-  setState(state: State): unknown
-  update(overrides: State): unknown
-  [name: string]: AnyFunction
+/* The commands of an API, called with the arguments of the API methods. */
+export type BoundCommands<C extends CommandsAPI> = {
+  [K in keyof C]: (...args: Parameters<C[K]>) => unknown
 }
 
 const Mode = {
@@ -69,7 +75,7 @@ export type { Command }
 class Dispatcher {
   declare mode: symbol
   declare queue: Command[]
-  declare commands: Commands
+  declare commands: Commands & Record<string, AnyFunction>
   declare names: string[]
 
   queueIncoming() {
@@ -85,7 +91,7 @@ class Dispatcher {
   }
 
   execute(command: Command, root: WebComponent) {
-    const prevState = root.state
+    const prevState = root.state as State | undefined
     const nextState = command.invoke(prevState)
     root.state = nextState
     Renderer.update(root, prevState, nextState, command)
@@ -94,7 +100,7 @@ class Dispatcher {
   constructor(root: WebComponent) {
     this.mode = Mode.EXECUTE
     this.queue = []
-    this.commands = {} as Commands
+    this.commands = {} as Commands & Record<string, AnyFunction>
 
     let createCommand: (name: string, args: unknown[]) => Command
 
@@ -119,11 +125,7 @@ class Dispatcher {
         new Command(
           name,
           args,
-          () => (state: State) =>
-            combinedReducer(
-              state,
-              api[name]!(...args) as Parameters<typeof combinedReducer>[1],
-            ),
+          () => (state: State) => combinedReducer(state, api[name]!(...args)),
         )
     }
 

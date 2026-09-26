@@ -19,6 +19,11 @@ export type NormalizedTemplate = unknown[] | string | null
  * Is used to calculate differences between nodes.
  */
 abstract class Description {
+  declare static ElementDescription: typeof ElementDescription
+  declare static ComponentDescription: typeof ComponentDescription
+  declare static CommentDescription: typeof CommentDescription
+  declare static TextDescription: typeof TextDescription
+
   declare key?: string
   declare children?: NodeDescription[]
 

@@ -6,9 +6,15 @@ import {
   type Props,
   type TextDescription,
 } from './description.js'
-import Dispatcher, { type Commands, type CommandsAPI } from './dispatcher.js'
+import type { Child, RenderResult } from './bragi.js'
+import Dispatcher, {
+  type BoundCommands,
+  type Commands,
+  type CommandsAPI,
+} from './dispatcher.js'
 import Plugins from './plugins.js'
 import type { Reducer, State } from './reducers.js'
+import type { AnyFunction } from './utils.js'
 import Renderer from './renderer.js'
 import Sandbox, { type ComponentSandbox } from './sandbox.js'
 import Template from './template.js'
@@ -18,14 +24,22 @@ import VirtualDOM from './virtual-dom.js'
 /* The DOM node rendered for a virtual node. */
 export type NodeRef = Element | CharacterData
 
+/*
+ * A node with child nodes: an element, or a Web Component
+ * with the child nodes rendered in its light DOM.
+ */
+export type ParentVirtualNode = VirtualNode & { children?: VirtualNode[] }
+
 /* A task run when a component is destroyed, e.g. disconnecting a service. */
 export type CleanUpTask = (() => void) & { service?: unknown }
 
-export interface Service {
+/* A service components connect to, e.g. a subclass of Service. */
+export interface Connectable {
   connect(listeners: Record<string, unknown>): () => void
 }
 
-export type ComponentClass = typeof Component
+/* The class of any component, whatever its props. */
+export type ComponentClass = typeof Component<object>
 
 /*
  * An abstract parent node.
@@ -35,7 +49,6 @@ abstract class VirtualNode {
   declare key?: string
   declare parentNode: VirtualNode | null
   declare context: WebComponent | null
-  declare children?: VirtualNode[]
 
   abstract ref: NodeRef
   abstract get nodeType(): string
@@ -53,7 +66,7 @@ abstract class VirtualNode {
     this.context = context
   }
 
-  createChildren() {
+  createChildren(this: ParentVirtualNode) {
     this.children = this.description.children!.map(childDescription =>
       this.createChild(childDescription)!,
     )
@@ -89,7 +102,7 @@ abstract class VirtualNode {
     throw new Error('Inconsistent virtual DOM tree detected!')
   }
 
-  attachChildren() {
+  attachChildren(this: ParentVirtualNode) {
     if (this.children) {
       for (const child of this.children) {
         this.ref.appendChild(child.ref)
@@ -97,7 +110,7 @@ abstract class VirtualNode {
     }
   }
 
-  insertChild(child: VirtualNode, index?: number) {
+  insertChild(this: ParentVirtualNode, child: VirtualNode, index?: number) {
     if (!this.children) {
       this.children = []
     }
@@ -110,7 +123,7 @@ abstract class VirtualNode {
     child.parentNode = this
   }
 
-  replaceChild(child: VirtualNode, node: VirtualNode) {
+  replaceChild(this: ParentVirtualNode, child: VirtualNode, node: VirtualNode) {
     const index = this.children!.indexOf(child)
     toolkit.assert(index >= 0, 'Specified node is not a child of this element!')
     this.children!.splice(index, 1, node)
@@ -119,7 +132,12 @@ abstract class VirtualNode {
     child.ref.replaceWith(node.ref)
   }
 
-  moveChild(child: VirtualNode, from: number, to: number) {
+  moveChild(
+    this: ParentVirtualNode,
+    child: VirtualNode,
+    from: number,
+    to: number,
+  ) {
     toolkit.assert(
       this.children![from] === child,
       'Specified node is not a child of this element!',
@@ -130,7 +148,7 @@ abstract class VirtualNode {
     this.ref.insertBefore(child.ref, (this.ref as Element).children[to] ?? null)
   }
 
-  removeChild(child: VirtualNode) {
+  removeChild(this: ParentVirtualNode, child: VirtualNode) {
     const index = this.children!.indexOf(child)
     toolkit.assert(index >= 0, 'Specified node is not a child of this element!')
     this.children!.splice(index, 1)
@@ -169,7 +187,7 @@ abstract class VirtualNode {
  * Node representing Component in the virtual DOM tree.
  * Components
  */
-class Component extends VirtualNode {
+class Component<P extends object = object> extends VirtualNode {
   static NodeType = 'component'
 
   declare static elementName?: string
@@ -188,12 +206,15 @@ class Component extends VirtualNode {
   declare content: VirtualNode | null
 
   /* The component props, available on the sandbox passed as `this`. */
-  declare props: Props
+  declare props: P
+
+  /* The child templates, available on the sandbox passed as `this`. */
+  declare children: Child[]
 
   onCreated?(): void
   onAttached?(): void
-  onPropsReceived?(nextProps: Props): void
-  onUpdated?(prevProps: Props): void
+  onPropsReceived?(nextProps: P): void
+  onUpdated?(prevProps: P): void
   onDestroyed?(): void
   onDetached?(): void
 
@@ -233,7 +254,7 @@ class Component extends VirtualNode {
     return (this.constructor as ComponentClass).prototype.hasOwnProperty(method)
   }
 
-  connectTo(service: Service, listeners: Record<string, unknown>) {
+  connectTo(service: Connectable, listeners: Record<string, unknown>) {
     toolkit.assert(
       typeof service.connect === 'function',
       'Services have to define the connect() method',
@@ -266,11 +287,12 @@ class Component extends VirtualNode {
     return (this.content as Component).placeholder || null
   }
 
-  render(): unknown {
+  render(): RenderResult {
     return undefined
   }
 
-  get commands(): Commands {
+  /* The commands of the root component, whose types are not known here. */
+  get commands(): Commands<unknown> & Record<string, AnyFunction> {
     return this.context ? this.context.commands : this.rootNode.commands
   }
 
@@ -313,7 +335,20 @@ const CONTAINER = Symbol('container')
 const CUSTOM_ELEMENT = Symbol('custom-element')
 const DISPATCHER = Symbol('dispatcher')
 
-class WebComponent extends Component {
+/*
+ * A root component with its own state, commands and plugins, rendered
+ * in a custom element when elementName is defined.
+ *
+ * P: props received from the parent,
+ * S: state, available as `this.props` when rendering,
+ * C: commands API returned by getCommands().
+ */
+class WebComponent<
+  P extends object = object,
+  S extends object = P,
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- no commands besides the core ones
+  C extends CommandsAPI = {},
+> extends Component<S> {
   static NodeType = 'root'
 
   static styles: string[] = []
@@ -323,7 +358,7 @@ class WebComponent extends Component {
   declare markAsReady: () => void
   declare plugins: Plugins | null
   declare shadow: ShadowRoot | null
-  declare state?: State
+  declare state?: S
   declare pendingDescription?: ComponentDescription
   declare stopTracking?: () => void
   declare elementClass?: CustomElementConstructor;
@@ -355,8 +390,10 @@ class WebComponent extends Component {
       this.ref = Renderer.createCustomElement(this)
       this.plugins!.installAll()
       if (this.description.children) {
-        this.createChildren()
-        this.attachChildren()
+        // the child nodes are rendered in the light DOM
+        const parent = this as unknown as ParentVirtualNode
+        parent.createChildren()
+        parent.attachChildren()
       }
     } else {
       this.plugins!.installAll()
@@ -378,9 +415,10 @@ class WebComponent extends Component {
   async init() {
     toolkit.track(this)
 
+    // props are passed from templates, which are not checked against P
     const state = await this.getInitialState.call(
       this.sandbox,
-      this.description.props || {},
+      (this.description.props || {}) as P,
     )
     this.setState(state)
 
@@ -393,15 +431,15 @@ class WebComponent extends Component {
     this.markAsReady()
   }
 
-  setState(state: State) {
+  setState(state: S) {
     if (state.constructor !== Object) {
       throw new Error('Web Component state must be a plain object!')
     }
     this.commands.setState(
       Template.normalizeComponentProps(
-        state,
+        state as State,
         this.constructor as typeof WebComponent,
-      ),
+      ) as S,
     )
   }
 
@@ -414,8 +452,8 @@ class WebComponent extends Component {
       return
     }
     const state = this.getUpdatedState(
-      description.props || {},
-      this.state || {},
+      (description.props || {}) as P,
+      this.state || ({} as S),
     )
     this.setState(state)
   }
@@ -424,17 +462,18 @@ class WebComponent extends Component {
    * The default implementation delegating the calculation of initial state
    * to the state manager.
    */
-  async getInitialState(props: Props): Promise<State> {
-    return {
+  getInitialState(props: P): S | Promise<S> {
+    // the default state is a copy of the props
+    return Promise.resolve({
       ...props,
-    }
+    } as unknown as S)
   }
 
   /**
    * The default implementation delegating the calculation of updated state
    * to the state manager.
    */
-  getUpdatedState(props: Props, state: State): State {
+  getUpdatedState(props: P, state: S): S {
     return {
       ...state,
       ...props,
@@ -449,8 +488,8 @@ class WebComponent extends Component {
     this[DISPATCHER] = dispatcher
   }
 
-  get commands(): Commands {
-    return this.dispatcher.commands
+  get commands(): Commands<S> & BoundCommands<C> {
+    return this.dispatcher.commands as Commands<S> & BoundCommands<C>
   }
 
   createPlugins(): Plugins {
@@ -543,6 +582,7 @@ class VirtualElement extends VirtualNode {
 
   declare description: ElementDescription
   declare ref: HTMLElement
+  declare children?: VirtualNode[]
 
   constructor(
     description: ElementDescription,

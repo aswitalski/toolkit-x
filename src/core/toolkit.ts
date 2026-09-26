@@ -1,3 +1,4 @@
+import type { PureComponent, RenderResult } from './bragi.js'
 import type { ComponentDescription, Props } from './description.js'
 import { Component, type ComponentClass, WebComponent } from './nodes.js'
 import Plugins, { type PluginManifest } from './plugins.js'
@@ -24,10 +25,7 @@ const getLoader = () => {
 }
 
 /* Function to Component mapping. */
-const pureComponentClassRegistry = new Map<
-  (props: Props) => unknown,
-  ComponentClass
->()
+const pureComponentClassRegistry = new Map<PureComponent, ComponentClass>()
 
 class Toolkit {
   declare roots: Set<WebComponent>
@@ -109,9 +107,7 @@ class Toolkit {
       case 'component':
         return component as ComponentClass
       case 'function':
-        return this.resolvePureComponentClass(
-          component as (props: Props) => unknown,
-        )
+        return this.resolvePureComponentClass(component as PureComponent)
       case 'symbol':
         return this.resolveLoadedClass(String(component).slice(7, -1))
       default:
@@ -123,7 +119,7 @@ class Toolkit {
    * Returns a PureComponent class rendering the template
    * provided by the specified function.
    */
-  resolvePureComponentClass(fn: (props: Props) => unknown): ComponentClass {
+  resolvePureComponentClass(fn: PureComponent): ComponentClass {
     let ComponentClass = pureComponentClassRegistry.get(fn)
     if (ComponentClass) {
       return ComponentClass
@@ -131,8 +127,9 @@ class Toolkit {
     ComponentClass = class PureComponent extends Component {
       static renderer = fn
 
-      render() {
-        return fn.call(this, this.props)
+      render(): RenderResult {
+        // the props type of a pure component is not known here
+        return fn.call(this, this.props as never)
       }
     }
     pureComponentClassRegistry.set(fn, ComponentClass)

@@ -36,11 +36,6 @@ type ToolkitModules = typeof nodes & {
   noop: () => void
 }
 
-declare module './core/toolkit.js' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface Toolkit extends ToolkitModules {}
-}
-
 Object.assign(Toolkit.prototype, nodes, {
   Browser,
   Description,
@@ -68,6 +63,40 @@ export {
   VirtualNode,
 } from './core/nodes.js'
 
+export type {
+  AttributeValue,
+  Child,
+  ClassName,
+  ComponentTemplate,
+  ComponentType,
+  ElementProps,
+  ElementTemplate,
+  EventListenerFor,
+  Listener,
+  PureComponent,
+  RenderResult,
+  Style,
+  TagName,
+} from './core/bragi.js'
+export type { AttributeName, EventName } from './core/browser.js'
+export type { Props } from './core/description.js'
+export type {
+  BoundCommands,
+  Commands,
+  CommandsAPI,
+  StateUpdate,
+} from './core/dispatcher.js'
+export type { ComponentClass, Connectable } from './core/nodes.js'
+export type { PluginManifest, PluginSandbox } from './core/plugins.js'
+export type {
+  CommandCreator,
+  Reducer,
+  ReducerCommand,
+  State,
+} from './core/reducers.js'
+export type { Update } from './core/renderer.js'
+export type { Options, Settings } from './core/toolkit.js'
+
 export {
   Browser,
   Description,
@@ -87,4 +116,7 @@ export {
   utils,
 }
 
-export default toolkit
+/* The Toolkit instance, with the modules and node classes assigned above. */
+export type ToolkitAPI = Toolkit & ToolkitModules
+
+export default toolkit as ToolkitAPI

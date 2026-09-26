@@ -7,6 +7,7 @@ import type {
 import Lifecycle from './lifecycle.js'
 import type {
   Component,
+  ParentVirtualNode,
   VirtualElement,
   VirtualNode,
   WebComponent,
@@ -161,7 +162,9 @@ class Diff {
   childPatches(child: VirtualNode, description: NodeDescription): void {
     if (child.isComponent()) {
       if (child.isRoot()) {
-        this.childrenPatches(child.children, description.children, child)
+        // the child nodes of a Web Component are rendered in the light DOM
+        const parent = child as unknown as ParentVirtualNode
+        this.childrenPatches(parent.children, description.children, child)
         this.addPatch(Patch.updateNode(child, description))
         return child.update(description as ComponentDescription)
       }

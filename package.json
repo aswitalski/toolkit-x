@@ -3,7 +3,6 @@
   "version": "0.69.0",
   "description": "Toolkit X, a Web UI toolkit",
   "private": true,
-  "main": "src/index.js",
   "scripts": {
     "typecheck": "node node_modules/typescript-7/lib/tsc.js -p .",
     "test": "vitest run",
@@ -12,10 +11,10 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "node build.js",
+    "build": "tsdown",
     "demo": "vite demo",
     "demo:release": "npm run build && vite demo --mode release",
-    "update-opera": "npm run build && cp dist/toolkit-0.69.0.js $WORK_DIR",
+    "update-opera": "npm run build && cp dist/toolkit-0.69.0.js dist/toolkit-0.69.0.js.map $WORK_DIR",
     "watch": "npm-watch update-opera",
     "prepare": "simple-git-hooks"
   },
@@ -38,10 +37,10 @@
   },
   "homepage": "https://github.com/aswitalski/toolkit-x#readme",
   "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
     "@eslint/js": "^10.0.1",
     "@vitest/browser-playwright": "^5.0.2",
     "@vitest/coverage-v8": "^5.0.2",
-    "esbuild": "^0.28.2",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
@@ -50,7 +49,9 @@
     "npm-watch": "^0.13.0",
     "playwright": "^1.63.0",
     "prettier": "^3.9.9",
+    "publint": "^0.3.24",
     "simple-git-hooks": "^2.14.0",
+    "tsdown": "^0.23.0",
     "typescript": "~6.0.3",
     "typescript-7": "npm:typescript@^7.0.2",
     "typescript-eslint": "^8.70.1",
@@ -63,14 +64,24 @@
         "src",
         "test"
       ],
-      "extensions": "js",
+      "extensions": "js,ts",
       "quiet": true
     }
   },
   "type": "module",
-  "exports": "./src/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "allowScripts": {
-    "esbuild@0.28.2": true,
     "simple-git-hooks@2.14.0": true,
     "fsevents": false
   },

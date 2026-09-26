@@ -54,6 +54,15 @@ export default defineConfig([
     },
   },
   {
+    // type tests use deliberately invalid code, marked with @ts-expect-error
+    files: ['test/types/**'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+    },
+  },
+  {
     files: ['*.js', 'demo/vite.config.js'],
     languageOptions: {
       globals: {

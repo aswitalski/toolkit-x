@@ -122,6 +122,18 @@ If none are detected, the component will be able to utilize all the defined meth
 
 When responsibilities are divided correctly and command names are descriptive enough, conflicts should happen very rarely, if ever.
 
+### TypeScript
+
+Web Components take the types of props, state and the Commands API, so the commands are called with the arguments of the API methods:
+
+```ts
+class Stack extends WebComponent<object, StackState, typeof StackCommands> {
+  static getCommands() {
+    return StackCommands
+  }
+}
+```
+
 ### Testing
 
 Since all the state management logic is within the API object, it's extremely easy to debug and unit test it.

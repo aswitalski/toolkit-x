@@ -1,3 +1,4 @@
+import type { Template as BragiTemplate } from './bragi.js'
 import Browser from './browser.js'
 import {
   ComponentDescription,
@@ -130,7 +131,10 @@ const Template = {
    * Normalizes specified element props object and returns either
    * a non-empty object containing only supported props or null.
    */
-  normalizeComponentProps(props: Props, ComponentClass: ComponentClass): Props {
+  normalizeComponentProps(
+    props: Props | undefined,
+    ComponentClass: { defaultProps?: Props },
+  ): Props {
     return this.normalizeProps(props, ComponentClass.defaultProps || {})
   },
 
@@ -228,7 +232,7 @@ const Template = {
               )
             }
             if (!element.includes('-') && !isAttributeValid(key, element)) {
-              const names = (getValidElementNamesFor(key) as string[])
+              const names = (getValidElementNamesFor(key) as readonly string[])
                 .map(key => `"${key}"`)
                 .join(', ')
               const message = `The "${key}" attribute is not supported on "${
@@ -380,7 +384,7 @@ const Template = {
   /**
    * Returns a multi-property string value.
    */
-  getFunctionList(object: Props, whitelist?: string[]): string {
+  getFunctionList(object: Props, whitelist?: readonly string[]): string {
     const composite: Record<string, string> = {}
     let entries = Object.entries(object)
     if (whitelist) {
@@ -487,5 +491,8 @@ const Template = {
     return isNotEmpty(listeners) ? listeners : null
   },
 }
+
+/* A Bragi template, see bragi.ts, sharing its name with the module above. */
+type Template = BragiTemplate
 
 export default Template

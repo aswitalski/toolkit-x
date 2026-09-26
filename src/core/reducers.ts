@@ -1,5 +1,3 @@
-import type { AnyFunction } from './utils.js'
-
 export type State = Record<string, unknown>
 
 export interface ReducerCommand {
@@ -7,9 +5,13 @@ export interface ReducerCommand {
   [key: string]: unknown
 }
 
+/* Creates a command handled by a reducer. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- commands take any arguments
+export type CommandCreator = (...args: any[]) => ReducerCommand
+
 /* A reducer with the command creators it handles. */
 export type Reducer = ((state: State, command: ReducerCommand) => State) & {
-  commands: Record<string, AnyFunction>
+  commands: Record<string, CommandCreator>
 }
 
 const SET_STATE = Symbol('set-state')
@@ -41,7 +43,7 @@ coreReducer.commands = {
 
 class Reducers {
   static combine(...reducers: Reducer[]): Reducer {
-    const commands: Record<string, AnyFunction> = {}
+    const commands: Record<string, CommandCreator> = {}
     const reducer: Reducer = (state, command) => {
       for (const reducer of [coreReducer, ...reducers]) {
         state = reducer(state, command)
