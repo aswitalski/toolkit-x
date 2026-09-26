@@ -105,8 +105,8 @@ export type ElementTemplate =
 /* A function rendering the template for given props. */
 export type PureComponent = (props: never) => RenderResult
 
-/* A component class, a pure component, or a module loader symbol. */
-export type ComponentType = typeof Component<object> | PureComponent | symbol
+/* A component class or a pure component. */
+export type ComponentType = typeof Component<object> | PureComponent
 
 export type ComponentTemplate =
   | readonly [ComponentType, ...Child[]]

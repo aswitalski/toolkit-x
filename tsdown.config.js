@@ -3,11 +3,6 @@ import { defineConfig } from 'tsdown'
 
 const { version } = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 
-const loader = fs.readFileSync(
-  'node_modules/lazy-module-loader/loader.js',
-  'utf8',
-)
-
 export default defineConfig([
   {
     // ES module with type declarations, the package entry
@@ -22,7 +17,7 @@ export default defineConfig([
     attw: { profile: 'esm-only' },
   },
   {
-    // Classic script exposing the loader and opr.Toolkit globals
+    // Classic script exposing the opr.Toolkit global
     entry: { [`toolkit-${version}`]: 'src/release.ts' },
     format: 'iife',
     platform: 'browser',
@@ -31,7 +26,6 @@ export default defineConfig([
     dts: false,
     clean: false,
     hash: false,
-    banner: { js: loader },
     outputOptions: { entryFileNames: '[name].js' },
   },
 ])

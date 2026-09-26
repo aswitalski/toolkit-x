@@ -1,20 +1,5 @@
 import toolkit from '../src/index.ts'
 
-/* Stub of the module loader resolving components registered by id. */
-{
-  const registry = new Map()
-
-  globalThis.loader = {
-    get(key) {
-      return registry.get(key)
-    },
-    define(key, module) {
-      registry.set(key, module)
-    },
-    async preload(key) {},
-  }
-}
-
 toolkit.assert = (condition, message) => {
   if (!condition) {
     throw new Error(message)

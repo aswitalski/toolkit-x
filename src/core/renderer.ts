@@ -173,15 +173,8 @@ const Renderer = {
   },
 }
 
-/* Uses the module loader to resolve paths if present, plain paths otherwise. */
-const resolvePath = (path: string) =>
-  typeof loader === 'undefined' ? path : loader.path(path)
-
 const cssImports = (paths: string[]) =>
-  paths
-    .map(resolvePath)
-    .map(path => `@import url(${path});`)
-    .join('\n')
+  paths.map(path => `@import url(${path});`).join('\n')
 
 type PluginOrManifest = Plugin | PluginManifest
 

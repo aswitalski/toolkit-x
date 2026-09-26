@@ -10,131 +10,15 @@ describe('Template => describe', () => {
   })
 
   describe('Component', () => {
-    it('detects component symbol', () => {
+    it('rejects symbols', () => {
       // given
-      class Component extends opr.Toolkit.Component {}
-      const id = 'test/component'
-      const symbol = Symbol.for(id)
-      const template = [symbol]
-
-      // when
-      loader.define(id, Component)
-      const description = Template.describe(template)
+      const template = [Symbol.for('test/component')]
 
       // then
-      assert.equal(description.type, 'component')
-      assert.equal(description.component, Component)
-    })
-
-    it('detects component symbol with properties', () => {
-      // given
-      class ComponentWithProps extends opr.Toolkit.Component {}
-      const id = 'test/component-with-properties'
-      const symbol = Symbol.for(id)
-      const props = {
-        prop: 'prop',
-      }
-      const template = [symbol, props]
-
-      // when
-      loader.define(id, ComponentWithProps)
-      const description = Template.describe(template)
-
-      // then
-      assert.equal(description.type, 'component')
-      assert.equal(description.component, ComponentWithProps)
-    })
-
-    it('detects component symbol with child nodes', () => {
-      // given
-      class ComponentWithChildren extends opr.Toolkit.Component {}
-      const id = 'test/component-with-children'
-      const symbol = Symbol.for(id)
-      const children = [['div'], ['span']]
-      const template = [symbol, ...children]
-
-      // when
-      loader.define(id, ComponentWithChildren)
-      const description = Template.describe(template)
-
-      // then
-      assert.equal(description.type, 'component')
-      assert.equal(description.component, ComponentWithChildren)
-      assert.equal(description.children.length, 2)
-      assert.equal(description.children[0].type, 'element')
-      assert.equal(description.children[0].name, 'div')
-      assert.equal(description.children[1].type, 'element')
-      assert.equal(description.children[1].name, 'span')
-    })
-
-    it('detects component symbol with filtered child nodes', () => {
-      // given
-      class ComponentWithChildren extends opr.Toolkit.Component {}
-      const id = 'test/component-with-filtered-children'
-      const symbol = Symbol.for(id)
-      const children = [null, false, ['div'], ['span']]
-      const template = [symbol, ...children]
-
-      // when
-      loader.define(id, ComponentWithChildren)
-      const description = Template.describe(template)
-
-      // then
-      assert.equal(description.type, 'component')
-      assert.equal(description.component, ComponentWithChildren)
-      assert.equal(description.children.length, 2)
-      assert(description.children[0].type, 'element')
-      assert.equal(description.children[0].name, 'div')
-      assert(description.children[1].type, 'element')
-      assert.equal(description.children[1].name, 'span')
-    })
-
-    it('detects component symbol with properties and child nodes', () => {
-      // given
-      class ComponentWithPropsAndChildren extends opr.Toolkit.Component {}
-      const id = 'test/component-with-props-and-children'
-      const symbol = Symbol.for(id)
-      const props = {
-        prop: 'prop',
-      }
-      const children = [['div'], ['span']]
-      const template = [symbol, props, ...children]
-
-      // when
-      loader.define(id, ComponentWithPropsAndChildren)
-      const description = Template.describe(template)
-
-      // then
-      assert.equal(description.type, 'component')
-      assert.equal(description.component, ComponentWithPropsAndChildren)
-      assert.deepEqual(description.props, props)
-      assert.equal(description.children.length, 2)
-      assert.equal(description.children[0].name, 'div')
-      assert.equal(description.children[1].name, 'span')
-    })
-
-    it('detects component symbol with properties and filtered child nodes', () => {
-      // given
-      class ComponentWithPropsAndChildren extends opr.Toolkit.Component {}
-      const id = 'test/component-with-props-and-some-children'
-      const symbol = Symbol.for(id)
-      const props = {
-        prop: 'prop',
-      }
-      const children = [false, ['div'], null, ['span'], null]
-      const template = [symbol, props, ...children]
-
-      // when
-      loader.define(id, ComponentWithPropsAndChildren)
-      const description = Template.describe(template)
-
-      // then
-      assert.equal(description.type, 'component')
-      assert.equal(description.component, ComponentWithPropsAndChildren)
-      assert.deepEqual(description.props, props)
-      assert.equal(description.children.length, 2)
-      assert.equal(description.children[0].name, 'div')
-      assert.equal(description.children[1].name, 'span')
+      assert.throws(
+        () => Template.describe(template),
+        'Invalid node type specified: symbol',
+      )
     })
 
     it('detects component', () => {

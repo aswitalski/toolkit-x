@@ -74,8 +74,6 @@ describe('Virtual DOM', () => {
         }
       }
 
-      loader.define('NestedElements', NestedElements)
-
       const label = 'Example'
       const url = 'http://www.example.com'
       const onClick = () => {}

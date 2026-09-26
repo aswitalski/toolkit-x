@@ -16,14 +16,6 @@ export interface Options {
   plugins?: PluginManifest[]
 }
 
-/* Returns the module loader required to resolve modules by id. */
-const getLoader = () => {
-  if (typeof loader === 'undefined') {
-    throw new Error('Resolving modules by id requires lazy-module-loader')
-  }
-  return loader
-}
-
 /* Function to Component mapping. */
 const pureComponentClassRegistry = new Map<PureComponent, ComponentClass>()
 
@@ -54,26 +46,6 @@ class Toolkit {
     this.settings = settings
     this.plugins = this.createPlugins(options.plugins)
     this[INIT](true)
-  }
-
-  /**
-   * Loads the script with the specified module id as an ES module.
-   */
-  import(path: string): Promise<void> {
-    const modulePath = getLoader().path(path)
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script')
-      script.src = modulePath
-      script.type = 'module'
-      script.onload = () => {
-        resolve()
-      }
-      script.onerror = error => {
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- rejects with the load error event
-        reject(error)
-      }
-      document.head.appendChild(script)
-    })
   }
 
   /**
@@ -108,8 +80,6 @@ class Toolkit {
         return component as ComponentClass
       case 'function':
         return this.resolvePureComponentClass(component as PureComponent)
-      case 'symbol':
-        return this.resolveLoadedClass(String(component).slice(7, -1))
       default:
         throw new Error(`Unsupported component type: ${type}`)
     }
@@ -133,28 +103,6 @@ class Toolkit {
       }
     }
     pureComponentClassRegistry.set(fn, ComponentClass)
-    return ComponentClass
-  }
-
-  /**
-   * Returns a component class resolved by module loader
-   * with the specified id.
-   */
-  resolveLoadedClass(id: string): ComponentClass {
-    const ComponentClass = getLoader().get(id) as ComponentClass | undefined
-    if (!ComponentClass) {
-      throw new Error(`Error resolving component class for '${id}'`)
-    }
-    if (!(ComponentClass.prototype instanceof Component)) {
-      console.error(
-        'Module:',
-        ComponentClass,
-        'is not a component extending Component!',
-      )
-      throw new Error(
-        `Module defined with id "${id}" is not a component class.`,
-      )
-    }
     return ComponentClass
   }
 
@@ -192,21 +140,9 @@ class Toolkit {
   }
 
   async createRoot(
-    component: ComponentClass | string,
+    component: ComponentClass,
     props: Props = {},
   ): Promise<WebComponent> {
-    if (typeof component === 'string') {
-      const RootClass = (await getLoader().preload(component)) as ComponentClass
-      const description = Template.describe([
-        RootClass,
-        props,
-      ]) as ComponentDescription
-      if (RootClass.prototype instanceof WebComponent) {
-        return VirtualDOM.createWebComponent(description, null)
-      }
-      console.error('Specified class is not a WebComponent: ', RootClass)
-      throw new Error('Invalid Web Component class!')
-    }
     const description = Template.describe([
       component,
       props,
@@ -215,7 +151,7 @@ class Toolkit {
   }
 
   async render(
-    component: ComponentClass | string,
+    component: ComponentClass,
     container: Element,
     props: Props = {},
   ): Promise<WebComponent> {

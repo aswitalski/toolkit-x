@@ -56,7 +56,6 @@ const Template = {
               break
             case 'component':
             case 'function':
-            case 'symbol':
               description = new ComponentDescription(
                 toolkit.resolveComponentClass(item, type),
               )
