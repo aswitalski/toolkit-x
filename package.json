@@ -1,7 +1,7 @@
 {
-  "name": "opera-toolkit",
+  "name": "toolkit-x",
   "version": "0.69.0",
-  "description": "Opera Web UI Toolkit",
+  "description": "Toolkit X, a Web UI toolkit",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -21,10 +21,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/operasoftware/toolkit.git"
+    "url": "git+https://github.com/aswitalski/toolkit-x.git"
   },
   "keywords": [
-    "opera",
     "web ui",
     "toolkit",
     "native",
@@ -35,9 +34,9 @@
   "author": "Aleksander Świtalski",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/operasoftware/toolkit/issues"
+    "url": "https://github.com/aswitalski/toolkit-x/issues"
   },
-  "homepage": "https://github.com/operasoftware/toolkit#readme",
+  "homepage": "https://github.com/aswitalski/toolkit-x#readme",
   "devDependencies": {
     "assert": "^2.0.0",
     "dom-test": "^0.4.0",

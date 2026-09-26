@@ -20,7 +20,7 @@ app.use('/test', express.static('test'));
 
 const server = app.listen(app.get('port'), () => {
   console.log('-----------------------------------------------------------');
-  console.log(` Running Opera Toolkit demo on port ${PORT}:`);
+  console.log(` Running Toolkit X demo on port ${PORT}:`);
   console.log('-----------------------------------------------------------');
   console.log(` - debug:   http://localhost:${PORT}/debug/`);
   console.log(` - release: http://localhost:${PORT}/release/`);

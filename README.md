@@ -1,6 +1,6 @@
-# opera-toolkit
+# Toolkit X
 
-Opera Toolkit is a UI library created for rendering Opera Desktop browser's internal Web pages.
+Toolkit X is a UI library created for rendering Opera Desktop browser's internal Web pages.
 It allows to build the user interface natively by utilising the engine's latest features.
 
 ## Why?
