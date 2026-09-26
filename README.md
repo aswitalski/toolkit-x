@@ -163,6 +163,7 @@ npx playwright install chromium  # once, for running the tests
 | `npm test`             | runs the tests in Chromium with Vitest             |
 | `npm run test:watch`   | runs the tests on every change                     |
 | `npm run coverage`     | runs the tests with the coverage report            |
+| `npm run bench`        | runs the benchmarks                                |
 | `npm run typecheck`    | checks the types with TypeScript                   |
 | `npm run lint`         | lints the code with ESLint                         |
 | `npm run format`       | formats the code with Prettier                     |

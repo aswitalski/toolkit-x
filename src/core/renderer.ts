@@ -178,7 +178,7 @@ const cssImports = (paths: string[]) =>
 
 type PluginOrManifest = Plugin | PluginManifest
 
-class ComponentElement extends HTMLElement {
+export class ComponentElement extends HTMLElement {
   declare $root: WebComponent | null
   declare pendingDestruction?: ReturnType<typeof setTimeout>
   declare install: (plugin: PluginOrManifest, cascade?: boolean) => void

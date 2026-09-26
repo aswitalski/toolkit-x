@@ -4,10 +4,11 @@
   "description": "Toolkit X, a Web UI toolkit",
   "private": true,
   "scripts": {
-    "typecheck": "node node_modules/typescript-7/lib/tsc.js -p .",
+    "typecheck": "node node_modules/typescript-7/lib/tsc.js -p . && node node_modules/typescript-7/lib/tsc.js -p test && node node_modules/typescript-7/lib/tsc.js -p demo",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "bench": "vitest bench --run --reporter=verbose",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

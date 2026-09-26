@@ -63,6 +63,13 @@ export default defineConfig([
     },
   },
   {
+    // component methods are bound by the sandbox, spies are passed as values
+    files: ['test/**/*.ts', 'demo/**/*.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
+  {
     files: ['*.js', 'demo/vite.config.js'],
     languageOptions: {
       globals: {

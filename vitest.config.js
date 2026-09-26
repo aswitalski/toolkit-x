@@ -3,8 +3,8 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    include: ['test/**/*.spec.js', 'test/functional/**/*.test.js'],
-    setupFiles: ['test/setup.js'],
+    include: ['test/**/*.spec.ts', 'test/functional/**/*.test.ts'],
+    setupFiles: ['test/setup.ts'],
     globals: true,
     browser: {
       enabled: true,
