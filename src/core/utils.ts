@@ -1,19 +1,24 @@
 import Browser from './browser.js'
 
-const throttle = (fn, wait = 200, delayFirstEvent = false) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyFunction = (...args: any[]) => unknown
+
+const throttle = <T extends AnyFunction>(
+  fn: T,
+  wait = 200,
+  delayFirstEvent = false,
+) => {
   let lastTimestamp = 0
-  /** @type {ReturnType<typeof setTimeout> | null} */
-  let taskId = null
+  let taskId: ReturnType<typeof setTimeout> | null = null
 
-  let context
-  let params
+  let context: unknown
+  let params: Parameters<T>
 
-  /** @this {unknown} */
-  return function throttled(...args) {
+  return function throttled(this: unknown, ...args: Parameters<T>) {
     if (!taskId) {
       const timestamp = Date.now()
       const elapsed = timestamp - lastTimestamp
-      const scheduleTask = delay => {
+      const scheduleTask = (delay: number) => {
         taskId = setTimeout(() => {
           taskId = null
           lastTimestamp = Date.now()
@@ -30,20 +35,23 @@ const throttle = (fn, wait = 200, delayFirstEvent = false) => {
         scheduleTask(wait - elapsed)
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- kept for the delayed call
     context = this
     params = args
   }
 }
 
-const debounce = (fn, wait = 200, leading = false) => {
-  /** @type {ReturnType<typeof setTimeout> | null} */
-  let taskId = null
+const debounce = <T extends AnyFunction>(
+  fn: T,
+  wait = 200,
+  leading = false,
+) => {
+  let taskId: ReturnType<typeof setTimeout> | null = null
 
-  let context
-  let params
+  let context: unknown
+  let params: Parameters<T>
 
-  /** @this {unknown} */
-  return function debounced(...args) {
+  return function debounced(this: unknown, ...args: Parameters<T>) {
     const isFirstInvocation = !taskId
     if (taskId) {
       clearTimeout(taskId)
@@ -53,6 +61,7 @@ const debounce = (fn, wait = 200, leading = false) => {
       return fn.call(context, ...params)
     }, wait)
 
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- kept for the delayed call
     context = this
     params = args
 
@@ -62,7 +71,8 @@ const debounce = (fn, wait = 200, leading = false) => {
   }
 }
 
-const addDataPrefix = attr => `data${attr[0].toUpperCase()}${attr.slice(1)}`
+const addDataPrefix = (attr: string) =>
+  `data${attr[0]!.toUpperCase()}${attr.slice(1)}`
 
 const createUUID = () => {
   const s4 = () =>
@@ -72,9 +82,10 @@ const createUUID = () => {
   return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`
 }
 
-const lowerDash = name => name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+const lowerDash = (name: string) =>
+  name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 
-const getAttributeName = key => {
+const getAttributeName = (key: string) => {
   if (key === 'acceptCharset' || key === 'httpEquiv') {
     return lowerDash(key)
   } else if (key.startsWith('aria')) {
@@ -83,18 +94,18 @@ const getAttributeName = key => {
   return key.toLowerCase()
 }
 
-const getEventName = key =>
+const getEventName = (key: string) =>
   key === 'onDoubleClick' ? 'dblclick' : key.slice(2).toLowerCase()
 
-const isSpecialProperty = prop =>
+const isSpecialProperty = (prop: string) =>
   ['key', 'class', 'style', 'dataset', 'properties'].includes(prop)
 
-const isSupportedAttribute = attr =>
+const isSupportedAttribute = (attr: string) =>
   isSpecialProperty(attr) ||
   Browser.isAttributeSupported(attr) ||
   Browser.isEventSupported(attr)
 
-const postRender = fn => {
+const postRender = (fn: FrameRequestCallback) => {
   // since Chromium 64 there are some problems with animations not being
   // triggered correctly, this hack solves the problem across all OS-es
 
@@ -105,14 +116,14 @@ const postRender = fn => {
   /* eslint-enable prefer-arrow-callback */
 }
 
-const deepFreeze = obj => {
+const deepFreeze = <T>(obj: T): T => {
   if (obj === null || typeof obj !== 'object' || Object.isFrozen(obj)) {
     // functions are intentionally not frozen
     return obj
   }
   Object.freeze(obj)
   for (const property of Object.getOwnPropertyNames(obj)) {
-    deepFreeze(obj[property])
+    deepFreeze((obj as Record<string, unknown>)[property])
   }
   return obj
 }

@@ -1,11 +1,23 @@
-import { Comment, Text, VirtualElement, WebComponent } from './nodes.js'
+import type { ComponentDescription, NodeDescription } from './description.js'
+import {
+  Comment,
+  type Component,
+  Text,
+  VirtualElement,
+  type VirtualNode,
+  WebComponent,
+} from './nodes.js'
 import Renderer from './renderer.js'
 
 const VirtualDOM = {
   /**
    * Creates a new Virtual DOM structure from given description.
    */
-  createFromDescription(description, parent, context) {
+  createFromDescription(
+    description: NodeDescription | null,
+    parent?: VirtualNode | null,
+    context?: WebComponent | null,
+  ): VirtualNode | null {
     if (!description) {
       return null
     }
@@ -15,18 +27,24 @@ const VirtualDOM = {
       case 'element':
         return new VirtualElement(description, parent, context)
       case 'comment':
-        return new Comment(description, parent)
+        return new Comment(description, parent!)
       case 'text':
-        return new Text(description, parent)
+        return new Text(description, parent!)
       default:
-        throw new Error(`Unsupported node type: ${description.type}`)
+        throw new Error(
+          `Unsupported node type: ${(description as NodeDescription).type}`,
+        )
     }
   },
 
   /**
    * Creates a new component instance from given description.
    */
-  createComponent(description, parent, context) {
+  createComponent(
+    description: ComponentDescription,
+    parent?: VirtualNode | null,
+    context?: WebComponent | null,
+  ): Component {
     const ComponentClass = description.component
     if (ComponentClass.prototype instanceof WebComponent) {
       return this.createWebComponent(
@@ -54,13 +72,13 @@ const VirtualDOM = {
    * Creates a new Web Component instance from given description.
    */
   createWebComponent(
-    description,
-    parent,
-    context,
+    description: ComponentDescription,
+    parent?: VirtualNode | null,
+    context?: WebComponent | null,
     requireCustomElement = false,
-  ) {
+  ): WebComponent {
     try {
-      const ComponentClass = description.component
+      const ComponentClass = description.component as typeof WebComponent
       if (requireCustomElement && !ComponentClass.elementName) {
         throw new Error(
           `Root component "${

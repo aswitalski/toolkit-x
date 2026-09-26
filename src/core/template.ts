@@ -2,36 +2,56 @@ import Browser from './browser.js'
 import {
   ComponentDescription,
   ElementDescription,
+  type Listener,
+  type NodeDescription,
+  type Props,
   TextDescription,
 } from './description.js'
-import { Component } from './nodes.js'
+import { Component, type ComponentClass } from './nodes.js'
 import { toolkit } from './toolkit.js'
 import utils from './utils.js'
 
-const isDefined = value => value !== undefined && value !== null
-const isFalsy = template => template === null || template === false
-const isNotEmpty = object => Boolean(Object.keys(object).length)
+export type ItemType =
+  | 'component'
+  | 'function'
+  | 'null'
+  | 'node'
+  | 'props'
+  | 'unknown'
+  | 'string'
+  | 'number'
+  | 'bigint'
+  | 'boolean'
+  | 'symbol'
+  | 'undefined'
+
+const isDefined = <T>(value: T): value is NonNullable<T> =>
+  value !== undefined && value !== null
+const isFalsy = (template: unknown) => template === null || template === false
+const isNotEmpty = (object: object) => Boolean(Object.keys(object).length)
 
 const Template = {
   /**
    * Creates a normalized Description of given template.
    */
-  describe(template) {
+  describe(template: unknown): NodeDescription | null {
     if (isFalsy(template)) {
       return null
     }
 
     if (Array.isArray(template) && template.length) {
-      let description
-      for (const [item, type, index] of template.map((item, index) => [
-        item,
-        this.getItemType(item),
-        index,
-      ])) {
+      let description!: ComponentDescription | ElementDescription
+      for (const [item, type, index] of (template as unknown[]).map(
+        (item, index): [unknown, ItemType, number] => [
+          item,
+          this.getItemType(item),
+          index,
+        ],
+      )) {
         if (index === 0) {
           switch (type) {
             case 'string':
-              description = new ElementDescription(item)
+              description = new ElementDescription(item as string)
               break
             case 'component':
             case 'function':
@@ -53,9 +73,9 @@ const Template = {
         }
         if (index === 1 && type === 'props') {
           if (description.type === 'component') {
-            this.assignPropsToComponent(item, description)
+            this.assignPropsToComponent(item as Props, description)
           } else if (description.type === 'element') {
-            this.assignPropsToElement(item, description)
+            this.assignPropsToElement(item as Props, description)
           }
           continue
         }
@@ -64,11 +84,12 @@ const Template = {
         }
         if (type === 'string' || type === 'number' || item === true) {
           description.children = description.children || []
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string -- only strings, numbers and true
           description.children.push(new TextDescription(String(item)))
           continue
         } else if (type === 'node') {
           description.children = description.children || []
-          description.children.push(this.describe(item))
+          description.children.push(this.describe(item)!)
         } else {
           console.error(
             'Invalid item',
@@ -93,8 +114,8 @@ const Template = {
   /**
    * Returns a new props object supplemented by overriden values.
    */
-  normalizeProps(...overrides) {
-    const result = {}
+  normalizeProps(...overrides: Array<Props | undefined>): Props {
+    const result: Props = {}
     for (const override of overrides) {
       for (const [key, value] of Object.entries(override || {})) {
         if (result[key] === undefined && value !== undefined) {
@@ -109,11 +130,11 @@ const Template = {
    * Normalizes specified element props object and returns either
    * a non-empty object containing only supported props or null.
    */
-  normalizeComponentProps(props, ComponentClass) {
+  normalizeComponentProps(props: Props, ComponentClass: ComponentClass): Props {
     return this.normalizeProps(props, ComponentClass.defaultProps || {})
   },
 
-  assignPropsToComponent(object, description) {
+  assignPropsToComponent(object: Props, description: ComponentDescription) {
     const props = this.getComponentProps(
       object,
       description.component,
@@ -122,10 +143,11 @@ const Template = {
     if (props) {
       description.props = props
       if (isDefined(props.key)) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string -- keys are stringified as given
         description.key = String(props.key)
       }
       if (props.attrs) {
-        const attrs = this.getCustomAttributes(props.attrs, true)
+        const attrs = this.getCustomAttributes(props.attrs as Props, true)
         if (attrs) {
           description.attrs = attrs
         }
@@ -133,17 +155,22 @@ const Template = {
     }
   },
 
-  getComponentProps(object, ComponentClass, isRoot) {
+  getComponentProps(
+    object: Props,
+    ComponentClass: ComponentClass,
+    isRoot: boolean,
+  ): Props | null {
     const props = isRoot
       ? object
       : this.normalizeComponentProps(object, ComponentClass)
     return isNotEmpty(props) ? props : null
   },
 
-  assignPropsToElement(props, description) {
+  assignPropsToElement(props: Props, description: ElementDescription) {
     for (const [key, value] of Object.entries(props)) {
       if (key === 'key') {
         if (isDefined(value)) {
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string -- keys are stringified as given
           description.key = String(value)
         }
       } else if (key === 'class') {
@@ -152,28 +179,28 @@ const Template = {
           description.class = className
         }
       } else if (key === 'style') {
-        const style = this.getStyle(value)
+        const style = this.getStyle(value as Props)
         if (style) {
           description.style = style
         }
       } else if (key === 'dataset') {
-        const dataset = this.getDataset(value)
+        const dataset = this.getDataset(value as Props)
         if (dataset) {
           description.dataset = dataset
         }
       } else if (key === 'properties') {
-        const properties = this.getProperties(value)
+        const properties = this.getProperties(value as Props)
         if (properties) {
           description.properties = properties
         }
       } else if (key === 'attrs') {
-        const customAttrs = this.getCustomAttributes(value)
+        const customAttrs = this.getCustomAttributes(value as Props)
         if (customAttrs) {
           description.custom = description.custom || {}
           description.custom.attrs = customAttrs
         }
       } else if (key === 'on') {
-        const customListeners = this.getCustomListeners(value)
+        const customListeners = this.getCustomListeners(value as Props)
         if (customListeners) {
           description.custom = description.custom || {}
           description.custom.listeners = customListeners
@@ -201,7 +228,7 @@ const Template = {
               )
             }
             if (!element.includes('-') && !isAttributeValid(key, element)) {
-              const names = getValidElementNamesFor(key)
+              const names = (getValidElementNamesFor(key) as string[])
                 .map(key => `"${key}"`)
                 .join(', ')
               const message = `The "${key}" attribute is not supported on "${
@@ -215,7 +242,7 @@ const Template = {
           const listener = this.getListener(value, key)
           if (listener) {
             description.listeners = description.listeners || {}
-            description.listeners[key] = value
+            description.listeners[key] = value as Listener
           }
         } else {
           console.warn(
@@ -229,11 +256,11 @@ const Template = {
   /**
    * Returns the type of item used in the array representing node template.
    */
-  getItemType(item) {
+  getItemType(item: unknown): ItemType {
     const type = typeof item
     switch (type) {
       case 'function':
-        if (item.prototype instanceof Component) {
+        if ((item as ComponentClass).prototype instanceof Component) {
           return 'component'
         }
         return 'function'
@@ -242,7 +269,7 @@ const Template = {
           return 'null'
         } else if (Array.isArray(item)) {
           return 'node'
-        } else if (item.constructor === Object) {
+        } else if ((item as object).constructor === Object) {
           return 'props'
         }
         return 'unknown'
@@ -254,7 +281,7 @@ const Template = {
   /**
    * Resolves any object to a space separated string of class names.
    */
-  getClassName(value) {
+  getClassName(value: unknown): string {
     if (!value) {
       return ''
     }
@@ -263,7 +290,7 @@ const Template = {
     }
     if (Array.isArray(value)) {
       return value
-        .reduce((result, item) => {
+        .reduce((result: string[], item) => {
           if (!item) {
             return result
           }
@@ -283,7 +310,7 @@ const Template = {
         return ''
       }
       return Object.keys(value)
-        .map(key => value[key] && key)
+        .map(key => (value as Props)[key] && key)
         .filter(item => item)
         .join(' ')
     }
@@ -294,13 +321,16 @@ const Template = {
    * Returns either a non-empty style object containing only understood
    * styling rules or null.
    */
-  getStyle(object) {
+  getStyle(object: Props): Record<string, string> | null {
     toolkit.assert(
       object.constructor === Object,
       'Style must be a plain object!',
     )
 
-    const reduceToNonEmptyValues = (style, [name, value]) => {
+    const reduceToNonEmptyValues = (
+      style: Record<string, string>,
+      [name, value]: [string, unknown],
+    ) => {
       const string = this.getStyleProperty(value, name)
       if (isDefined(string)) {
         style[name] = string
@@ -324,10 +354,10 @@ const Template = {
     return isNotEmpty(style) ? style : null
   },
 
-  getStyleProperty(value, name) {
+  getStyleProperty(value: unknown, name: string): string | null {
     if (typeof value === 'string') {
       return value || "''"
-    } else if ([true, false, null, undefined].includes(value)) {
+    } else if ([true, false, null, undefined].includes(value as boolean)) {
       return null
     } else if (Array.isArray(value)) {
       return value.join('')
@@ -342,7 +372,7 @@ const Template = {
       } else {
         throw new Error(`Unknown function list: ${JSON.stringify(value)}`)
       }
-      return this.getFunctionList(value, whitelist)
+      return this.getFunctionList(value as Props, whitelist)
     }
     throw new Error(`Invalid style property value: ${JSON.stringify(value)}`)
   },
@@ -350,8 +380,8 @@ const Template = {
   /**
    * Returns a multi-property string value.
    */
-  getFunctionList(object, whitelist) {
-    const composite = {}
+  getFunctionList(object: Props, whitelist?: string[]): string {
+    const composite: Record<string, string> = {}
     let entries = Object.entries(object)
     if (whitelist) {
       entries = entries.filter(([key, value]) => whitelist.includes(key))
@@ -367,9 +397,9 @@ const Template = {
       .join(' ')
   },
 
-  getListener(value, name) {
+  getListener(value: unknown, name: string): Listener | null {
     if (typeof value === 'function') {
-      return value
+      return value as Listener
     }
     if (value === null || value === false || value === undefined) {
       return null
@@ -380,7 +410,10 @@ const Template = {
   /**
    * Resolves given value to a string.
    */
-  getAttributeValue(value, allowEmpty = true) {
+  getAttributeValue(
+    value: unknown,
+    allowEmpty = true,
+  ): string | null | undefined {
     if (value === true || value === '') {
       return allowEmpty ? '' : null
     } else if (typeof value === 'string') {
@@ -394,14 +427,15 @@ const Template = {
     } else if (['object', 'function', 'symbol'].includes(typeof value)) {
       throw new Error(`Invalid attribute value: ${JSON.stringify(value)}!`)
     }
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string -- objects are rejected above
     return String(value)
   },
 
   /**
    * Returns either a non-empty dataset object or null.
    */
-  getDataset(object) {
-    const dataset = {}
+  getDataset(object: Props): Record<string, string> | null {
+    const dataset: Record<string, string> = {}
     for (const key of Object.keys(object)) {
       const value = this.getAttributeValue(object[key])
       if (isDefined(value)) {
@@ -415,16 +449,19 @@ const Template = {
    * Returns either a non-empty object containing properties set
    * directly on a rendered DOM Element or null.
    */
-  getProperties(object) {
+  getProperties(object: Props): Props | null {
     return isNotEmpty(object) ? object : null
   },
 
-  getCustomAttributes(object, forComponent) {
+  getCustomAttributes(
+    object: Props,
+    forComponent?: boolean,
+  ): Record<string, string> | null {
     console.assert(
       object.constructor === Object,
       'Expecting object for custom attributes!',
     )
-    const attrs = {}
+    const attrs: Record<string, string> = {}
     for (const [key, value] of Object.entries(object)) {
       const attr = this.getAttributeValue(value, /*= allowEmpty */ true)
       if (isDefined(attr)) {
@@ -435,12 +472,12 @@ const Template = {
     return isNotEmpty(attrs) ? attrs : null
   },
 
-  getCustomListeners(object) {
+  getCustomListeners(object: Props): Record<string, Listener> | null {
     console.assert(
       object.constructor === Object,
       'Expecting object for custom listeners!',
     )
-    const listeners = {}
+    const listeners: Record<string, Listener> = {}
     for (const [key, value] of Object.entries(object)) {
       const listener = this.getListener(value, key)
       if (listener) {

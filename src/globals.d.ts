@@ -6,9 +6,9 @@ declare global {
    */
   var loader:
     | {
-        get(id: string): any
+        get(id: string): unknown
         path(id: string): string
-        preload(id: string): Promise<any>
+        preload(id: string): Promise<unknown>
       }
     | undefined
 

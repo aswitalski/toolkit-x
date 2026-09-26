@@ -89,7 +89,8 @@ const SUPPORTED_EVENTS = [
   'onToggle',
 ]
 
-const SUPPORTED_ATTRIBUTES = [
+/* Attribute names with the elements they are valid on, all when omitted. */
+const SUPPORTED_ATTRIBUTES: Array<[string, string[]?]> = [
   ['accept', ['form', 'input']],
   ['acceptCharset', ['form']],
   ['accessKey'],
@@ -373,17 +374,17 @@ const SUPPORTED_TRANSFORMS = [
   'perspective',
 ]
 
-const supportedAttributes = new Map()
+const supportedAttributes = new Map<string, string[] | '*'>()
 for (const [key, whitelist] of SUPPORTED_ATTRIBUTES) {
   supportedAttributes.set(key, whitelist || '*')
 }
 
 const Browser = {
-  isAttributeSupported(key) {
+  isAttributeSupported(this: void, key: string): boolean {
     return supportedAttributes.has(key)
   },
 
-  isAttributeValid(key, element) {
+  isAttributeValid(this: void, key: string, element: string): boolean {
     const whitelist = supportedAttributes.get(key)
     if (whitelist) {
       return whitelist === '*' || whitelist.includes(element)
@@ -391,23 +392,23 @@ const Browser = {
     return false
   },
 
-  getValidElementNamesFor(key) {
+  getValidElementNamesFor(this: void, key: string): string[] | '*' | undefined {
     return supportedAttributes.get(key)
   },
 
-  isEventSupported(key) {
+  isEventSupported(this: void, key: string): boolean {
     return SUPPORTED_EVENTS.includes(key)
   },
 
-  isStyleSupported(key) {
+  isStyleSupported(this: void, key: string): boolean {
     return key.startsWith('--') || SUPPORTED_STYLES.includes(key)
   },
 
-  isFilterSupported(key) {
+  isFilterSupported(this: void, key: string): boolean {
     return SUPPORTED_FILTERS.includes(key)
   },
 
-  isTransformSupported(key) {
+  isTransformSupported(this: void, key: string): boolean {
     return SUPPORTED_TRANSFORMS.includes(key)
   },
 

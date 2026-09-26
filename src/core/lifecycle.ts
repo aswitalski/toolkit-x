@@ -1,12 +1,21 @@
-// @ts-nocheck
-// TODO: Type-check once converted to TypeScript.
+import type {
+  ComponentDescription,
+  NodeDescription,
+  Props,
+} from './description.js'
+import type {
+  Component,
+  VirtualElement,
+  VirtualNode,
+  WebComponent,
+} from './nodes.js'
 import Patch from './patch.js'
 
 const Lifecycle = {
-  onComponentCreated(component) {
+  onComponentCreated(component: Component) {
     if (component.hasOwnMethod('onCreated')) {
       component.dispatcher.queueIncoming()
-      component.onCreated.call(component.sandbox)
+      component.onCreated!.call(component.sandbox)
       component.dispatcher.executeIncoming()
     }
     if (component.content) {
@@ -14,7 +23,7 @@ const Lifecycle = {
     }
   },
 
-  onElementCreated(element) {
+  onElementCreated(element: VirtualElement | WebComponent) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeCreated(child)
@@ -22,7 +31,7 @@ const Lifecycle = {
     }
   },
 
-  onNodeCreated(node) {
+  onNodeCreated(node: VirtualNode): void {
     if (node.isElement()) {
       return this.onElementCreated(node)
     } else if (node.isComponent() && !node.isRoot()) {
@@ -30,10 +39,10 @@ const Lifecycle = {
     }
   },
 
-  onRootCreated(root) {
+  onRootCreated(root: WebComponent) {
     if (root.hasOwnMethod('onCreated')) {
       root.dispatcher.queueIncoming()
-      root.onCreated.call(root.sandbox)
+      root.onCreated!.call(root.sandbox)
       root.dispatcher.executeIncoming()
     }
     if (root.children) {
@@ -43,18 +52,18 @@ const Lifecycle = {
     }
   },
 
-  onComponentAttached(component) {
+  onComponentAttached(component: Component) {
     if (component.content) {
       this.onNodeAttached(component.content)
     }
     if (component.hasOwnMethod('onAttached')) {
       component.dispatcher.queueIncoming()
-      component.onAttached.call(component.sandbox)
+      component.onAttached!.call(component.sandbox)
       component.dispatcher.executeIncoming()
     }
   },
 
-  onElementAttached(element) {
+  onElementAttached(element: VirtualElement | WebComponent) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeAttached(child)
@@ -62,7 +71,7 @@ const Lifecycle = {
     }
   },
 
-  onNodeAttached(node) {
+  onNodeAttached(node: VirtualNode): void {
     if (node.isElement()) {
       return this.onElementAttached(node)
     } else if (node.isComponent() && !node.isRoot()) {
@@ -70,50 +79,56 @@ const Lifecycle = {
     }
   },
 
-  onNodeReceivedDescription(node, description) {
+  onNodeReceivedDescription(node: VirtualNode, description: NodeDescription) {
     if (node.isComponent()) {
-      this.onComponentReceivedProps(node, description.props)
+      this.onComponentReceivedProps(
+        node,
+        (description as ComponentDescription).props,
+      )
     }
   },
 
-  onNodeUpdated(node, prevDescription) {
+  onNodeUpdated(node: VirtualNode, prevDescription: NodeDescription) {
     if (node.isComponent()) {
-      this.onComponentUpdated(node, prevDescription.props)
+      this.onComponentUpdated(
+        node,
+        (prevDescription as ComponentDescription).props,
+      )
     }
   },
 
-  onRootAttached(root) {
+  onRootAttached(root: WebComponent) {
     if (root.children) {
       for (const child of root.children) {
         this.onNodeAttached(child)
       }
     }
     if (root.hasOwnMethod('onAttached')) {
-      root.onAttached.call(root.sandbox)
+      root.onAttached!.call(root.sandbox)
     }
   },
 
-  onComponentReceivedProps(component, nextProps = {}) {
+  onComponentReceivedProps(component: Component, nextProps: Props = {}) {
     if (component.hasOwnMethod('onPropsReceived')) {
       component.dispatcher.queueIncoming()
-      component.onPropsReceived.call(component.sandbox, nextProps)
+      component.onPropsReceived!.call(component.sandbox, nextProps)
       component.dispatcher.executeIncoming()
     }
   },
 
-  onComponentUpdated(component, prevProps = {}) {
+  onComponentUpdated(component: Component, prevProps: Props = {}) {
     if (component.hasOwnMethod('onUpdated')) {
       component.dispatcher.queueIncoming()
-      component.onUpdated.call(component.sandbox, prevProps)
+      component.onUpdated!.call(component.sandbox, prevProps)
       component.dispatcher.executeIncoming()
     }
   },
 
-  onComponentDestroyed(component) {
+  onComponentDestroyed(component: Component) {
     component.destroy()
     if (component.hasOwnMethod('onDestroyed')) {
       component.dispatcher.ignoreIncoming()
-      component.onDestroyed.call(component.sandbox)
+      component.onDestroyed!.call(component.sandbox)
     }
     if (component.content) {
       this.onNodeDestroyed(component.content)
@@ -123,7 +138,7 @@ const Lifecycle = {
     }
   },
 
-  onElementDestroyed(element) {
+  onElementDestroyed(element: VirtualElement | WebComponent) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeDestroyed(child)
@@ -131,7 +146,7 @@ const Lifecycle = {
     }
   },
 
-  onNodeDestroyed(node) {
+  onNodeDestroyed(node: VirtualNode): void {
     if (node.isElement()) {
       return this.onElementDestroyed(node)
     } else if (node.isComponent() && !node.isRoot()) {
@@ -139,7 +154,7 @@ const Lifecycle = {
     }
   },
 
-  onComponentDetached(component) {
+  onComponentDetached(component: Component) {
     if (component.isRoot()) {
       this.onElementDetached(component)
     }
@@ -148,11 +163,11 @@ const Lifecycle = {
     }
     if (component.hasOwnMethod('onDetached')) {
       component.dispatcher.ignoreIncoming()
-      component.onDetached.call(component.sandbox)
+      component.onDetached!.call(component.sandbox)
     }
   },
 
-  onElementDetached(element) {
+  onElementDetached(element: VirtualElement | WebComponent) {
     if (element.children) {
       for (const child of element.children) {
         this.onNodeDetached(child)
@@ -160,7 +175,7 @@ const Lifecycle = {
     }
   },
 
-  onNodeDetached(node) {
+  onNodeDetached(node: VirtualNode) {
     if (node.isElement()) {
       this.onElementDetached(node)
       node.parentNode = null
@@ -170,13 +185,13 @@ const Lifecycle = {
     }
   },
 
-  beforeUpdate(patches) {
+  beforeUpdate(patches: Patch[]) {
     for (const patch of patches) {
       this.beforePatchApplied(patch)
     }
   },
 
-  beforePatchApplied(patch) {
+  beforePatchApplied(patch: Patch) {
     const Type = Patch.Type
     switch (patch.type) {
       case Type.INIT_ROOT_COMPONENT:
@@ -199,14 +214,14 @@ const Lifecycle = {
     }
   },
 
-  afterUpdate(patches) {
+  afterUpdate(patches: Patch[]) {
     patches = [...patches].reverse()
     for (const patch of patches) {
       this.afterPatchApplied(patch)
     }
   },
 
-  afterPatchApplied(patch) {
+  afterPatchApplied(patch: Patch) {
     const Type = Patch.Type
     switch (patch.type) {
       case Type.INIT_ROOT_COMPONENT:

@@ -5,7 +5,7 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "typecheck": "tsc -p .",
+    "typecheck": "node node_modules/typescript-7/lib/tsc.js -p .",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
@@ -51,7 +51,9 @@
     "playwright": "^1.63.0",
     "prettier": "^3.9.9",
     "simple-git-hooks": "^2.14.0",
-    "typescript": "^7.0.2",
+    "typescript": "~6.0.3",
+    "typescript-7": "npm:typescript@^7.0.2",
+    "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
     "vitest": "^5.0.2"
   },
@@ -80,7 +82,7 @@
     "pre-push": "npm run lint && npm run typecheck && npm test"
   },
   "lint-staged": {
-    "*.js": [
+    "*.{js,ts}": [
       "eslint --fix",
       "prettier --write"
     ],

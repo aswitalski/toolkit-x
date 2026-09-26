@@ -1,6 +1,6 @@
 import toolkit from 'toolkit'
 
-import logger from '../src/plugins/logger.js'
+import logger from '../src/plugins/logger.ts'
 import Demo from './src/demo.js'
 
 /* The release mode runs the demo against the bundled ESM build. */

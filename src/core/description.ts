@@ -1,20 +1,37 @@
-// @ts-nocheck
-// TODO: Type-check once converted to TypeScript.
-import { Root } from './nodes.js'
+import { type ComponentClass, Root } from './nodes.js'
+
+export type Props = Record<string, unknown>
+
+/* An event listener, possibly bound to a component by its sandbox. */
+export type Listener = ((event: Event) => unknown) & { source?: unknown }
+
+export type NodeDescription =
+  | ComponentDescription
+  | ElementDescription
+  | CommentDescription
+  | TextDescription
+
+/* A normalized template, as returned by the asTemplate getters. */
+export type NormalizedTemplate = unknown[] | string | null
 
 /*
  * Normalized description of a template.
  * Is used to calculate differences between nodes.
  */
-class Description {
-  get childrenAsTemplates() {
+abstract class Description {
+  declare key?: string
+  declare children?: NodeDescription[]
+
+  abstract get asTemplate(): NormalizedTemplate
+
+  get childrenAsTemplates(): NormalizedTemplate[] | undefined {
     if (this.children) {
       return this.children.map(child => child.asTemplate)
     }
     return undefined
   }
 
-  isCompatible(description) {
+  isCompatible(description: Description): boolean {
     return this.constructor === description.constructor
   }
 }
@@ -32,25 +49,30 @@ class Description {
  * - asTemplate: returns component description as a normalized template
  */
 class ComponentDescription extends Description {
-  constructor(component) {
+  declare component: ComponentClass
+  declare type: 'component'
+  declare props?: Props
+  declare attrs?: Record<string, string>
+
+  constructor(component: ComponentClass) {
     super()
     this.component = component
     this.type = 'component'
   }
 
-  isCompatible(description) {
+  isCompatible(description: Description): boolean {
     return (
       super.isCompatible(description) &&
-      this.component === description.component
+      this.component === (description as ComponentDescription).component
     )
   }
 
-  get isRoot() {
+  get isRoot(): boolean {
     return this.component.prototype instanceof Root
   }
 
-  get asTemplate() {
-    const template = [this.component]
+  get asTemplate(): unknown[] {
+    const template: unknown[] = [this.component]
     if (this.props) {
       template.push(this.props)
     }
@@ -81,19 +103,36 @@ class ComponentDescription extends Description {
  * - asTemplate: returns element description as a normalized template
  */
 class ElementDescription extends Description {
-  constructor(name) {
+  declare name: string
+  declare type: 'element'
+  declare text?: string
+  declare class?: string
+  declare style?: Record<string, string>
+  declare attrs?: Record<string, string>
+  declare dataset?: Record<string, string>
+  declare listeners?: Record<string, Listener>
+  declare properties?: Record<string, unknown>
+  declare custom?: {
+    attrs?: Record<string, string>
+    listeners?: Record<string, Listener>
+  }
+
+  constructor(name: string) {
     super()
     this.name = name
     this.type = 'element'
   }
 
-  isCompatible(description) {
-    return super.isCompatible(description) && this.name === description.name
+  isCompatible(description: Description): boolean {
+    return (
+      super.isCompatible(description) &&
+      this.name === (description as ElementDescription).name
+    )
   }
 
-  get asTemplate() {
-    const template = [this.name]
-    const props = {}
+  get asTemplate(): unknown[] {
+    const template: unknown[] = [this.name]
+    const props: Record<string, unknown> = {}
     if (this.key) {
       props.key = this.key
     }
@@ -131,18 +170,24 @@ class ElementDescription extends Description {
  * Description of a Comment node.
  */
 class CommentDescription extends Description {
-  constructor(text) {
+  declare text: string
+  declare type: 'comment'
+
+  constructor(text: string) {
     super()
     this.text = text
     this.type = 'comment'
   }
 
-  get asTemplate() {
+  get asTemplate(): null {
     return null
   }
 
-  isCompatible(description) {
-    return super.isCompatible(description) && this.text === description.text
+  isCompatible(description: Description): boolean {
+    return (
+      super.isCompatible(description) &&
+      this.text === (description as CommentDescription).text
+    )
   }
 }
 
@@ -150,18 +195,24 @@ class CommentDescription extends Description {
  * Description of a Text node.
  */
 class TextDescription extends Description {
-  constructor(text) {
+  declare text: string
+  declare type: 'text'
+
+  constructor(text: string) {
     super()
     this.text = text
     this.type = 'text'
   }
 
-  get asTemplate() {
+  get asTemplate(): string {
     return this.text
   }
 
-  isCompatible(description) {
-    return super.isCompatible(description) && this.text === description.text
+  isCompatible(description: Description): boolean {
+    return (
+      super.isCompatible(description) &&
+      this.text === (description as TextDescription).text
+    )
   }
 }
 

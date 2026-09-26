@@ -1,4 +1,4 @@
-import toolkit from '../src/index.js'
+import toolkit from '../src/index.ts'
 
 /* Stub of the module loader resolving components registered by id. */
 {

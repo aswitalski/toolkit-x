@@ -1,34 +1,48 @@
+import type { AnyFunction } from './utils.js'
+
+export type State = Record<string, unknown>
+
+export interface ReducerCommand {
+  type: symbol
+  [key: string]: unknown
+}
+
+/* A reducer with the command creators it handles. */
+export type Reducer = ((state: State, command: ReducerCommand) => State) & {
+  commands: Record<string, AnyFunction>
+}
+
 const SET_STATE = Symbol('set-state')
 const UPDATE = Symbol('update')
 
-const coreReducer = (state, command) => {
+const coreReducer: Reducer = (state, command) => {
   if (command.type === SET_STATE) {
-    return command.state
+    return command.state as State
   }
   if (command.type === UPDATE) {
     return {
       ...state,
-      ...command.state,
+      ...(command.state as State),
     }
   }
   return state
 }
 
 coreReducer.commands = {
-  setState: state => ({
+  setState: (state: State) => ({
     type: SET_STATE,
     state,
   }),
-  update: state => ({
+  update: (state: State) => ({
     type: UPDATE,
     state,
   }),
 }
 
 class Reducers {
-  static combine(...reducers) {
-    const commands = {}
-    const reducer = (state, command) => {
+  static combine(...reducers: Reducer[]): Reducer {
+    const commands: Record<string, AnyFunction> = {}
+    const reducer: Reducer = (state, command) => {
       for (const reducer of [coreReducer, ...reducers]) {
         state = reducer(state, command)
       }

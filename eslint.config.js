@@ -1,8 +1,12 @@
 import js from '@eslint/js'
 import prettier from 'eslint-config-prettier/flat'
+import { defineConfig } from 'eslint/config'
 import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
-export default [
+const unusedVars = ['error', { vars: 'local', args: 'none' }]
+
+export default defineConfig([
   {
     ignores: ['dist', 'coverage', '.vitest'],
   },
@@ -24,7 +28,7 @@ export default [
       'no-fallthrough': 'error',
       'no-invalid-this': 'error',
       'no-undef': 'off',
-      'no-unused-vars': ['error', { vars: 'local', args: 'none' }],
+      'no-unused-vars': unusedVars,
       'new-cap': ['error', { capIsNew: false }],
       'no-unneeded-ternary': 'error',
       'arrow-body-style': ['error', 'as-needed'],
@@ -33,6 +37,20 @@ export default [
       'no-var': 'error',
       'prefer-arrow-callback': 'error',
       'prefer-template': 'error',
+    },
+  },
+  {
+    files: ['**/*.ts'],
+    extends: [tseslint.configs.recommendedTypeChecked],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': unusedVars,
+      // async marks Promise-returning APIs, even without an await
+      '@typescript-eslint/require-await': 'off',
     },
   },
   {
@@ -47,4 +65,4 @@ export default [
     },
   },
   prettier,
-]
+])

@@ -1,20 +1,25 @@
+import type { WebComponent } from '../core/nodes.js'
+import type { PluginManifest } from '../core/plugins.js'
+import type { Update } from '../core/renderer.js'
+
 const RENDER_TIME = 'Render time'
-const title = update => `==> ${update.root.constructor.displayName} <==`
+const title = (update: Update) =>
+  `==> ${(update.root.constructor as typeof WebComponent).displayName} <==`
 
 /* eslint-disable no-console */
 
-const Logger = {
+const Logger: PluginManifest = {
   name: 'logger',
   permissions: ['listen-for-updates'],
 
-  onBeforeUpdate(update) {
+  onBeforeUpdate(update: Update) {
     console.group(title(update))
-    console.log('Command:', update.command.type)
+    console.log('Command:', update.command.name)
     console.time(RENDER_TIME)
   },
 
-  onAfterUpdate(update) {
-    if (update.patches.length) {
+  onAfterUpdate(update: Update) {
+    if (update.patches!.length) {
       console.log('%cPatches:', 'color: hsl(54, 70%, 45%)', update.patches)
     } else {
       console.log('%c=> No update', 'color: #07a707')

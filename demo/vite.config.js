@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
       toolkit: resolve(
         mode === 'release'
           ? `../dist/toolkit-${version}.esm.js`
-          : '../src/index.js',
+          : '../src/index.ts',
       ),
     },
   },

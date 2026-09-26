@@ -1,5 +1,5 @@
-// @ts-nocheck
-// TODO: Type-check once converted to TypeScript.
+import type { WebComponent } from './nodes.js'
+import type { Update } from './renderer.js'
 import Sandbox from './sandbox.js'
 import { toolkit } from './toolkit.js'
 
@@ -9,8 +9,33 @@ const Permission = {
   INJECT_STYLESHEETS: 'inject-stylesheets',
 }
 
+/* The API a plugin receives in its register() method. */
+export interface PluginSandbox {
+  registerMethod?(name: string): void
+}
+
+export interface PluginManifest {
+  name: string
+  permissions?: string[]
+  register?(sandbox: PluginSandbox): void
+  install?(root: WebComponent): () => void
+  onBeforeUpdate?(update: Update): void
+  onAfterUpdate?(update: Update): void
+  getStylesheets?(): string[]
+  [key: string]: unknown
+}
+
 class Plugin {
-  constructor(manifest) {
+  declare name: string
+  declare permissions: string[]
+  declare origin: PluginManifest
+  declare register?: () => void
+  declare install?: (root: WebComponent) => () => void
+  declare onBeforeUpdate?: (update: Update) => void
+  declare onAfterUpdate?: (update: Update) => void
+  declare getStylesheets?: () => string[]
+
+  constructor(manifest: PluginManifest) {
     toolkit.assert(
       typeof manifest.name === 'string' && manifest.name.length,
       'Plugin name must be a non-empty string!',
@@ -33,11 +58,11 @@ class Plugin {
 
     const sandbox = this.createSandbox()
     if (typeof manifest.register === 'function') {
-      this.register = () => manifest.register(sandbox)
+      this.register = () => manifest.register!(sandbox)
     }
     if (typeof manifest.install === 'function') {
       this.install = root => {
-        const uninstall = manifest.install(root)
+        const uninstall = manifest.install!(root)
         toolkit.assert(
           typeof uninstall === 'function',
           'The plugin installation must return the uninstall function!',
@@ -47,16 +72,16 @@ class Plugin {
     }
   }
 
-  isListener() {
+  isListener(): boolean {
     return this.permissions.includes(Permission.LISTEN_FOR_UPDATES)
   }
 
-  isStylesheetProvider() {
+  isStylesheetProvider(): boolean {
     return this.permissions.includes(Permission.INJECT_STYLESHEETS)
   }
 
-  createSandbox() {
-    const sandbox = {}
+  createSandbox(): PluginSandbox {
+    const sandbox: PluginSandbox = {}
     for (const permission of this.permissions) {
       switch (permission) {
         case Permission.REGISTER_METHOD:
@@ -68,6 +93,10 @@ class Plugin {
 }
 
 class Registry {
+  declare plugins: Map<string, Plugin>
+  declare cache: { listeners: Plugin[] };
+  declare [Symbol.iterator]: () => Iterator<Plugin>
+
   constructor() {
     this.plugins = new Map()
     this.cache = {
@@ -79,7 +108,7 @@ class Registry {
   /**
    * Adds the plugin to the registry
    */
-  add(plugin) {
+  add(plugin: Plugin) {
     toolkit.assert(
       !this.isRegistered(plugin.name),
       `Plugin '${plugin.name}' is already registered!`,
@@ -89,26 +118,9 @@ class Registry {
   }
 
   /**
-   * Removes plugin from the registry with the specified name.
-   * Returns the uninstall function if present.
-   */
-  remove(name) {
-    const plugin = this.plugins.get(name)
-    toolkit.assert(plugin, `No plugin found with the specified name: "${name}"`)
-    this.plugins.delete(name)
-    this.updateCache()
-    const uninstall = this.uninstalls.get(name)
-    if (uninstall) {
-      this.uninstalls.delete(name)
-      return uninstall
-    }
-    return null
-  }
-
-  /**
    * Checks if plugin with specified name exists in the registry.
    */
-  isRegistered(name) {
+  isRegistered(name: string): boolean {
     return this.plugins.has(name)
   }
 
@@ -119,19 +131,17 @@ class Registry {
     const plugins = [...this.plugins.values()]
     this.cache.listeners = plugins.filter(plugin => plugin.isListener())
   }
-
-  /**
-   * Clears the registry and the cache.
-   */
-  clear() {
-    this.plugins.clear()
-    this.uninstalls.clear()
-    this.cache.listeners.length = 0
-  }
 }
 
 class Plugins {
-  constructor(root) {
+  static Plugin = Plugin
+
+  declare root: WebComponent | null
+  declare registry: Registry
+  declare uninstalls: Map<string, () => void>;
+  declare [Symbol.iterator]: () => Iterator<Plugin>
+
+  constructor(root: WebComponent | null) {
     this.root = root
     this.registry = new Registry()
     this.uninstalls = new Map()
@@ -141,7 +151,7 @@ class Plugins {
   /**
    * Creates a Plugin instance from the manifest object and registers it.
    */
-  register(plugin) {
+  register(plugin: Plugin | PluginManifest) {
     if (!(plugin instanceof Plugin)) {
       plugin = new Plugin(plugin)
     }
@@ -157,7 +167,7 @@ class Plugins {
     }
   }
 
-  install(plugin) {
+  install(plugin: Plugin | PluginManifest) {
     if (this.root && plugin.install) {
       const uninstall = plugin.install(this.root)
       this.uninstalls.set(plugin.name, uninstall)
@@ -168,7 +178,7 @@ class Plugins {
    * Removes the plugin from the registry and invokes it's uninstall method
    * if present.
    */
-  uninstall(name) {
+  uninstall(name: string) {
     const uninstall = this.uninstalls.get(name)
     if (uninstall) {
       uninstall()
@@ -188,24 +198,24 @@ class Plugins {
   /**
    * Invokes listener methods on registered listener plugins.
    */
-  notify(action, event) {
+  notify(action: 'before-update' | 'after-update', event: Update) {
     switch (action) {
       case 'before-update':
         for (const listener of this.registry.cache.listeners) {
-          listener.onBeforeUpdate(event)
+          listener.onBeforeUpdate!(event)
         }
         return
       case 'after-update':
         for (const listener of this.registry.cache.listeners) {
-          listener.onAfterUpdate(event)
+          listener.onAfterUpdate!(event)
         }
         return
       default:
-        throw new Error(`Unknown action: ${action}`)
+        throw new Error(`Unknown action: ${action as string}`)
     }
   }
 }
 
-Plugins.Plugin = Plugin
+export type { Plugin }
 
 export default Plugins

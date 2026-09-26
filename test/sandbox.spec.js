@@ -136,15 +136,13 @@ describe('Sandbox', () => {
 
     it('allows to get root-specific properties', () => {
       // given
-      const dispatch = () => {}
-      const component = createRoot()
-      component.dispatch = dispatch
+      const root = createRoot()
 
       // when
-      const sandbox = Sandbox.create(component)
+      const sandbox = Sandbox.create(root)
 
       // then
-      assert.equal(sandbox.dispatch, dispatch)
+      assert.equal(sandbox.commands, root.commands)
     })
 
     it('allows to register services', () => {

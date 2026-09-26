@@ -1,19 +1,52 @@
-// @ts-nocheck
-// TODO: Type-check once converted to TypeScript.
-import { CommentDescription } from './description.js'
-import Dispatcher from './dispatcher.js'
+import {
+  CommentDescription,
+  type ComponentDescription,
+  type ElementDescription,
+  type NodeDescription,
+  type Props,
+  type TextDescription,
+} from './description.js'
+import Dispatcher, { type Commands, type CommandsAPI } from './dispatcher.js'
 import Plugins from './plugins.js'
+import type { Reducer, State } from './reducers.js'
 import Renderer from './renderer.js'
-import Sandbox from './sandbox.js'
+import Sandbox, { type ComponentSandbox } from './sandbox.js'
 import Template from './template.js'
 import { toolkit } from './toolkit.js'
 import VirtualDOM from './virtual-dom.js'
 
+/* The DOM node rendered for a virtual node. */
+export type NodeRef = Element | CharacterData
+
+/* A task run when a component is destroyed, e.g. disconnecting a service. */
+export type CleanUpTask = (() => void) & { service?: unknown }
+
+export interface Service {
+  connect(listeners: Record<string, unknown>): () => void
+}
+
+export type ComponentClass = typeof Component
+
 /*
  * An abstract parent node.
  */
-class VirtualNode {
-  constructor(description, parentNode = null, context = null) {
+abstract class VirtualNode {
+  declare description: NodeDescription
+  declare key?: string
+  declare parentNode: VirtualNode | null
+  declare context: WebComponent | null
+  declare children?: VirtualNode[]
+
+  abstract ref: NodeRef
+  abstract get nodeType(): string
+  abstract attachDOM(): void
+  abstract detachDOM(): void
+
+  constructor(
+    description: NodeDescription,
+    parentNode: VirtualNode | null = null,
+    context: WebComponent | null = null,
+  ) {
     this.description = description
     this.key = description.key
     this.parentNode = parentNode
@@ -21,16 +54,16 @@ class VirtualNode {
   }
 
   createChildren() {
-    this.children = this.description.children.map(childDescription =>
-      this.createChild(childDescription),
+    this.children = this.description.children!.map(childDescription =>
+      this.createChild(childDescription)!,
     )
   }
 
-  createChild(description) {
+  createChild(description: NodeDescription): VirtualNode | null {
     return VirtualDOM.createFromDescription(description, this, this.context)
   }
 
-  get parentElement() {
+  get parentElement(): VirtualNode | null {
     if (this.parentNode) {
       return this.parentNode.isElement()
         ? this.parentNode
@@ -39,14 +72,14 @@ class VirtualNode {
     return null
   }
 
-  get container() {
+  get container(): Element | VirtualNode | undefined {
     if (this.parentNode) {
       return this.parentNode.container
     }
     return this
   }
 
-  get rootNode() {
+  get rootNode(): WebComponent {
     if (this.isRoot()) {
       return this
     }
@@ -64,7 +97,7 @@ class VirtualNode {
     }
   }
 
-  insertChild(child, index) {
+  insertChild(child: VirtualNode, index?: number) {
     if (!this.children) {
       this.children = []
     }
@@ -77,57 +110,57 @@ class VirtualNode {
     child.parentNode = this
   }
 
-  replaceChild(child, node) {
-    const index = this.children.indexOf(child)
+  replaceChild(child: VirtualNode, node: VirtualNode) {
+    const index = this.children!.indexOf(child)
     toolkit.assert(index >= 0, 'Specified node is not a child of this element!')
-    this.children.splice(index, 1, node)
+    this.children!.splice(index, 1, node)
     child.parentNode = null
     node.parentNode = this
     child.ref.replaceWith(node.ref)
   }
 
-  moveChild(child, from, to) {
+  moveChild(child: VirtualNode, from: number, to: number) {
     toolkit.assert(
-      this.children[from] === child,
+      this.children![from] === child,
       'Specified node is not a child of this element!',
     )
-    this.children.splice(from, 1)
-    this.children.splice(to, 0, child)
+    this.children!.splice(from, 1)
+    this.children!.splice(to, 0, child)
     this.ref.removeChild(child.ref)
-    this.ref.insertBefore(child.ref, this.ref.children[to])
+    this.ref.insertBefore(child.ref, (this.ref as Element).children[to] ?? null)
   }
 
-  removeChild(child) {
-    const index = this.children.indexOf(child)
+  removeChild(child: VirtualNode) {
+    const index = this.children!.indexOf(child)
     toolkit.assert(index >= 0, 'Specified node is not a child of this element!')
-    this.children.splice(index, 1)
-    if (!this.children.length) {
+    this.children!.splice(index, 1)
+    if (!this.children!.length) {
       delete this.children
     }
     this.ref.removeChild(child.ref)
   }
 
-  isRoot() {
+  isRoot(): this is WebComponent {
     return this instanceof WebComponent
   }
 
-  isComponent() {
+  isComponent(): this is Component {
     return this instanceof Component
   }
 
-  isElement() {
+  isElement(): this is VirtualElement {
     return this instanceof VirtualElement
   }
 
-  isComment() {
+  isComment(): this is Comment {
     return this instanceof Comment
   }
 
-  isText() {
+  isText(): this is Text {
     return this instanceof Text
   }
 
-  isCompatible(node) {
+  isCompatible(node: VirtualNode | null | undefined) {
     return node && this.nodeType === node.nodeType && this.key === node.key
   }
 }
@@ -139,11 +172,37 @@ class VirtualNode {
 class Component extends VirtualNode {
   static NodeType = 'component'
 
-  static get displayName() {
+  declare static elementName?: string
+  declare static defaultProps?: Props
+
+  static getCommands?(): CommandsAPI | CommandsAPI[]
+
+  static get displayName(): string {
     return this.name
   }
 
-  constructor(description, parent, context, attachDOM = true) {
+  declare description: ComponentDescription
+  declare sandbox: ComponentSandbox
+  declare cleanUpTasks: CleanUpTask[]
+  declare isInitialized: boolean
+  declare content: VirtualNode | null
+
+  /* The component props, available on the sandbox passed as `this`. */
+  declare props: Props
+
+  onCreated?(): void
+  onAttached?(): void
+  onPropsReceived?(nextProps: Props): void
+  onUpdated?(prevProps: Props): void
+  onDestroyed?(): void
+  onDetached?(): void
+
+  constructor(
+    description: ComponentDescription,
+    parent?: VirtualNode | null,
+    context?: WebComponent | null,
+    attachDOM = true,
+  ) {
     super(description, parent, context)
     this.sandbox = Sandbox.create(this)
     this.cleanUpTasks = []
@@ -158,28 +217,28 @@ class Component extends VirtualNode {
   /**
    * Sets the component content.
    */
-  setContent(node) {
+  setContent(node: VirtualNode) {
     toolkit.assert(
       node.parentNode === this,
       'Specified node does not have a valid parent!',
     )
-    this.content.parentNode = null
+    this.content!.parentNode = null
     node.parentNode = this
-    this.content.ref.replaceWith(node.ref)
+    this.content!.ref.replaceWith(node.ref)
     this.content = node
   }
 
-  hasOwnMethod(method) {
+  hasOwnMethod(method: string): boolean {
     // eslint-disable-next-line no-prototype-builtins
-    return this.constructor.prototype.hasOwnProperty(method)
+    return (this.constructor as ComponentClass).prototype.hasOwnProperty(method)
   }
 
-  connectTo(service, listeners) {
+  connectTo(service: Service, listeners: Record<string, unknown>) {
     toolkit.assert(
       typeof service.connect === 'function',
       'Services have to define the connect() method',
     )
-    const disconnect = service.connect(listeners)
+    const disconnect: CleanUpTask = service.connect(listeners)
     toolkit.assert(
       typeof disconnect === 'function',
       'The result of the connect() method has to be a disconnect() method',
@@ -188,7 +247,7 @@ class Component extends VirtualNode {
     this.cleanUpTasks.push(disconnect)
   }
 
-  get childElement() {
+  get childElement(): VirtualNode | null {
     if (this.content) {
       if (this.content.isElement() || this.content.isRoot()) {
         return this.content
@@ -200,22 +259,22 @@ class Component extends VirtualNode {
     return null
   }
 
-  get placeholder() {
-    if (this.content.isComment()) {
+  get placeholder(): VirtualNode | null {
+    if (this.content!.isComment()) {
       return this.content
     }
-    return this.content.placeholder || null
+    return (this.content as Component).placeholder || null
   }
 
-  render() {
+  render(): unknown {
     return undefined
   }
 
-  get commands() {
+  get commands(): Commands {
     return this.context ? this.context.commands : this.rootNode.commands
   }
 
-  get dispatcher() {
+  get dispatcher(): Dispatcher {
     return this.context ? this.context.dispatcher : this.rootNode.dispatcher
   }
 
@@ -225,16 +284,16 @@ class Component extends VirtualNode {
     }
   }
 
-  get nodeType() {
+  get nodeType(): string {
     return Component.NodeType
   }
 
-  get ref() {
-    return this.content.ref
+  get ref(): NodeRef {
+    return this.content!.ref
   }
 
-  isCompatible(node) {
-    return super.isCompatible(node) && this.constructor === node.constructor
+  isCompatible(node: VirtualNode | null | undefined) {
+    return super.isCompatible(node) && this.constructor === node!.constructor
   }
 
   attachDOM() {
@@ -257,9 +316,28 @@ const DISPATCHER = Symbol('dispatcher')
 class WebComponent extends Component {
   static NodeType = 'root'
 
-  static styles = []
+  static styles: string[] = []
 
-  constructor(description, parent = null, context = null) {
+  declare subroots: Set<WebComponent>
+  declare ready: Promise<void>
+  declare markAsReady: () => void
+  declare plugins: Plugins | null
+  declare shadow: ShadowRoot | null
+  declare state?: State
+  declare pendingDescription?: ComponentDescription
+  declare stopTracking?: () => void
+  declare elementClass?: CustomElementConstructor;
+  declare [CONTAINER]?: Element;
+  declare [CUSTOM_ELEMENT]?: HTMLElement | null;
+  declare [DISPATCHER]: Dispatcher
+
+  getReducers?(): Reducer[]
+
+  constructor(
+    description: ComponentDescription,
+    parent: VirtualNode | null = null,
+    context: WebComponent | null = null,
+  ) {
     super(description, parent, context, /*= attachDOM */ false)
     this.subroots = new Set()
     this.dispatcher = new Dispatcher(this)
@@ -273,23 +351,25 @@ class WebComponent extends Component {
   }
 
   attachDOM() {
-    if (this.constructor.elementName) {
+    if ((this.constructor as typeof WebComponent).elementName) {
       this.ref = Renderer.createCustomElement(this)
-      this.plugins.installAll()
+      this.plugins!.installAll()
       if (this.description.children) {
         this.createChildren()
         this.attachChildren()
       }
     } else {
-      this.plugins.installAll()
+      this.plugins!.installAll()
       super.attachDOM()
     }
   }
 
-  createPlaceholder() {
+  createPlaceholder(): VirtualNode {
     return VirtualDOM.createFromDescription(
-      new CommentDescription(this.constructor.displayName),
-    )
+      new CommentDescription(
+        (this.constructor as typeof WebComponent).displayName,
+      ),
+    )!
   }
 
   /**
@@ -313,19 +393,22 @@ class WebComponent extends Component {
     this.markAsReady()
   }
 
-  setState(state) {
+  setState(state: State) {
     if (state.constructor !== Object) {
       throw new Error('Web Component state must be a plain object!')
     }
     this.commands.setState(
-      Template.normalizeComponentProps(state, this.constructor),
+      Template.normalizeComponentProps(
+        state,
+        this.constructor as typeof WebComponent,
+      ),
     )
   }
 
   /**
    * Triggers the component update.
    */
-  update(description) {
+  update(description: ComponentDescription) {
     if (!this.isInitialized) {
       this.pendingDescription = description
       return
@@ -341,7 +424,7 @@ class WebComponent extends Component {
    * The default implementation delegating the calculation of initial state
    * to the state manager.
    */
-  async getInitialState(props) {
+  async getInitialState(props: Props): Promise<State> {
     return {
       ...props,
     }
@@ -351,38 +434,38 @@ class WebComponent extends Component {
    * The default implementation delegating the calculation of updated state
    * to the state manager.
    */
-  getUpdatedState(props, state) {
+  getUpdatedState(props: Props, state: State): State {
     return {
       ...state,
       ...props,
     }
   }
 
-  get dispatcher() {
+  get dispatcher(): Dispatcher {
     return this[DISPATCHER]
   }
 
-  set dispatcher(dispatcher) {
+  set dispatcher(dispatcher: Dispatcher) {
     this[DISPATCHER] = dispatcher
   }
 
-  get commands() {
+  get commands(): Commands {
     return this.dispatcher.commands
   }
 
-  createPlugins() {
+  createPlugins(): Plugins {
     const plugins = new Plugins(this)
     const inherited = this.parentNode
-      ? this.parentNode.plugins
+      ? (this.parentNode as WebComponent).plugins
       : toolkit.plugins
-    for (const plugin of inherited) {
+    for (const plugin of inherited!) {
       plugins.register(plugin)
     }
     return plugins
   }
 
-  async mount(container) {
-    if (this.constructor.elementName) {
+  async mount(container: Element): Promise<this> {
+    if ((this.constructor as typeof WebComponent).elementName) {
       // triggers this.init() from element's connected callback
       container.appendChild(this.ref)
       await this.ready
@@ -393,9 +476,9 @@ class WebComponent extends Component {
     return this
   }
 
-  getStylesheets() {
-    const stylesheets = []
-    const stylesheetProviders = [...this.plugins].filter(plugin =>
+  getStylesheets(): string[] {
+    const stylesheets: string[] = []
+    const stylesheetProviders = [...this.plugins!].filter(plugin =>
       plugin.isStylesheetProvider(),
     )
     for (const plugin of stylesheetProviders) {
@@ -406,30 +489,31 @@ class WebComponent extends Component {
       }
       stylesheets.push(...plugin.getStylesheets())
     }
-    if (Array.isArray(this.constructor.styles)) {
-      stylesheets.push(...this.constructor.styles)
+    const RootClass = this.constructor as typeof WebComponent
+    if (Array.isArray(RootClass.styles)) {
+      stylesheets.push(...RootClass.styles)
     }
     return stylesheets
   }
 
-  get ref() {
+  get ref(): NodeRef {
     return this[CUSTOM_ELEMENT] || super.ref
   }
 
-  set ref(ref) {
+  set ref(ref: HTMLElement | null) {
     this[CUSTOM_ELEMENT] = ref
   }
 
-  set container(container) {
+  set container(container: Element | undefined) {
     this[CONTAINER] = container
   }
 
-  get container() {
+  get container(): Element | undefined {
     return this[CONTAINER]
   }
 
-  get tracked() {
-    const tracked = []
+  get tracked(): WebComponent[] {
+    const tracked: WebComponent[] = []
     for (const root of this.subroots) {
       tracked.push(root, ...root.tracked)
     }
@@ -439,17 +523,17 @@ class WebComponent extends Component {
   destroy() {
     super.destroy()
     try {
-      this.stopTracking()
+      this.stopTracking!()
     } catch {
       return
     }
     this.dispatcher.ignoreIncoming()
-    this.plugins.destroy()
+    void this.plugins!.destroy()
     this.plugins = null
     this.parentNode = null
   }
 
-  get nodeType() {
+  get nodeType(): string {
     return WebComponent.NodeType
   }
 }
@@ -457,7 +541,14 @@ class WebComponent extends Component {
 class VirtualElement extends VirtualNode {
   static NodeType = 'element'
 
-  constructor(description, parent, context) {
+  declare description: ElementDescription
+  declare ref: HTMLElement
+
+  constructor(
+    description: ElementDescription,
+    parent?: VirtualNode | null,
+    context?: WebComponent | null,
+  ) {
     super(description, parent, context)
     if (description.children) {
       this.createChildren()
@@ -465,12 +556,15 @@ class VirtualElement extends VirtualNode {
     this.attachDOM()
   }
 
-  get nodeType() {
+  get nodeType(): string {
     return VirtualElement.NodeType
   }
 
-  isCompatible(node) {
-    return super.isCompatible(node) && this.name === node.name
+  isCompatible(node: VirtualNode | null | undefined) {
+    return (
+      super.isCompatible(node) &&
+      this.description.name === (node as VirtualElement).description.name
+    )
   }
 
   attachDOM() {
@@ -479,22 +573,25 @@ class VirtualElement extends VirtualNode {
   }
 
   detachDOM() {
-    for (const child of this.children) {
+    for (const child of this.children!) {
       child.detachDOM()
     }
-    this.ref = null
+    this.ref = null!
   }
 }
 
 class Comment extends VirtualNode {
   static NodeType = 'comment'
 
-  constructor(description, parentNode) {
+  declare description: CommentDescription
+  declare ref: globalThis.Comment
+
+  constructor(description: CommentDescription, parentNode?: VirtualNode) {
     super(description, parentNode)
     this.attachDOM()
   }
 
-  get nodeType() {
+  get nodeType(): string {
     return Comment.NodeType
   }
 
@@ -503,19 +600,22 @@ class Comment extends VirtualNode {
   }
 
   detachDOM() {
-    this.ref = null
+    this.ref = null!
   }
 }
 
 class Text extends VirtualNode {
   static NodeType = 'text'
 
-  constructor(description, parentNode) {
+  declare description: TextDescription
+  declare ref: globalThis.Text
+
+  constructor(description: TextDescription, parentNode?: VirtualNode) {
     super(description, parentNode)
     this.attachDOM()
   }
 
-  get nodeType() {
+  get nodeType(): string {
     return Text.NodeType
   }
 
@@ -524,7 +624,7 @@ class Text extends VirtualNode {
   }
 
   detachDOM() {
-    this.ref = null
+    this.ref = null!
   }
 }
 

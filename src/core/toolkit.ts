@@ -1,11 +1,19 @@
-// @ts-nocheck
-// TODO: Type-check once converted to TypeScript.
-import { Component, WebComponent } from './nodes.js'
-import Plugins from './plugins.js'
-import Template from './template.js'
+import type { ComponentDescription, Props } from './description.js'
+import { Component, type ComponentClass, WebComponent } from './nodes.js'
+import Plugins, { type PluginManifest } from './plugins.js'
+import Template, { type ItemType } from './template.js'
 import VirtualDOM from './virtual-dom.js'
 
 const INIT = Symbol('init')
+
+export interface Settings {
+  debug: boolean
+}
+
+export interface Options {
+  debug?: boolean
+  plugins?: PluginManifest[]
+}
 
 /* Returns the module loader required to resolve modules by id. */
 const getLoader = () => {
@@ -16,23 +24,33 @@ const getLoader = () => {
 }
 
 /* Function to Component mapping. */
-const pureComponentClassRegistry = new Map()
+const pureComponentClassRegistry = new Map<
+  (props: Props) => unknown,
+  ComponentClass
+>()
 
 class Toolkit {
+  declare roots: Set<WebComponent>
+  declare settings: Settings | null
+  declare plugins: Plugins | null
+  declare ready: Promise<boolean>
+  declare assert: (condition: unknown, message?: string) => void;
+  declare [INIT]: (value: boolean) => void
+
   constructor() {
     this.roots = new Set()
     this.settings = null
     this.ready = new Promise(resolve => {
       this[INIT] = resolve
     })
-    this.assert = console.assert
+    this.assert = console.assert as Toolkit['assert']
   }
 
   /**
    * Configures Toolkit with given options object.
    */
-  async configure(options) {
-    const settings = {}
+  async configure(options: Options) {
+    const settings = {} as Settings
     settings.debug = options.debug || false
     Object.freeze(settings)
     this.settings = settings
@@ -42,9 +60,8 @@ class Toolkit {
 
   /**
    * Loads the script with the specified module id as an ES module.
-   * @returns {Promise<void>}
    */
-  import(path) {
+  import(path: string): Promise<void> {
     const modulePath = getLoader().path(path)
     return new Promise((resolve, reject) => {
       const script = document.createElement('script')
@@ -54,6 +71,7 @@ class Toolkit {
         resolve()
       }
       script.onerror = error => {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- rejects with the load error event
         reject(error)
       }
       document.head.appendChild(script)
@@ -65,7 +83,7 @@ class Toolkit {
    * will require new configuration to be provided first.
    */
   reset() {
-    this.plugins?.destroy()
+    void this.plugins?.destroy()
     this.plugins = null
     this.roots.clear()
     this.settings = null
@@ -75,7 +93,7 @@ class Toolkit {
     })
   }
 
-  createPlugins(manifests = []) {
+  createPlugins(manifests: PluginManifest[] = []): Plugins {
     const plugins = new Plugins(null)
     for (const manifest of manifests) {
       plugins.register(manifest)
@@ -86,12 +104,14 @@ class Toolkit {
   /**
    * Returns resolved Component class.
    */
-  resolveComponentClass(component, type) {
+  resolveComponentClass(component: unknown, type: ItemType): ComponentClass {
     switch (type) {
       case 'component':
-        return component
+        return component as ComponentClass
       case 'function':
-        return this.resolvePureComponentClass(component)
+        return this.resolvePureComponentClass(
+          component as (props: Props) => unknown,
+        )
       case 'symbol':
         return this.resolveLoadedClass(String(component).slice(7, -1))
       default:
@@ -103,17 +123,18 @@ class Toolkit {
    * Returns a PureComponent class rendering the template
    * provided by the specified function.
    */
-  resolvePureComponentClass(fn) {
+  resolvePureComponentClass(fn: (props: Props) => unknown): ComponentClass {
     let ComponentClass = pureComponentClassRegistry.get(fn)
     if (ComponentClass) {
       return ComponentClass
     }
     ComponentClass = class PureComponent extends Component {
+      static renderer = fn
+
       render() {
         return fn.call(this, this.props)
       }
     }
-    ComponentClass.renderer = fn
     pureComponentClassRegistry.set(fn, ComponentClass)
     return ComponentClass
   }
@@ -122,8 +143,8 @@ class Toolkit {
    * Returns a component class resolved by module loader
    * with the specified id.
    */
-  resolveLoadedClass(id) {
-    const ComponentClass = getLoader().get(id)
+  resolveLoadedClass(id: string): ComponentClass {
+    const ComponentClass = getLoader().get(id) as ComponentClass | undefined
     if (!ComponentClass) {
       throw new Error(`Error resolving component class for '${id}'`)
     }
@@ -140,7 +161,7 @@ class Toolkit {
     return ComponentClass
   }
 
-  track(root) {
+  track(root: WebComponent) {
     if (root.parentNode) {
       const parentRootNode = root.parentNode.rootNode
       parentRootNode.subroots.add(root)
@@ -155,39 +176,52 @@ class Toolkit {
     }
   }
 
-  get tracked() {
-    const tracked = []
+  get tracked(): WebComponent[] {
+    const tracked: WebComponent[] = []
     for (const root of this.roots) {
       tracked.push(root, ...root.tracked)
     }
     return tracked
   }
 
-  isDebug() {
+  isDebug(): boolean {
     return Boolean(this.settings && this.settings.debug)
   }
 
-  warn(...messages) {
+  warn(...messages: unknown[]) {
     if (this.isDebug()) {
       console.warn(...messages)
     }
   }
 
-  async createRoot(component, props = {}) {
+  async createRoot(
+    component: ComponentClass | string,
+    props: Props = {},
+  ): Promise<WebComponent> {
     if (typeof component === 'string') {
-      const RootClass = await getLoader().preload(component)
-      const description = Template.describe([RootClass, props])
+      const RootClass = (await getLoader().preload(component)) as ComponentClass
+      const description = Template.describe([
+        RootClass,
+        props,
+      ]) as ComponentDescription
       if (RootClass.prototype instanceof WebComponent) {
         return VirtualDOM.createWebComponent(description, null)
       }
       console.error('Specified class is not a WebComponent: ', RootClass)
       throw new Error('Invalid Web Component class!')
     }
-    const description = Template.describe([component, props])
+    const description = Template.describe([
+      component,
+      props,
+    ]) as ComponentDescription
     return VirtualDOM.createWebComponent(description, null)
   }
 
-  async render(component, container, props = {}) {
+  async render(
+    component: ComponentClass | string,
+    container: Element,
+    props: Props = {},
+  ): Promise<WebComponent> {
     await this.ready
     const root = await this.createRoot(component, props)
     return root.mount(container)

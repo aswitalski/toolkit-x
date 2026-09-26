@@ -26,11 +26,11 @@ const bundle = async (entryPoint, format) => {
 }
 
 /* Classic script exposing the loader and opr.Toolkit globals. */
-const iife = await bundle('./src/release.js', 'iife')
+const iife = await bundle('./src/release.ts', 'iife')
 const release = `${Loader}\n\n${iife}`
 
 /* ES module exporting the Toolkit API. */
-const esmRelease = await bundle('./src/index.js', 'esm')
+const esmRelease = await bundle('./src/index.ts', 'esm')
 
 if (!fs.existsSync(targetDir)) {
   fs.mkdirSync(targetDir)

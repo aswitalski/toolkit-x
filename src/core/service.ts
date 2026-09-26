@@ -1,9 +1,9 @@
-// @ts-nocheck
-// TODO: Type-check once converted to TypeScript.
 import { toolkit } from './toolkit.js'
 
 class Service {
-  static validate(listeners) {
+  declare static events: string[]
+
+  static validate(listeners: Record<string, unknown>): string[] {
     if (toolkit.isDebug()) {
       const keys = Object.keys(listeners)
       toolkit.assert(
