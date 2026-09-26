@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
 import { Component } from './nodes.js'
 
 const isFunction = (target, property) => typeof target[property] === 'function'

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
 import { Root } from './nodes.js'
 
 /*
@@ -169,5 +171,12 @@ Object.assign(Description, {
   CommentDescription,
   TextDescription,
 })
+
+export {
+  ElementDescription,
+  ComponentDescription,
+  CommentDescription,
+  TextDescription,
+}
 
 export default Description

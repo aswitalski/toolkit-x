@@ -37,6 +37,20 @@ describe('Virtual DOM', () => {
       assert.equal(component.content.description.attrs.href, url)
     })
 
+    it('creates a pure component rendering the template of a function', () => {
+      // given
+      const Label = props => ['span', props.text]
+
+      // when
+      const component = render(Label, { text: 'Pure' })
+
+      // then
+      assert(component.isComponent())
+      assert(component.content.isElement())
+      assert.equal(component.content.description.name, 'span')
+      assert.equal(component.content.description.children[0].text, 'Pure')
+    })
+
     it('creates a leaf with nested elements', () => {
       // given
       class NestedElements extends opr.Toolkit.Component {

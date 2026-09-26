@@ -21,7 +21,7 @@ const Logger = {
     }
     console.timeEnd(RENDER_TIME)
     console.log('--------------------------------')
-    console.groupEnd(title(update))
+    console.groupEnd()
   },
 }
 

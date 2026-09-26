@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
 import Sandbox from './sandbox.js'
 import { toolkit } from './toolkit.js'
 

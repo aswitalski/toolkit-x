@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
 import Patch from './patch.js'
 
 const Lifecycle = {

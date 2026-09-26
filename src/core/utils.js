@@ -2,13 +2,14 @@ import Browser from './browser.js'
 
 const throttle = (fn, wait = 200, delayFirstEvent = false) => {
   let lastTimestamp = 0
+  /** @type {ReturnType<typeof setTimeout> | null} */
   let taskId = null
 
   let context
   let params
 
+  /** @this {unknown} */
   return function throttled(...args) {
-    /* eslint-disable no-invalid-this */
     if (!taskId) {
       const timestamp = Date.now()
       const elapsed = timestamp - lastTimestamp
@@ -31,16 +32,17 @@ const throttle = (fn, wait = 200, delayFirstEvent = false) => {
     }
     context = this
     params = args
-    /* eslint-enable no-invalid-this */
   }
 }
 
 const debounce = (fn, wait = 200, leading = false) => {
+  /** @type {ReturnType<typeof setTimeout> | null} */
   let taskId = null
 
   let context
   let params
 
+  /** @this {unknown} */
   return function debounced(...args) {
     const isFirstInvocation = !taskId
     if (taskId) {
@@ -51,7 +53,7 @@ const debounce = (fn, wait = 200, leading = false) => {
       return fn.call(context, ...params)
     }, wait)
 
-    context = this // eslint-disable-line no-invalid-this
+    context = this
     params = args
 
     if (isFirstInvocation && leading) {

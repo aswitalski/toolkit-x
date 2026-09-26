@@ -1,9 +1,19 @@
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
 import { Component, WebComponent } from './nodes.js'
 import Plugins from './plugins.js'
 import Template from './template.js'
 import VirtualDOM from './virtual-dom.js'
 
 const INIT = Symbol('init')
+
+/* Returns the module loader required to resolve modules by id. */
+const getLoader = () => {
+  if (typeof loader === 'undefined') {
+    throw new Error('Resolving modules by id requires lazy-module-loader')
+  }
+  return loader
+}
 
 /* Function to Component mapping. */
 const pureComponentClassRegistry = new Map()
@@ -30,8 +40,12 @@ class Toolkit {
     this[INIT](true)
   }
 
+  /**
+   * Loads the script with the specified module id as an ES module.
+   * @returns {Promise<void>}
+   */
   import(path) {
-    const modulePath = loader.path(path)
+    const modulePath = getLoader().path(path)
     return new Promise((resolve, reject) => {
       const script = document.createElement('script')
       script.src = modulePath
@@ -51,7 +65,7 @@ class Toolkit {
    * will require new configuration to be provided first.
    */
   reset() {
-    this.plugins.destroy()
+    this.plugins?.destroy()
     this.plugins = null
     this.roots.clear()
     this.settings = null
@@ -96,7 +110,7 @@ class Toolkit {
     }
     ComponentClass = class PureComponent extends Component {
       render() {
-        fn.bind(this)(this.props)
+        return fn.call(this, this.props)
       }
     }
     ComponentClass.renderer = fn
@@ -109,7 +123,7 @@ class Toolkit {
    * with the specified id.
    */
   resolveLoadedClass(id) {
-    const ComponentClass = loader.get(id)
+    const ComponentClass = getLoader().get(id)
     if (!ComponentClass) {
       throw new Error(`Error resolving component class for '${id}'`)
     }
@@ -161,12 +175,12 @@ class Toolkit {
 
   async createRoot(component, props = {}) {
     if (typeof component === 'string') {
-      const RootClass = await loader.preload(component)
+      const RootClass = await getLoader().preload(component)
       const description = Template.describe([RootClass, props])
       if (RootClass.prototype instanceof WebComponent) {
         return VirtualDOM.createWebComponent(description, null)
       }
-      console.error('Specified class is not a WebComponent: ', ComponentClass)
+      console.error('Specified class is not a WebComponent: ', RootClass)
       throw new Error('Invalid Web Component class!')
     }
     const description = Template.describe([component, props])

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
 import utils from './utils.js'
 
 const noop = () => {}

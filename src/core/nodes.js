@@ -1,4 +1,6 @@
-import Description from './description.js'
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
+import { CommentDescription } from './description.js'
 import Dispatcher from './dispatcher.js'
 import Plugins from './plugins.js'
 import Renderer from './renderer.js'
@@ -286,7 +288,7 @@ class WebComponent extends Component {
 
   createPlaceholder() {
     return VirtualDOM.createFromDescription(
-      new Description.CommentDescription(this.constructor.displayName),
+      new CommentDescription(this.constructor.displayName),
     )
   }
 

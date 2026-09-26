@@ -5,6 +5,7 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
+    "typecheck": "tsc -p .",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
@@ -50,6 +51,7 @@
     "playwright": "^1.63.0",
     "prettier": "^3.9.9",
     "simple-git-hooks": "^2.14.0",
+    "typescript": "^7.0.2",
     "vite": "^8.3.1",
     "vitest": "^5.0.2"
   },
@@ -67,14 +69,15 @@
   "exports": "./src/index.js",
   "allowScripts": {
     "esbuild@0.28.2": true,
-    "simple-git-hooks@2.14.0": true
+    "simple-git-hooks@2.14.0": true,
+    "fsevents": false
   },
   "engines": {
     "node": ">=24"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",
-    "pre-push": "npm run lint && npm test"
+    "pre-push": "npm run lint && npm run typecheck && npm test"
   },
   "lint-staged": {
     "*.js": [

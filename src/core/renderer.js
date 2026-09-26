@@ -1,4 +1,4 @@
-import Description from './description.js'
+import { CommentDescription } from './description.js'
 import Diff from './diff.js'
 import Lifecycle from './lifecycle.js'
 import Plugins from './plugins.js'
@@ -18,7 +18,7 @@ const Renderer = {
       return Template.describe(template)
     }
     const text = component.constructor.displayName
-    return new Description.CommentDescription(text)
+    return new CommentDescription(text)
   },
 
   /**

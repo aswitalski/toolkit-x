@@ -1,3 +1,4 @@
+import toolkit from './index.js'
 import './release.js'
 
 /*
@@ -5,8 +6,6 @@ import './release.js'
  * statically, so this only runs the optional loader configuration.
  */
 window.loadToolkit = async configureLoader => {
-  if (configureLoader) {
-    configureLoader()
-  }
-  return opr.Toolkit
+  configureLoader?.()
+  return toolkit
 }

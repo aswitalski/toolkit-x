@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Type-check once converted to TypeScript.
 import { toolkit } from './toolkit.js'
 
 class Service {

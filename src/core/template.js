@@ -1,5 +1,9 @@
 import Browser from './browser.js'
-import Description from './description.js'
+import {
+  ComponentDescription,
+  ElementDescription,
+  TextDescription,
+} from './description.js'
 import { Component } from './nodes.js'
 import { toolkit } from './toolkit.js'
 import utils from './utils.js'
@@ -18,9 +22,6 @@ const Template = {
     }
 
     if (Array.isArray(template) && template.length) {
-      const { ComponentDescription, ElementDescription, TextDescription } =
-        Description
-
       let description
       for (const [item, type, index] of template.map((item, index) => [
         item,

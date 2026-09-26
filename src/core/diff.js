@@ -90,7 +90,6 @@ class Diff {
       component,
       description.props,
       description.childrenAsTemplates,
-      true,
     )
     this.componentContentPatches(nodeDescription, component)
 
