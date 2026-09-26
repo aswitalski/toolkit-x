@@ -3,19 +3,22 @@
   "version": "0.69.0",
   "description": "Toolkit X, a Web UI toolkit",
   "private": true,
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "mocha 'test/**/*.spec.js'",
     "test:server": "node test/server.js",
     "demo": "node demo/server.js",
     "coverage": "nyc mocha",
-    "eslint": "eslint src/core/*.js test/*.spec.js",
+    "eslint": "eslint src/*.js src/core/*.js src/plugins/*.js test/*.spec.js",
     "release": "node build.js",
     "update-opera": "node build.js && cp dist/toolkit-0.69.0.js $WORK_DIR",
-    "watch": "npm-watch update-opera"
+    "watch": "npm-watch update-opera",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "pre-commit": [
     "release",
+    "format:check",
     "eslint",
     "test"
   ],
@@ -40,7 +43,9 @@
   "devDependencies": {
     "assert": "^2.0.0",
     "dom-test": "^0.4.0",
+    "esbuild": "^0.28.2",
     "eslint": "^8.6.0",
+    "eslint-config-prettier": "^10.1.8",
     "express": "^4.17.2",
     "lazy-module-loader": "^1.0.2",
     "mocha": "^9.1.3",
@@ -48,6 +53,7 @@
     "nyc": "^15.1.0",
     "path": "^0.12.7",
     "pre-commit": "^1.2.2",
+    "prettier": "^3.9.9",
     "sinon": "^12.0.1",
     "tap": "^15.1.6"
   },
@@ -60,5 +66,7 @@
       "extensions": "js",
       "quiet": true
     }
-  }
+  },
+  "type": "module",
+  "exports": "./src/index.js"
 }

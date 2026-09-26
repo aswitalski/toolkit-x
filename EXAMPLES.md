@@ -1,33 +1,32 @@
 ## Examples
 
- Toggle rendered within a custom element:
+Toggle rendered within a custom element:
 
 ```js
-class Toggle extends opr.Toolkit.WebComponent {
+import { WebComponent } from 'toolkit-x'
 
-  static elementName = 'opr-toogle';
+class Toggle extends WebComponent {
+  static elementName = 'opr-toggle'
 
-  static styles = [
-    'styles/toggle.css',
-  ];
+  static styles = ['styles/toggle.css']
 
   getInitialState(props) {
     return {
       id: props.id,
       value: Settings.getValue(props.id),
-    };
+    }
   }
 
   onAttached() {
     this.connectTo(Settings, {
       [this.props.id]: this.onValueChanged,
-    });
+    })
   }
 
   onValueChanged(value) {
     this.commands.update({
       value,
-    });
+    })
   }
 
   render() {
@@ -38,7 +37,7 @@ class Toggle extends opr.Toolkit.WebComponent {
         class: 'toggle',
         checked: this.props.value === true,
       },
-    ];
+    ]
   }
 }
 ```
@@ -46,15 +45,14 @@ class Toggle extends opr.Toolkit.WebComponent {
 Impression reporter wrapper:
 
 ```js
-class ImpressionReporter extends opr.Toolkit.WebComponent {
-
+class ImpressionReporter extends WebComponent {
   onVisible() {
     // called by the intersection observer plugin
-    Stats.reportImpression(this.props.id);
+    Stats.reportImpression(this.props.id)
   }
 
   render() {
-    return this.children[0];
+    return this.children[0]
   }
 }
 ```
@@ -62,59 +60,45 @@ class ImpressionReporter extends opr.Toolkit.WebComponent {
 Animation decorator:
 
 ```js
-class Animation extends opr.Toolkit.WebComponent {
-
+class Animation extends WebComponent {
   getInitialState(props) {
     return {
       ...props,
       animation: 'fade-in',
-    };
+    }
   }
 
   getUpdatedState(props, state) {
     return {
       ...props,
       animation: 'shake',
-    };
-  };
+    }
+  }
 }
 ```
 
 Image details information with asynchronous state update:
 
 ```js
-class ImageDetails extends opr.Toolkit.WebComponent {
+class ImageDetails extends WebComponent {
+  static elementName = 'image-details'
 
-  static elementName = 'image-details';
-
-  async getInitialState({url}) {
-    const metadata = await Service.getImageMetadata(url);
+  async getInitialState({ url }) {
+    const metadata = await Service.getImageMetadata(url)
     return {
       url,
       metadata,
-    };
+    }
   }
 
   render() {
     return [
       'section',
-      [
-        'img',
-        url: this.props.url,
-      ],
-      [
-        'span',
-        `Width: ${this.props.metadata.width}`,
-      ]
-      [
-        'span',
-        `Height: ${this.props.metadata.height}`,
-      ],
-      [
-        'span',
-        `File size: ${format(this.props.metadata.size)}`,
-      ],
-    ];
+      ['img', { src: this.props.url }],
+      ['span', `Width: ${this.props.metadata.width}`],
+      ['span', `Height: ${this.props.metadata.height}`],
+      ['span', `File size: ${format(this.props.metadata.size)}`],
+    ]
   }
 }
 ```

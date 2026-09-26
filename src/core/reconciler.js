@@ -1,155 +1,158 @@
-{
-  const Name = {
-    INSERT: Symbol('insert'),
-    MOVE: Symbol('move'),
-    REMOVE: Symbol('remove'),
-  };
+import Diff from './diff.js'
 
-  class Move {
+const Name = {
+  INSERT: Symbol('insert'),
+  MOVE: Symbol('move'),
+  REMOVE: Symbol('remove'),
+}
 
-    constructor(name, item, props, make) {
-      this.name = name;
-      this.item = item;
-      this.at = props.at;
-      this.from = props.from;
-      this.to = props.to;
-      this.make = make;
-    }
-
-    static insert(item, at) {
-      return new Move(Name.INSERT, item, {at}, items => {
-        items.splice(at, 0, item);
-      });
-    }
-
-    static move(item, from, to) {
-      return new Move(Name.MOVE, item, {from, to}, items => {
-        items.splice(from, 1);
-        items.splice(to, 0, item);
-      });
-    }
-
-    static remove(item, at) {
-      return new Move(Name.REMOVE, item, {at}, items => {
-        items.splice(at, 1);
-      });
-    }
+class Move {
+  constructor(name, item, props, make) {
+    this.name = name
+    this.item = item
+    this.at = props.at
+    this.from = props.from
+    this.to = props.to
+    this.make = make
   }
 
-  const Reconciler = {
+  static insert(item, at) {
+    return new Move(Name.INSERT, item, { at }, items => {
+      items.splice(at, 0, item)
+    })
+  }
 
-    comparator(a, b) {
-      if (Object.is(a.key, b.key)) {
-        return 0;
-      }
-      return a.key > b.key ? 1 : -1;
-    },
+  static move(item, from, to) {
+    return new Move(Name.MOVE, item, { from, to }, items => {
+      items.splice(from, 1)
+      items.splice(to, 0, item)
+    })
+  }
 
-    calculateMoves(source, target, favoredToMove = null) {
-      const moves = [];
-
-      const createItem = function(key, index) {
-        return ({key, index});
-      };
-
-      const before = source.map(createItem).sort(this.comparator);
-      const after = target.map(createItem).sort(this.comparator);
-
-      let removed = [];
-      let inserted = [];
-
-      while (before.length || after.length) {
-        if (!before.length) {
-          inserted = inserted.concat(after);
-          break;
-        }
-        if (!after.length) {
-          removed = removed.concat(before);
-          break;
-        }
-        const result = this.comparator(after[0], before[0]);
-        if (result === 0) {
-          before.shift();
-          after.shift();
-        } else if (result === 1) {
-          removed.push(before.shift());
-        } else {
-          inserted.push(after.shift());
-        }
-      }
-
-      const sortByIndex = function(foo, bar) {
-        return foo.index - bar.index;
-      };
-
-      removed.sort(sortByIndex).reverse();
-      inserted.sort(sortByIndex);
-
-      const result = [...source];
-
-      for (let item of removed) {
-        const move = Move.remove(item.key, item.index);
-        move.make(result);
-        moves.push(move);
-      }
-      for (let item of inserted) {
-        const move = Move.insert(item.key, item.index);
-        move.make(result);
-        moves.push(move);
-      }
-
-      if (opr.Toolkit.Diff.deepEqual(result, target)) {
-        moves.result = result;
-        return moves;
-      }
-
-      const calculateIndexChanges = (source, target, reversed = false) => {
-
-        const moves = [];
-
-        const moveItemIfNeeded = index => {
-          const item = target[index];
-          if (source[index] !== item) {
-            const from = source.indexOf(item);
-            const move = Move.move(item, from, index);
-            move.make(source);
-            moves.push(move);
-          }
-        };
-
-        if (reversed) {
-          for (let i = target.length - 1; i >= 0; i--) {
-            moveItemIfNeeded(i);
-          }
-        } else {
-          for (let i = 0; i < target.length; i++) {
-            moveItemIfNeeded(i);
-          }
-        }
-        moves.result = source;
-        return moves;
-      };
-
-      const defaultMoves = calculateIndexChanges([...result], target);
-      if (defaultMoves.length > 1 ||
-          favoredToMove && defaultMoves.length === 1 &&
-              defaultMoves[0].item !== favoredToMove) {
-        const alternativeMoves =
-            calculateIndexChanges([...result], target, /*= reversed */ true);
-        if (alternativeMoves.length <= defaultMoves.length) {
-          moves.push(...alternativeMoves);
-          moves.result = alternativeMoves.result;
-          return moves;
-        }
-      }
-      moves.push(...defaultMoves);
-      moves.result = defaultMoves.result;
-      return moves;
-    },
-  };
-
-  Reconciler.Move = Move;
-  Reconciler.Move.Name = Name;
-
-  module.exports = Reconciler;
+  static remove(item, at) {
+    return new Move(Name.REMOVE, item, { at }, items => {
+      items.splice(at, 1)
+    })
+  }
 }
+
+const Reconciler = {
+  comparator(a, b) {
+    if (Object.is(a.key, b.key)) {
+      return 0
+    }
+    return a.key > b.key ? 1 : -1
+  },
+
+  calculateMoves(source, target, favoredToMove = null) {
+    const moves = []
+
+    const createItem = function (key, index) {
+      return { key, index }
+    }
+
+    const before = source.map(createItem).sort(this.comparator)
+    const after = target.map(createItem).sort(this.comparator)
+
+    let removed = []
+    let inserted = []
+
+    while (before.length || after.length) {
+      if (!before.length) {
+        inserted = inserted.concat(after)
+        break
+      }
+      if (!after.length) {
+        removed = removed.concat(before)
+        break
+      }
+      const result = this.comparator(after[0], before[0])
+      if (result === 0) {
+        before.shift()
+        after.shift()
+      } else if (result === 1) {
+        removed.push(before.shift())
+      } else {
+        inserted.push(after.shift())
+      }
+    }
+
+    const sortByIndex = function (foo, bar) {
+      return foo.index - bar.index
+    }
+
+    removed.sort(sortByIndex).reverse()
+    inserted.sort(sortByIndex)
+
+    const result = [...source]
+
+    for (let item of removed) {
+      const move = Move.remove(item.key, item.index)
+      move.make(result)
+      moves.push(move)
+    }
+    for (let item of inserted) {
+      const move = Move.insert(item.key, item.index)
+      move.make(result)
+      moves.push(move)
+    }
+
+    if (Diff.deepEqual(result, target)) {
+      moves.result = result
+      return moves
+    }
+
+    const calculateIndexChanges = (source, target, reversed = false) => {
+      const moves = []
+
+      const moveItemIfNeeded = index => {
+        const item = target[index]
+        if (source[index] !== item) {
+          const from = source.indexOf(item)
+          const move = Move.move(item, from, index)
+          move.make(source)
+          moves.push(move)
+        }
+      }
+
+      if (reversed) {
+        for (let i = target.length - 1; i >= 0; i--) {
+          moveItemIfNeeded(i)
+        }
+      } else {
+        for (let i = 0; i < target.length; i++) {
+          moveItemIfNeeded(i)
+        }
+      }
+      moves.result = source
+      return moves
+    }
+
+    const defaultMoves = calculateIndexChanges([...result], target)
+    if (
+      defaultMoves.length > 1 ||
+      (favoredToMove &&
+        defaultMoves.length === 1 &&
+        defaultMoves[0].item !== favoredToMove)
+    ) {
+      const alternativeMoves = calculateIndexChanges(
+        [...result],
+        target,
+        /*= reversed */ true,
+      )
+      if (alternativeMoves.length <= defaultMoves.length) {
+        moves.push(...alternativeMoves)
+        moves.result = alternativeMoves.result
+        return moves
+      }
+    }
+    moves.push(...defaultMoves)
+    moves.result = defaultMoves.result
+    return moves
+  },
+}
+
+Reconciler.Move = Move
+Reconciler.Move.Name = Name
+
+export default Reconciler

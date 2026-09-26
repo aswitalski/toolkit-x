@@ -1,46 +1,41 @@
-{
-  const getNextChannel = current => current === 'developer' ? 'beta' : 'stable';
+import { Root } from 'toolkit'
 
-  class Logo extends opr.Toolkit.Root {
+const getNextChannel = current => (current === 'developer' ? 'beta' : 'stable')
 
-    static get elementName() {
-      return 'logo-component';
-    }
+class Logo extends Root {
+  static elementName = 'logo-component'
 
-    static get styles() {
-      return ['styles/logo.css'];
-    }
+  static styles = ['styles/logo.css']
 
-    async getInitialState(props) {
-      return {
-        ...props,
-        channel: 'developer',
-      };
-    }
-
-    onClick(event) {
-      this.commands.update({
-        channel: getNextChannel(this.props.channel),
-      });
-      event.stopImmediatePropagation();
-      event.preventDefault();
-    }
-
-    render() {
-      return [
-        'logo',
-        {
-          style: {
-            background: `url('/images/${this.props.channel}.svg')`,
-          },
-          attrs: {
-            channel: this.props.channel,
-          },
-          onClick: this.onClick,
-        },
-      ];
+  async getInitialState(props) {
+    return {
+      ...props,
+      channel: 'developer',
     }
   }
 
-  module.exports = Logo;
+  onClick(event) {
+    this.commands.update({
+      channel: getNextChannel(this.props.channel),
+    })
+    event.stopImmediatePropagation()
+    event.preventDefault()
+  }
+
+  render() {
+    return [
+      'logo',
+      {
+        style: {
+          background: `url('/images/${this.props.channel}.svg')`,
+        },
+        attrs: {
+          channel: this.props.channel,
+        },
+        onClick: this.onClick,
+      },
+    ]
+  }
 }
+
+export default Logo

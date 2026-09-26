@@ -1,19 +1,17 @@
 describe.skip('Components', () => {
-  let container;
+  let container
 
   beforeEach(() => {
-    container = document.createElement('section');
-    document.body.appendChild(container);
-  });
+    container = document.createElement('section')
+    document.body.appendChild(container)
+  })
 
-  afterEach(() => { container.remove(); })
+  afterEach(() => {
+    container.remove()
+  })
 
-  it('creates a simple Component', async () => {
-
-  });
+  it('creates a simple Component', async () => {})
 
   // drive
-  it('creates a Web Component', async () => {
-
-  });
-});
+  it('creates a Web Component', async () => {})
+})

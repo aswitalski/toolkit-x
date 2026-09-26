@@ -1,100 +1,92 @@
 describe('Patch element => apply', () => {
+  const { Patch } = opr.Toolkit
 
-  const {
-    Patch,
-  } = opr.Toolkit;
-
-  const createElement = name => createFromTemplate([name]);
+  const createElement = name => createFromTemplate([name])
 
   it('adds attribute', () => {
-
     // given
-    const element = createFromTemplate(['input']);
+    const element = createFromTemplate(['input'])
 
     // when
-    Patch.setAttribute('name', 'value', element).apply();
-    Patch.setAttribute('noValidate', '', element).apply();
-    Patch.setAttribute('minLength', '100px', element).apply();
+    Patch.setAttribute('name', 'value', element).apply()
+    Patch.setAttribute('noValidate', '', element).apply()
+    Patch.setAttribute('minLength', '100px', element).apply()
 
     // then
-    assert.equal(element.ref.attributes['name'].value, 'value');
-    assert.equal(element.ref.attributes['novalidate'].value, '');
-    assert.equal(element.ref.attributes['minlength'].value, '100px');
-  });
+    assert.equal(element.ref.attributes['name'].value, 'value')
+    assert.equal(element.ref.attributes['novalidate'].value, '')
+    assert.equal(element.ref.attributes['minlength'].value, '100px')
+  })
 
   it('replaces attribute', () => {
-
     // given
     const element = createFromTemplate([
-      'input', {
+      'input',
+      {
         name: 'name',
         minLength: '50px',
       },
-    ]);
+    ])
 
     assert.deepEqual(element.description.attrs, {
       name: 'name',
       minLength: '50px',
-    });
-    assert.equal(element.ref.attributes['name'].value, 'name');
-    assert.equal(element.ref.attributes['minlength'].value, '50px');
+    })
+    assert.equal(element.ref.attributes['name'].value, 'name')
+    assert.equal(element.ref.attributes['minlength'].value, '50px')
 
     // when
-    Patch.setAttribute('name', 'value', element).apply();
-    Patch.setAttribute('minLength', '100px', element).apply();
+    Patch.setAttribute('name', 'value', element).apply()
+    Patch.setAttribute('minLength', '100px', element).apply()
 
     // then
-    assert.equal(element.ref.attributes['name'].value, 'value');
-    assert.equal(element.ref.attributes['minlength'].value, '100px');
-  });
+    assert.equal(element.ref.attributes['name'].value, 'value')
+    assert.equal(element.ref.attributes['minlength'].value, '100px')
+  })
 
   it('removes attribute', () => {
-
     // given
     const element = createFromTemplate([
-      'input', {
+      'input',
+      {
         name: 'name',
         minLength: '50px',
       },
-    ]);
+    ])
 
     assert.deepEqual(element.description.attrs, {
       name: 'name',
       minLength: '50px',
-    });
-    assert.equal(element.ref.attributes['name'].value, 'name');
-    assert.equal(element.ref.attributes['minlength'].value, '50px');
+    })
+    assert.equal(element.ref.attributes['name'].value, 'name')
+    assert.equal(element.ref.attributes['minlength'].value, '50px')
 
     // when
-    Patch.removeAttribute('name', element).apply();
-    Patch.removeAttribute('minLength', element).apply();
+    Patch.removeAttribute('name', element).apply()
+    Patch.removeAttribute('minLength', element).apply()
 
     // then
-    assert.deepEqual(element.ref.attributes, {});
-  });
+    assert.deepEqual(element.ref.attributes, {})
+  })
 
   it('adds data attributes', () => {
-
     // given
-    const element = createFromTemplate([
-      'div',
-    ]);
+    const element = createFromTemplate(['div'])
 
     // when
-    Patch.setDataAttribute('id', '10', element).apply();
-    Patch.setDataAttribute('customAttribute', 'true', element).apply();
+    Patch.setDataAttribute('id', '10', element).apply()
+    Patch.setDataAttribute('customAttribute', 'true', element).apply()
 
     // then
-    assert.equal(Object.keys(element.ref.dataset).length, 2);
-    assert.equal(element.ref.dataset.id, '10');
-    assert.equal(element.ref.dataset.customAttribute, 'true');
+    assert.equal(Object.keys(element.ref.dataset).length, 2)
+    assert.equal(element.ref.dataset.id, '10')
+    assert.equal(element.ref.dataset.customAttribute, 'true')
 
-    assert.equal(element.ref.getAttribute('data-id'), '10');
-    assert.equal(element.ref.getAttribute('data-custom-attribute'), 'true');
-  });
+    assert.equal(element.ref.getAttribute('data-id'), '10')
+    assert.equal(element.ref.getAttribute('data-custom-attribute'), 'true')
+  })
 
   it('replaces data attributes', () => {
-
     // given
     const element = createFromTemplate([
       'div',
@@ -104,33 +96,32 @@ describe('Patch element => apply', () => {
           someName: 'Some Name',
         },
       },
-    ]);
+    ])
 
     // when
-    Patch.setDataAttribute('toolkitId', '23', element).apply();
+    Patch.setDataAttribute('toolkitId', '23', element).apply()
 
-    assert.equal(Object.keys(element.ref.dataset).length, 2);
-    assert.equal(element.ref.dataset.toolkitId, '23');
-    assert.equal(element.ref.dataset.someName, 'Some Name');
+    assert.equal(Object.keys(element.ref.dataset).length, 2)
+    assert.equal(element.ref.dataset.toolkitId, '23')
+    assert.equal(element.ref.dataset.someName, 'Some Name')
 
-    assert.equal(element.ref.getAttribute('data-toolkit-id'), '23');
-    assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name');
+    assert.equal(element.ref.getAttribute('data-toolkit-id'), '23')
+    assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name')
 
     // when
-    Patch.setDataAttribute('toolkitId', '23', element).apply();
-    Patch.setDataAttribute('someName', 'Other Name', element).apply();
+    Patch.setDataAttribute('toolkitId', '23', element).apply()
+    Patch.setDataAttribute('someName', 'Other Name', element).apply()
 
     // then
-    assert.equal(Object.keys(element.ref.dataset).length, 2);
-    assert.equal(element.ref.dataset.toolkitId, '23');
-    assert.equal(element.ref.dataset.someName, 'Other Name');
+    assert.equal(Object.keys(element.ref.dataset).length, 2)
+    assert.equal(element.ref.dataset.toolkitId, '23')
+    assert.equal(element.ref.dataset.someName, 'Other Name')
 
-    assert.equal(element.ref.getAttribute('data-toolkit-id'), '23');
-    assert.equal(element.ref.getAttribute('data-some-name'), 'Other Name');
-  });
+    assert.equal(element.ref.getAttribute('data-toolkit-id'), '23')
+    assert.equal(element.ref.getAttribute('data-some-name'), 'Other Name')
+  })
 
   it('removes data attribute', () => {
-
     // given
     const element = createFromTemplate([
       'div',
@@ -140,63 +131,61 @@ describe('Patch element => apply', () => {
           anything: 'true',
         },
       },
-    ]);
+    ])
 
-    assert.equal(Object.entries(element.description.dataset).length, 2);
+    assert.equal(Object.entries(element.description.dataset).length, 2)
     const dataset = {
       name: 'name',
       anything: 'true',
-    };
-    assert.deepEqual(element.description.dataset, dataset);
+    }
+    assert.deepEqual(element.description.dataset, dataset)
 
-    assert.equal(Object.keys(element.ref.dataset).length, 2);
-    assert.equal(element.ref.dataset.name, 'name');
-    assert.equal(element.ref.dataset.anything, 'true');
+    assert.equal(Object.keys(element.ref.dataset).length, 2)
+    assert.equal(element.ref.dataset.name, 'name')
+    assert.equal(element.ref.dataset.anything, 'true')
 
     // when
-    Patch.removeDataAttribute('name', element).apply();
-    Patch.removeDataAttribute('anything', element).apply();
+    Patch.removeDataAttribute('name', element).apply()
+    Patch.removeDataAttribute('anything', element).apply()
 
     // then
-    assert.equal(element.ref.dataset.name, undefined);
-    assert.equal(element.ref.dataset.anything, undefined);
-  });
+    assert.equal(element.ref.dataset.name, undefined)
+    assert.equal(element.ref.dataset.anything, undefined)
+  })
 
   it('adds style property', () => {
-
     // given
-    const element = createFromTemplate(['div']);
+    const element = createFromTemplate(['div'])
 
     // when
-    Patch.setStyleProperty('color', 'black', element).apply();
+    Patch.setStyleProperty('color', 'black', element).apply()
 
     // then
-    assert.equal(element.ref.style.color, 'black');
-  });
+    assert.equal(element.ref.style.color, 'black')
+  })
 
   it('replaces style property', () => {
-
     // given
     const element = createFromTemplate([
-      'div', {
+      'div',
+      {
         style: {
           textDecoration: 'underline',
         },
       },
-    ]);
+    ])
 
-    assert.equal(element.description.style.textDecoration, 'underline');
-    assert.equal(element.ref.style.textDecoration, 'underline');
+    assert.equal(element.description.style.textDecoration, 'underline')
+    assert.equal(element.ref.style.textDecoration, 'underline')
 
     // when
-    Patch.setStyleProperty('textDecoration', 'overline', element).apply();
+    Patch.setStyleProperty('textDecoration', 'overline', element).apply()
 
     // then
-    assert.equal(element.ref.style.textDecoration, 'overline');
-  });
+    assert.equal(element.ref.style.textDecoration, 'overline')
+  })
 
   it('removes style property', () => {
-
     // given
     const element = createFromTemplate([
       'div',
@@ -205,132 +194,129 @@ describe('Patch element => apply', () => {
           visibility: 'hidden',
         },
       },
-    ]);
+    ])
 
-    assert.equal(element.description.style.visibility, 'hidden');
-    assert.equal(element.ref.style.visibility, 'hidden');
+    assert.equal(element.description.style.visibility, 'hidden')
+    assert.equal(element.ref.style.visibility, 'hidden')
 
     // when
-    Patch.removeStyleProperty('visibility', element).apply();
+    Patch.removeStyleProperty('visibility', element).apply()
 
     // then
-    assert.equal(element.ref.style.visibility, '');
-  });
+    assert.equal(element.ref.style.visibility, '')
+  })
 
   it('adds class name', () => {
-
     // given
     const element = createFromTemplate([
       'div',
       {
         class: {},
       },
-    ]);
+    ])
 
-    assert.equal(element.description.class, undefined);
-    assert.deepEqual([...element.ref.classList], []);
+    assert.equal(element.description.class, undefined)
+    assert.deepEqual([...element.ref.classList], [])
 
     // when
-    Patch.setClassName('test', element).apply();
+    Patch.setClassName('test', element).apply()
 
     // then
-    assert.deepEqual([...element.ref.classList], ['test']);
-  });
+    assert.deepEqual([...element.ref.classList], ['test'])
+  })
 
   it('removes class name', () => {
-
     // given
     const element = createFromTemplate([
       'div',
       {
         class: 'test',
       },
-    ]);
+    ])
 
-    assert.equal(element.description.class, 'test');
-    assert.deepEqual([...element.ref.classList], ['test']);
+    assert.equal(element.description.class, 'test')
+    assert.deepEqual([...element.ref.classList], ['test'])
 
     // when
-    Patch.setClassName('', element).apply();
+    Patch.setClassName('', element).apply()
 
     // then
-    assert.deepEqual([...element.ref.classList], []);
-  });
+    assert.deepEqual([...element.ref.classList], [])
+  })
 
   it('adds listener', () => {
-
     // given
-    const element = createFromTemplate(['div']);
-    const onClick = () => {};
+    const element = createFromTemplate(['div'])
+    const onClick = () => {}
 
     // when
-    Patch.addListener('onClick', onClick, element).apply();
+    Patch.addListener('onClick', onClick, element).apply()
 
     // then
     typeof window !== 'object' &&
-        assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
-  });
+      assert.deepEqual(element.ref.eventListeners_.click, [onClick])
+  })
 
   it('replaces listener', () => {
-
     // given
-    const doSomething = () => {};
-    const doSomethingElse = () => {};
+    const doSomething = () => {}
+    const doSomethingElse = () => {}
     const element = createFromTemplate([
       'div',
       {
         onClick: doSomething,
       },
-    ]);
+    ])
 
     // then
     typeof window !== 'object' &&
-        assert.deepEqual(element.ref.eventListeners_.click, [doSomething]);
+      assert.deepEqual(element.ref.eventListeners_.click, [doSomething])
 
     // when
-    Patch.replaceListener('onClick', doSomething, doSomethingElse, element)
-        .apply();
+    Patch.replaceListener(
+      'onClick',
+      doSomething,
+      doSomethingElse,
+      element,
+    ).apply()
 
     // then
     typeof window !== 'object' &&
-        assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse]);
-  });
+      assert.deepEqual(element.ref.eventListeners_.click, [doSomethingElse])
+  })
 
   it('removes listener', () => {
-
     // given
-    const onClick = () => {};
-    const element = createFromTemplate(['div', {onClick}]);
+    const onClick = () => {}
+    const element = createFromTemplate(['div', { onClick }])
 
     // then
     typeof window !== 'object' &&
-        assert.deepEqual(element.ref.eventListeners_.click, [onClick]);
+      assert.deepEqual(element.ref.eventListeners_.click, [onClick])
 
     // when
-    Patch.removeListener('onClick', onClick, element).apply();
+    Patch.removeListener('onClick', onClick, element).apply()
 
     // then
     typeof window !== 'object' &&
-        assert.deepEqual(element.ref.eventListeners_.click, []);
-  });
+      assert.deepEqual(element.ref.eventListeners_.click, [])
+  })
 
   it('sets property', () => {
-
     // given
-    const element = createFromTemplate(['div']);
+    const element = createFromTemplate(['div'])
 
-    assert.equal(element.description.properties, undefined);
-    assert.equal(element.ref.customAttribute, undefined);
+    assert.equal(element.description.properties, undefined)
+    assert.equal(element.ref.customAttribute, undefined)
 
     // when
-    Patch.setProperty('customAttribute', 'customValue', element).apply();
+    Patch.setProperty('customAttribute', 'customValue', element).apply()
 
     // then
-    assert.equal(element.ref.customAttribute, 'customValue');
-  });
+    assert.equal(element.ref.customAttribute, 'customValue')
+  })
 
   it('deletes property', () => {
-
     // given
     const element = createFromTemplate([
       'div',
@@ -339,21 +325,19 @@ describe('Patch element => apply', () => {
           customAttribute: 'customValue',
         },
       },
-    ]);
+    ])
 
-    assert.equal(
-        element.description.properties.customAttribute, 'customValue');
-    assert.equal(element.ref.customAttribute, 'customValue');
+    assert.equal(element.description.properties.customAttribute, 'customValue')
+    assert.equal(element.ref.customAttribute, 'customValue')
 
     // when
-    Patch.deleteProperty('customAttribute', element).apply();
+    Patch.deleteProperty('customAttribute', element).apply()
 
     // then
-    assert.equal(element.ref.customAttribute, undefined);
-  });
+    assert.equal(element.ref.customAttribute, undefined)
+  })
 
   it('replaces property', () => {
-
     // given
     const element = createFromTemplate([
       'div',
@@ -362,488 +346,359 @@ describe('Patch element => apply', () => {
           customAttribute: 'customValue',
         },
       },
-    ]);
+    ])
 
-    assert.equal(
-        element.description.properties.customAttribute, 'customValue');
-    assert.equal(element.ref.customAttribute, 'customValue');
+    assert.equal(element.description.properties.customAttribute, 'customValue')
+    assert.equal(element.ref.customAttribute, 'customValue')
 
     // when
-    Patch.setProperty('customAttribute', 'anotherValue', element).apply();
+    Patch.setProperty('customAttribute', 'anotherValue', element).apply()
 
     // then
-    assert.equal(element.ref.customAttribute, 'anotherValue');
-  });
+    assert.equal(element.ref.customAttribute, 'anotherValue')
+  })
 
   it('inserts child node to an empty element', () => {
-
     // given
-    const element = createFromTemplate([
-      'div',
-    ]);
-    const span = createElement('span');
+    const element = createFromTemplate(['div'])
+    const span = createElement('span')
 
     // then
-    assert.equal(element.ref.childNodes.length, 0);
+    assert.equal(element.ref.childNodes.length, 0)
 
     // when
-    Patch.insertChild(span, 0, element).apply();
+    Patch.insertChild(span, 0, element).apply()
 
     // then
-    assert.equal(element.children.length, 1);
-    assert.equal(element.ref.childNodes.length, 1);
+    assert.equal(element.children.length, 1)
+    assert.equal(element.ref.childNodes.length, 1)
 
-    assert.equal(element.children[0], span);
-    assert.equal(element.ref.firstElementChild, span.ref);
-  });
+    assert.equal(element.children[0], span)
+    assert.equal(element.ref.firstElementChild, span.ref)
+  })
 
   it('inserts child node before other child', () => {
-
     // given
-    const element = createFromTemplate([
-      'div',
-      [
-        'span',
-      ],
-      [
-        'span',
-      ],
-      [
-        'span',
-      ],
-    ]);
-    const link = createElement('a');
+    const element = createFromTemplate(['div', ['span'], ['span'], ['span']])
+    const link = createElement('a')
 
     // then
-    assert.equal(element.children.length, 3);
-    assert.equal(element.ref.childNodes.length, 3);
+    assert.equal(element.children.length, 3)
+    assert.equal(element.ref.childNodes.length, 3)
 
     // when
-    Patch.insertChild(link, 0, element).apply();
+    Patch.insertChild(link, 0, element).apply()
 
     // then
-    assert.equal(element.children.length, 4);
-    assert.equal(element.ref.childNodes.length, 4);
+    assert.equal(element.children.length, 4)
+    assert.equal(element.ref.childNodes.length, 4)
 
-    assert.equal(element.children[0], link);
-    assert(link.ref);
-    assert.equal(element.ref.firstElementChild, link.ref);
-  });
+    assert.equal(element.children[0], link)
+    assert(link.ref)
+    assert.equal(element.ref.firstElementChild, link.ref)
+  })
 
   it('inserts child node at the end', () => {
-
     // given
-    const element = createFromTemplate([
-      'div',
-      [
-        'span',
-      ],
-    ]);
-    const link = createElement('a');
+    const element = createFromTemplate(['div', ['span']])
+    const link = createElement('a')
 
     // then
-    assert.equal(element.children.length, 1);
-    assert.equal(element.ref.childNodes.length, 1);
+    assert.equal(element.children.length, 1)
+    assert.equal(element.ref.childNodes.length, 1)
 
     // when
-    Patch.insertChild(link, 1, element).apply();
+    Patch.insertChild(link, 1, element).apply()
 
     // then
-    assert.equal(element.children.length, 2);
-    assert.equal(element.ref.childNodes.length, 2);
+    assert.equal(element.children.length, 2)
+    assert.equal(element.ref.childNodes.length, 2)
 
-    assert.equal(element.children[1], link);
-    assert(link.ref);
-    assert.equal(element.ref.childNodes[1], link.ref);
-  });
+    assert.equal(element.children[1], link)
+    assert(link.ref)
+    assert.equal(element.ref.childNodes[1], link.ref)
+  })
   describe('move child node', () => {
-
     const Component = class extends opr.Toolkit.Component {
       render() {
-        return this.children[0] || null;
+        return this.children[0] || null
       }
-    };
+    }
 
     it('moves element', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          'p',
-        ],
-        [
-          'div',
-        ],
-        [
-          'span',
-        ],
-      ]);
-      const paragraph = element.children[0];
+      const element = createFromTemplate(['div', ['p'], ['div'], ['span']])
+      const paragraph = element.children[0]
 
       // then
-      assert.equal(element.children.length, 3);
-      assert.equal(element.ref.childNodes.length, 3);
+      assert.equal(element.children.length, 3)
+      assert.equal(element.ref.childNodes.length, 3)
 
       // when
-      Patch.moveChild(paragraph, 0, 2, element).apply();
+      Patch.moveChild(paragraph, 0, 2, element).apply()
 
       // then
-      assert.equal(element.children.length, 3);
-      assert.equal(element.ref.childNodes.length, 3);
+      assert.equal(element.children.length, 3)
+      assert.equal(element.ref.childNodes.length, 3)
 
-      assert.equal(element.children[0].description.name, 'div');
-      assert.equal(element.ref.childNodes[0].tagName, 'DIV');
+      assert.equal(element.children[0].description.name, 'div')
+      assert.equal(element.ref.childNodes[0].tagName, 'DIV')
 
-      assert.equal(element.children[1].description.name, 'span');
-      assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+      assert.equal(element.children[1].description.name, 'span')
+      assert.equal(element.ref.childNodes[1].tagName, 'SPAN')
 
-      assert.equal(element.children[2].description.name, 'p');
-      assert.equal(element.ref.childNodes[2].tagName, 'P');
-    });
+      assert.equal(element.children[2].description.name, 'p')
+      assert.equal(element.ref.childNodes[2].tagName, 'P')
+    })
 
     it('moves component with child element', () => {
-
       // given
       const element = createFromTemplate([
         'div',
-        [
-          'p',
-        ],
-        [
-          Component,
-          [
-            'section',
-          ],
-        ],
+        ['p'],
+        [Component, ['section']],
         ['span'],
-      ]);
-      const component = element.children[1];
+      ])
+      const component = element.children[1]
 
       // then
-      assert.equal(element.children.length, 3);
-      assert.equal(element.ref.childNodes.length, 3);
+      assert.equal(element.children.length, 3)
+      assert.equal(element.ref.childNodes.length, 3)
 
       // when
-      Patch.moveChild(component, 1, 0, element).apply();
+      Patch.moveChild(component, 1, 0, element).apply()
 
       // then
-      assert.equal(element.children.length, 3);
-      assert.equal(element.ref.childNodes.length, 3);
+      assert.equal(element.children.length, 3)
+      assert.equal(element.ref.childNodes.length, 3)
 
-      assert.equal(element.children[0].constructor, Component);
-      assert.equal(element.ref.childNodes[0].tagName, 'SECTION');
+      assert.equal(element.children[0].constructor, Component)
+      assert.equal(element.ref.childNodes[0].tagName, 'SECTION')
 
-      assert.equal(element.children[1].description.name, 'p');
-      assert.equal(element.ref.childNodes[1].tagName, 'P');
+      assert.equal(element.children[1].description.name, 'p')
+      assert.equal(element.ref.childNodes[1].tagName, 'P')
 
-      assert.equal(element.children[2].description.name, 'span');
-      assert.equal(element.ref.childNodes[2].tagName, 'SPAN');
-    });
+      assert.equal(element.children[2].description.name, 'span')
+      assert.equal(element.ref.childNodes[2].tagName, 'SPAN')
+    })
 
     it('moves empty component', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          Component,
-        ],
-        [
-          'span',
-        ],
-      ]);
-      const component = element.children[0];
+      const element = createFromTemplate(['div', [Component], ['span']])
+      const component = element.children[0]
 
       // then
-      assert.equal(element.children.length, 2);
-      assert.equal(element.ref.childNodes.length, 2);
+      assert.equal(element.children.length, 2)
+      assert.equal(element.ref.childNodes.length, 2)
 
       // when
-      Patch.moveChild(component, 0, 1, element).apply();
+      Patch.moveChild(component, 0, 1, element).apply()
 
       // then
-      assert.equal(element.children.length, 2);
-      assert.equal(element.ref.childNodes.length, 2);
+      assert.equal(element.children.length, 2)
+      assert.equal(element.ref.childNodes.length, 2)
 
-      assert.equal(element.children[0].description.name, 'span');
-      assert.equal(element.ref.childNodes[0].tagName, 'SPAN');
+      assert.equal(element.children[0].description.name, 'span')
+      assert.equal(element.ref.childNodes[0].tagName, 'SPAN')
 
-      assert.equal(element.children[1].constructor, Component);
-      assert(element.ref.childNodes[1].textContent.includes('Component'));
-    });
-  });
+      assert.equal(element.children[1].constructor, Component)
+      assert(element.ref.childNodes[1].textContent.includes('Component'))
+    })
+  })
 
   describe('replace child node', () => {
-
     const Component = class extends opr.Toolkit.Component {
       render() {
-        return ['component'];
+        return ['component']
       }
-    };
+    }
 
     it('replaces element with component', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          'p',
-        ],
-      ]);
-      const child = element.children[0];
+      const element = createFromTemplate(['div', ['p']])
+      const child = element.children[0]
 
-      const component = createFromTemplate([
-        Component,
-      ]);
+      const component = createFromTemplate([Component])
 
       // when
-      Patch.replaceChild(child, component, element).apply();
+      Patch.replaceChild(child, component, element).apply()
 
       // then
-      assert.equal(element.children[0], component);
-      assert.equal(element.children[0].ref.tagName, 'COMPONENT');
-    });
+      assert.equal(element.children[0], component)
+      assert.equal(element.children[0].ref.tagName, 'COMPONENT')
+    })
 
     it('replaces element with element', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          'p',
-        ],
-      ]);
-      const child = element.children[0];
+      const element = createFromTemplate(['div', ['p']])
+      const child = element.children[0]
 
-      const span = createFromTemplate([
-        'span',
-      ]);
+      const span = createFromTemplate(['span'])
 
       // when
-      Patch.replaceChild(child, span, element).apply();
+      Patch.replaceChild(child, span, element).apply()
 
       // then
-      assert.equal(element.children[0], span);
-      assert.equal(element.children[0].ref.tagName, 'SPAN');
-    });
+      assert.equal(element.children[0], span)
+      assert.equal(element.children[0].ref.tagName, 'SPAN')
+    })
 
     it('replaces component with component', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          Component,
-        ],
-      ]);
-      const child = element.children[0];
+      const element = createFromTemplate(['div', [Component]])
+      const child = element.children[0]
 
-      const component = createFromTemplate([
-        Component,
-      ]);
+      const component = createFromTemplate([Component])
 
       // when
-      Patch.replaceChild(child, component, element).apply();
+      Patch.replaceChild(child, component, element).apply()
 
       // then
-      assert.equal(element.children[0], component);
-      assert.equal(element.children[0].ref.tagName, 'COMPONENT');
-    });
+      assert.equal(element.children[0], component)
+      assert.equal(element.children[0].ref.tagName, 'COMPONENT')
+    })
 
     it('replaces component with element', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          Component,
-        ],
-      ]);
-      const child = element.children[0];
+      const element = createFromTemplate(['div', [Component]])
+      const child = element.children[0]
 
-      const span = createFromTemplate([
-        'span',
-      ]);
+      const span = createFromTemplate(['span'])
 
       // when
-      Patch.replaceChild(child, span, element).apply();
+      Patch.replaceChild(child, span, element).apply()
 
       // then
-      assert.equal(element.children[0], span);
-      assert.equal(element.children[0].ref.tagName, 'SPAN');
-    });
-  });
+      assert.equal(element.children[0], span)
+      assert.equal(element.children[0].ref.tagName, 'SPAN')
+    })
+  })
 
   describe('remove child node', () => {
-
     const Component = class extends opr.Toolkit.Component {
       render() {
-        return this.children[0] || null;
+        return this.children[0] || null
       }
-    };
+    }
 
     it('removes element', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          'p',
-        ],
-        [
-          'div',
-        ],
-        [
-          'span',
-        ],
-      ]);
-      const div = element.children[1];
+      const element = createFromTemplate(['div', ['p'], ['div'], ['span']])
+      const div = element.children[1]
 
       // then
-      assert.equal(element.children.length, 3);
-      assert.equal(element.ref.childNodes.length, 3);
+      assert.equal(element.children.length, 3)
+      assert.equal(element.ref.childNodes.length, 3)
 
       // when
-      Patch.removeChild(div, 1, element).apply();
+      Patch.removeChild(div, 1, element).apply()
 
       // then
-      assert.equal(element.children.length, 2);
-      assert.equal(element.ref.childNodes.length, 2);
+      assert.equal(element.children.length, 2)
+      assert.equal(element.ref.childNodes.length, 2)
 
-      assert.equal(element.children[0].description.name, 'p');
-      assert.equal(element.ref.childNodes[0].tagName, 'P');
+      assert.equal(element.children[0].description.name, 'p')
+      assert.equal(element.ref.childNodes[0].tagName, 'P')
 
-      assert.equal(element.children[1].description.name, 'span');
-      assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+      assert.equal(element.children[1].description.name, 'span')
+      assert.equal(element.ref.childNodes[1].tagName, 'SPAN')
 
       // given
-      const p = element.children[0];
+      const p = element.children[0]
 
       // when
-      Patch.removeChild(p, 0, element).apply();
+      Patch.removeChild(p, 0, element).apply()
 
       // then
-      assert.equal(element.children.length, 1);
-      assert.equal(element.ref.childNodes.length, 1);
+      assert.equal(element.children.length, 1)
+      assert.equal(element.ref.childNodes.length, 1)
 
-      assert.equal(element.children[0].description.name, 'span');
-      assert.equal(element.ref.childNodes[0].tagName, 'SPAN');
+      assert.equal(element.children[0].description.name, 'span')
+      assert.equal(element.ref.childNodes[0].tagName, 'SPAN')
 
       // given
-      const span = element.children[0];
+      const span = element.children[0]
 
       // when
-      Patch.removeChild(span, 0, element).apply();
+      Patch.removeChild(span, 0, element).apply()
 
       // then
-      assert.equal(element.children, undefined);
-      assert.equal(element.ref.childNodes.length, 0);
-    });
+      assert.equal(element.children, undefined)
+      assert.equal(element.ref.childNodes.length, 0)
+    })
 
     it('removes component with child element', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          'p',
-        ],
-        [
-          Component,
-          [
-            'span',
-          ],
-        ],
-      ]);
-      const component = element.children[1];
+      const element = createFromTemplate(['div', ['p'], [Component, ['span']]])
+      const component = element.children[1]
 
       // then
-      assert.equal(element.children.length, 2);
-      assert.equal(element.ref.childNodes.length, 2);
+      assert.equal(element.children.length, 2)
+      assert.equal(element.ref.childNodes.length, 2)
 
-      assert.equal(element.children[1].constructor, Component);
-      assert.equal(element.ref.childNodes[1].tagName, 'SPAN');
+      assert.equal(element.children[1].constructor, Component)
+      assert.equal(element.ref.childNodes[1].tagName, 'SPAN')
 
       // when
-      Patch.removeChild(component, 1, element).apply();
+      Patch.removeChild(component, 1, element).apply()
 
       // then
-      assert.equal(element.children.length, 1);
-      assert.equal(element.ref.childNodes.length, 1);
-    });
+      assert.equal(element.children.length, 1)
+      assert.equal(element.ref.childNodes.length, 1)
+    })
 
     it('removes empty component', () => {
-
       // given
-      const element = createFromTemplate([
-        'div',
-        [
-          'p',
-        ],
-        [
-          Component,
-        ],
-      ]);
-      const component = element.children[1];
+      const element = createFromTemplate(['div', ['p'], [Component]])
+      const component = element.children[1]
 
       // then
-      assert.equal(element.children.length, 2);
-      assert.equal(element.ref.childNodes.length, 2);
+      assert.equal(element.children.length, 2)
+      assert.equal(element.ref.childNodes.length, 2)
 
-      assert.equal(element.children[1].constructor, Component);
-      assert(element.ref.childNodes[1].textContent.includes('Component'));
+      assert.equal(element.children[1].constructor, Component)
+      assert(element.ref.childNodes[1].textContent.includes('Component'))
 
       // when
-      Patch.removeChild(component, 1, element).apply();
+      Patch.removeChild(component, 1, element).apply()
 
       // then
-      assert.equal(element.children.length, 1);
-      assert.equal(element.ref.childNodes.length, 1);
-    });
-  });
+      assert.equal(element.children.length, 1)
+      assert.equal(element.ref.childNodes.length, 1)
+    })
+  })
 
   it('sets text content', () => {
-
     // given
-    const element = createFromTemplate([
-      'div',
-      'one',
-    ]);
+    const element = createFromTemplate(['div', 'one'])
 
-    assert.equal(element.description.children[0].text, 'one');
-    assert.equal(element.ref.textContent, 'one');
+    assert.equal(element.description.children[0].text, 'one')
+    assert.equal(element.ref.textContent, 'one')
 
     // when
 
-    const {
-      Description,
-      VirtualDOM,
-    } = opr.Toolkit;
+    const { Description, VirtualDOM } = opr.Toolkit
 
     const two = VirtualDOM.createFromDescription(
-        new Description.TextDescription('two'));
-    Patch.replaceChild(element.children[0], two, element).apply();
+      new Description.TextDescription('two'),
+    )
+    Patch.replaceChild(element.children[0], two, element).apply()
 
     // then
-    assert.equal(element.ref.textContent, 'two');
-  });
+    assert.equal(element.ref.textContent, 'two')
+  })
 
   it('removes text content', () => {
-
     // given
-    const element = createFromTemplate([
-      'div',
-      'one',
-    ]);
+    const element = createFromTemplate(['div', 'one'])
 
-    assert.equal(element.description.children[0].text, 'one');
-    assert.equal(element.ref.textContent, 'one');
+    assert.equal(element.description.children[0].text, 'one')
+    assert.equal(element.ref.textContent, 'one')
 
     // when
-    Patch.removeChild(element.children[0], 0, element).apply();
+    Patch.removeChild(element.children[0], 0, element).apply()
 
     // then
-    assert.equal(element.ref.textContent, '');
-  });
-});
+    assert.equal(element.ref.textContent, '')
+  })
+})

@@ -1,17 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <title>Toolkit X demo (release)</title>
-  <base href = "/" />
-  <link rel="stylesheet" href="styles/page.css" />
-  <script src="/dist/toolkit-0.69.0.js"></script>
-</head>
-<body>
-  <div class="background"></div>
-  <apps>
-    <app id="left"></app>
-    <app id="right"></app>
-  </apps>
-  <script src="release/render.js"></script>
-</body>
+  <head>
+    <title>Toolkit X demo (release)</title>
+    <base href="/" />
+    <link rel="stylesheet" href="styles/page.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "toolkit": "/dist/toolkit-0.69.0.esm.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="background"></div>
+    <apps>
+      <app id="left"></app>
+      <app id="right"></app>
+    </apps>
+    <script src="release/render.js" type="module"></script>
+  </body>
 </html>

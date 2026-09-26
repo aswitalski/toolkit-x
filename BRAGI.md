@@ -3,7 +3,7 @@
 Bragi is a templating engine, allowing to express rendered content by objects, arrays and primitive types.
 
 ```js
-[
+const rectangle = [
   'section',
   {
     class: 'rectangle',
@@ -17,12 +17,10 @@ Bragi is a templating engine, allowing to express rendered content by objects, a
 ```
 
 ```js
-[
+const link = [
   'a',
   {
-    class: ['link', {
-      'highlighted': highlighted,
-    }],
+    class: ['link', { highlighted }],
     href: 'https://www.opera.com',
   },
   'Opera',
@@ -30,15 +28,5 @@ Bragi is a templating engine, allowing to express rendered content by objects, a
 ```
 
 ```js
-[
-  'ul',
-  [
-    'li',
-    'First item',
-  ],
-  [
-    'li',
-    'Second item',
-  ],
-]
+const list = ['ul', ['li', 'First item'], ['li', 'Second item']]
 ```

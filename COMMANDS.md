@@ -16,22 +16,23 @@ const API = {
       ...state,
       name,
       surname,
-    });
+    })
   },
-};
+}
 ```
 
 Once connected to a Web Component, the command can be issued from component methods:
 
 ```js
-class FormComponent extends opr.Toolkit.WebComponent {
+import { WebComponent } from 'toolkit-x'
 
-  getCommands() {
-    return API;
+class FormComponent extends WebComponent {
+  static getCommands() {
+    return API
   }
 
-  onPersonalDataChange({name, surname}) {
-    this.commands.setPersonalData(name, surname);
+  onPersonalDataChange({ name, surname }) {
+    this.commands.setPersonalData(name, surname)
   }
 }
 ```
@@ -48,7 +49,7 @@ If the reducer function returns the same object or it is equal to the previous o
 
 ### Immutable data
 
-Since the state comparison checks the deep equality of the objects, all the used data needs to be immutable. Modifying the existing state object may result in unpredictable behaviour. To avoid the incidental modifications Toolkit deeply freezes the state object in the `debug` mode. Any arbitrary modification will result in errors being thrown, to detect programmer's mistakes as early as possible.
+Since the state comparison checks the deep equality of the objects, all the used data needs to be immutable. Modifying the existing state object may result in unpredictable behaviour, so the reducers should always return new objects.
 
 ### Execution
 
@@ -59,60 +60,59 @@ They may also be called from the component's lifecycle methods, in the middle of
 ### Example
 
 ```js
+import { WebComponent } from 'toolkit-x'
+
 const StackCommands = {
   push(item) {
     return state => ({
       items: [...state.items, item],
-    });
+    })
   },
   pop() {
     return state => {
-      const items = [...state.items];
-      const removed = items.shift();
+      const items = [...state.items]
+      const removed = items.pop()
       return {
         items,
         removed,
-      };
-    };
+      }
+    }
   },
-};
+}
 
-export default class Stack extends opr.Toolkit.WebComponent {
+export default class Stack extends WebComponent {
+  static getCommands() {
+    return StackCommands
+  }
 
   getInitialState() {
     return {
       items: [],
-    };
-  }
-
-  getCommands() {
-    return StackCommands;
+    }
   }
 
   pushItem() {
-    const item = parseInt(256 * Math.random());
-    console.log('Pushing item:', item);
-    this.commands.push(item);
+    const item = Math.floor(256 * Math.random())
+    console.log('Pushing item:', item)
+    this.commands.push(item)
   }
 
   popItem() {
-    const state = this.commands.pop();
-    const item = state.removed;
-    console.log('Removed item:', item);
+    this.commands.pop()
+    console.log('Removed item:', this.props.removed)
   }
-};
+}
 ```
 
 ### Using multiple APIs
 
 Web Components can use multiple Command APIs at the same time.
-The `getCommands()` method may return an array containing many command objects.
+The static `getCommands()` method may return an array containing many command objects.
 
 ```js
-class FormComponent extends opr.Toolkit.WebComponent {
-
-  getCommands() {
-    return [FooCommands, BarCommands];
+class FormComponent extends WebComponent {
+  static getCommands() {
+    return [FooCommands, BarCommands]
   }
 }
 ```
@@ -120,27 +120,26 @@ class FormComponent extends opr.Toolkit.WebComponent {
 In such case the specified APIs are checked for any potential name conflicts.
 If none are detected, the component will be able to utilize all the defined methods.
 
-When responsibilies are divided correctly and command names are descriptive enough, conflicts should happen very rarely, if ever.
+When responsibilities are divided correctly and command names are descriptive enough, conflicts should happen very rarely, if ever.
 
 ### Testing
 
-Since all the state management logic is within the API object, it's extremally easy to debug and unit test it.
+Since all the state management logic is within the API object, it's extremely easy to debug and unit test it.
 
 ```js
-describe('pushes the item to the stack', () => {
-
+it('pushes the item to the stack', () => {
   // given
-  const item = 10;
+  const item = 10
   const state = {
     items: [1, 2, 3],
-  };
+  }
 
   // when
-  const reducer = StackCommands.push(item);
-  const result = reducer(state);
+  const reducer = StackCommands.push(item)
+  const result = reducer(state)
 
   // then
-  assert(result !== state);
-  assert.deepEqual([1, 2, 3, 10], result);
-});
+  assert(result !== state)
+  assert.deepEqual(result.items, [1, 2, 3, 10])
+})
 ```

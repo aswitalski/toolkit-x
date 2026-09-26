@@ -1,95 +1,95 @@
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Toolkit X Tests</title>
-  <link href="web/mocha.css" rel="stylesheet" />
-</head>
-<body>
-  <div id="mocha"></div>
-  <script src="loader/loader.js"></script>
-  <script src="web/mocha.js"></script>
-  <script src="web/assert.js"></script>
-  <script src="web/sinon.js"></script>
-  <script src="config/global.js"></script>
-  <script src="/src/debug.js"></script>
-  <script>
-    (async () => {
+  <head>
+    <meta charset="utf-8" />
+    <title>Toolkit X Tests</title>
+    <link href="web/mocha.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="loader/loader.js"></script>
+    <script src="web/mocha.js"></script>
+    <script src="web/assert.js"></script>
+    <script src="web/sinon.js"></script>
+    <script src="config/global.js"></script>
+    <script src="/src/debug.js" type="module"></script>
+    <script type="module">
+      ;(async () => {
+        await loadToolkit(() => {
+          loader.use({
+            path(key) {
+              if (key.endsWith('spec')) {
+                return `${key}.js`
+              }
+              return super.path(key)
+            },
+          })
+        })
+        mocha.setup('bdd')
 
-      await loadToolkit(() => {
-        loader.use({
-          path(key) {
-            if (key.endsWith('spec')) {
-              return `${key}.js`;
-            }
-            return super.path(key);
-          },
-        });
-      });
-      mocha.setup('bdd');
+        window.suppressConsoleErrors = () => {
+          let consoleError
+          beforeEach(() => {
+            consoleError = console.error
+            console.error = () => {}
+          })
 
-      window.suppressConsoleErrors = () => {
-
-        let consoleError;
-        beforeEach(() => {
-          consoleError = console.error;
-          console.error = () => {};
-        });
-
-        afterEach(() => {
-          console.error = consoleError;
-        });
-      };
-
-      opr.Toolkit.configure({
-         plugins: [],
-         debug: true,
-      });
-
-      opr.Toolkit.assert = (condition, message) => {
-        if (!condition) {
-          throw new Error(message);
+          afterEach(() => {
+            console.error = consoleError
+          })
         }
-      };
 
-      const loadTest = async name => new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = `${name}.js`;
-        script.onload = () => {
-          resolve('done');
-        };
-        script.onerror = error => {
-          reject(error);
-        };
-        document.head.appendChild(script);
-      });
+        opr.Toolkit.configure({
+          plugins: [],
+          debug: true,
+        })
 
-      await loadTest('description.spec');
-      await loadTest('diff-calculate.spec');
-      await loadTest('diff-deep-equal.spec');
-      await loadTest('dispatcher.spec');
-      await loadTest('attach-dom.spec');
-      await loadTest('lifecycle.spec');
-      await loadTest('nodes.spec');
-      await loadTest('patch-component.spec');
-      await loadTest('patch-element.spec');
-      await loadTest('plugins.spec');
-      await loadTest('reconciler.spec');
-      await loadTest('reducers.spec');
-      await loadTest('sandbox.spec');
-      await loadTest('template-describe.spec');
-      await loadTest('template-get-item-type.spec');
-      await loadTest('template-get-value.spec');
-      await loadTest('template-normalize.spec');
-      await loadTest('toolkit.spec');
-      await loadTest('utils.spec');
-      await loadTest('virtual-dom-create-component.spec');
-      await loadTest('virtual-dom-create-element.spec');
+        opr.Toolkit.assert = (condition, message) => {
+          if (!condition) {
+            throw new Error(message)
+          }
+        }
 
-      // await loadTest('performance.test');
+        const loadTest = async name =>
+          new Promise((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = `${name}.js`
+            script.type = 'module'
+            script.onload = () => {
+              resolve('done')
+            }
+            script.onerror = error => {
+              reject(error)
+            }
+            document.head.appendChild(script)
+          })
 
-      mocha.checkLeaks();
-      mocha.run();
-    })();
-  </script>
-</body>
+        await loadTest('description.spec')
+        await loadTest('diff-calculate.spec')
+        await loadTest('diff-deep-equal.spec')
+        await loadTest('dispatcher.spec')
+        await loadTest('attach-dom.spec')
+        await loadTest('lifecycle.spec')
+        await loadTest('nodes.spec')
+        await loadTest('patch-component.spec')
+        await loadTest('patch-element.spec')
+        await loadTest('plugins.spec')
+        await loadTest('reconciler.spec')
+        await loadTest('reducers.spec')
+        await loadTest('sandbox.spec')
+        await loadTest('template-describe.spec')
+        await loadTest('template-get-item-type.spec')
+        await loadTest('template-get-value.spec')
+        await loadTest('template-normalize.spec')
+        await loadTest('toolkit.spec')
+        await loadTest('utils.spec')
+        await loadTest('virtual-dom-create-component.spec')
+        await loadTest('virtual-dom-create-element.spec')
+
+        // await loadTest('performance.test')
+
+        mocha.checkLeaks()
+        mocha.run()
+      })()
+    </script>
+  </body>
 </html>

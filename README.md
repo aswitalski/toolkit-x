@@ -11,15 +11,15 @@ A solution dedicated for a single browser asks for a different approach, an atte
 
 ## Design principles
 
-* **native** - take advantage of the latest Chromium engine features,
-* **modular** - define each component, reducer, service as a separate module,
-* **dynamic** - build in discovery service, lazy-load modules for flexibility or preload for performance,
-* **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
-* **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and unidirectional data flow,
-* **encapsulated** - isolate apps as Web components, reduce usage of global variables to bare minimum,
-* **deterministic** - do not worry about race conditions, let the framework control the asynchronous operations properly,
-* **testable** - unit test all your components with little effort,
-* **debuggable** - easily inspect your apps, use live reload, instrumentation and time saving debug tools.
+- **native** - take advantage of the latest Chromium engine features,
+- **modular** - define each component, reducer, service as a separate module,
+- **dynamic** - build in discovery service, lazy-load modules for flexibility or preload for performance,
+- **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
+- **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and unidirectional data flow,
+- **encapsulated** - isolate apps as Web components, reduce usage of global variables to bare minimum,
+- **deterministic** - do not worry about race conditions, let the framework control the asynchronous operations properly,
+- **testable** - unit test all your components with little effort,
+- **debuggable** - easily inspect your apps, use live reload, instrumentation and time saving debug tools.
 
 ## Web Apps
 
@@ -40,7 +40,7 @@ const Square = props => [
       width: [props.size, 'px'],
     },
   },
-];
+]
 ```
 
 There is no transpilation phase, the sources are directly used by the browser in the form of ES modules.
@@ -71,6 +71,7 @@ Here are a few conceptual examples of [Web Components](EXAMPLES.md)
 ## Build
 
 To build a single-script, production version of Toolkit with no external dependencies just run:
+
 ```
 npm run release
 ```

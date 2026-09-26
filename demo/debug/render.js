@@ -1,10 +1,11 @@
-(async () => {
-  await loadToolkit();
-  const logger = await loader.require('plugins/logger');
-  opr.Toolkit.configure({
-    debug: true,
-    plugins: [logger],
-  });
-  await opr.Toolkit.render('src/demo', document.querySelector('#left'));
-  await opr.Toolkit.render('src/demo', document.querySelector('#right'));
-})();
+import toolkit from 'toolkit'
+
+import Demo from '../demo/demo.js'
+import logger from '../plugins/logger.js'
+
+toolkit.configure({
+  debug: true,
+  plugins: [logger],
+})
+await toolkit.render(Demo, document.querySelector('#left'))
+await toolkit.render(Demo, document.querySelector('#right'))

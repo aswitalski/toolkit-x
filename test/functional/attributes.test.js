@@ -1,30 +1,23 @@
 describe('Attributes', () => {
-
-  let container;
+  let container
 
   beforeEach(() => {
-    container = document.createElement('section');
-    document.body.appendChild(container);
-  });
+    container = document.createElement('section')
+    document.body.appendChild(container)
+  })
 
   afterEach(() => {
-    container.remove();
+    container.remove()
   })
 
   it('sets custom attribute for WebComponent', async () => {
-
-    const elementName = 'custom-element';
+    const elementName = 'custom-element'
 
     class CustomElement extends opr.Toolkit.WebComponent {
-
-      static get elementName() {
-        return elementName;
-      }
+      static elementName = elementName
 
       render() {
-        return [
-          'main',
-        ];
+        return ['main']
       }
     }
 
@@ -32,11 +25,10 @@ describe('Attributes', () => {
       attrs: {
         convertedToLowecase: 'yes',
       },
-    });
+    })
 
-    const element = container.querySelector('*');
-    assert.equal(customElement.ref, element);
-    assert.equal('yes', element.getAttribute('converted-to-lowecase'));
-  });
-
-});
+    const element = container.querySelector('*')
+    assert.equal(customElement.ref, element)
+    assert.equal('yes', element.getAttribute('converted-to-lowecase'))
+  })
+})

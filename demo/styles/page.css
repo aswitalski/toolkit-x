@@ -1,4 +1,5 @@
-:root, :host {
+:root,
+:host {
   background-color: black;
   --margin-size: 40px;
 }
