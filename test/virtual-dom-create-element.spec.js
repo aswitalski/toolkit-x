@@ -492,7 +492,11 @@ describe('Virtual DOM => create element', () => {
         // then
         assert(element instanceof VirtualElement)
         assert.equal(element.description.name, 'div')
-        assert.deepEqual(element.description.style, style)
+        assert.deepEqual(element.description.style, {
+          display: 'inherit',
+          height: '60',
+          width: '80',
+        })
       })
 
       it('supports array values', () => {

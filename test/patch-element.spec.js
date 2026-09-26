@@ -66,7 +66,7 @@ describe('Patch element => apply', () => {
     Patch.removeAttribute('minLength', element).apply()
 
     // then
-    assert.deepEqual(element.ref.attributes, {})
+    assert.equal(element.ref.attributes.length, 0)
   })
 
   it('adds data attributes', () => {

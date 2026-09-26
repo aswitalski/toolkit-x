@@ -438,7 +438,7 @@ class WebComponent extends Component {
     super.destroy()
     try {
       this.stopTracking()
-    } catch (e) {
+    } catch {
       return
     }
     this.dispatcher.ignoreIncoming()

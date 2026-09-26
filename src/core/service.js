@@ -3,8 +3,6 @@ import { toolkit } from './toolkit.js'
 class Service {
   static validate(listeners) {
     if (toolkit.isDebug()) {
-      // clang-format off
-      /* eslint-disable max-len */
       const keys = Object.keys(listeners)
       toolkit.assert(
         this.events instanceof Array,
@@ -33,8 +31,6 @@ class Service {
           `Specified listener "${supportedKey}" for ${this.name} is not a function`,
         )
       }
-      /* eslint-enable max-len */
-      // clang-format on
     }
     return this.events.filter(event => listeners[event] instanceof Function)
   }

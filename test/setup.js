@@ -1,16 +1,43 @@
-const isBrowser = typeof window === 'object'
+import toolkit from '../src/index.js'
 
-const $global = isBrowser ? window : global
+/* Stub of the module loader resolving components registered by id. */
+{
+  const registry = new Map()
+
+  globalThis.loader = {
+    get(key) {
+      return registry.get(key)
+    },
+    define(key, module) {
+      registry.set(key, module)
+    },
+    async preload(key) {},
+  }
+}
+
+toolkit.assert = (condition, message) => {
+  if (!condition) {
+    throw new Error(message)
+  }
+}
+
+globalThis.opr = {
+  Toolkit: toolkit,
+}
+
+toolkit.configure({
+  debug: true,
+})
 
 const container = document.createElement('main')
 
-$global.createFromTemplate = (template, parent) =>
+globalThis.createFromTemplate = (template, parent) =>
   opr.Toolkit.VirtualDOM.createFromDescription(
     opr.Toolkit.Template.describe(template),
     parent,
   )
 
-$global.createRootInstance = RootClass => {
+globalThis.createRootInstance = RootClass => {
   const { Template, VirtualDOM } = opr.Toolkit
   const description = Template.describe([RootClass])
   const root = VirtualDOM.createWebComponent(description, null, null, false)
@@ -18,14 +45,14 @@ $global.createRootInstance = RootClass => {
   return root
 }
 
-$global.createWebComponent = async WebComponent => {
+globalThis.createWebComponent = async WebComponent => {
   const instance = createRootInstance(WebComponent)
   const container = document.createElement('main')
   await instance.init(container)
   return instance
 }
 
-$global.createRoot = (template = null, container) => {
+globalThis.createRoot = (template = null, container) => {
   const { Template, VirtualDOM } = opr.Toolkit
   class Root extends opr.Toolkit.Root {
     render() {
@@ -41,7 +68,7 @@ $global.createRoot = (template = null, container) => {
   return root
 }
 
-$global.createComponent = (template = null) => {
+globalThis.createComponent = (template = null) => {
   class Component extends opr.Toolkit.Component {
     render() {
       return template

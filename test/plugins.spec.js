@@ -1,7 +1,7 @@
 describe('Plugins', () => {
   const plugin = {
     name: 'plugin',
-    install: sinon.stub().returns(opr.Toolkit.noop),
+    install: vi.fn().mockReturnValue(opr.Toolkit.noop),
   }
 
   describe('=> Install', () => {
@@ -23,7 +23,7 @@ describe('Plugins', () => {
       await opr.Toolkit.render(SomeRoot, document.body)
 
       // then
-      assert(plugin.install.calledOnce)
+      expect(plugin.install).toHaveBeenCalledOnce()
     })
   })
 })

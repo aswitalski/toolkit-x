@@ -26,15 +26,15 @@ describe('Commands API', () => {
 
   it('uses static getCommands() method', async () => {
     // given
-    const getCommands = sinon.fake.returns({
+    const getCommands = vi.fn().mockReturnValue({
       doNothing: () => state => state,
     })
 
     // when
-    const component = await createWebComponent(getCommands)
+    await createWebComponent(getCommands)
 
     // then
-    assert(getCommands.called)
+    expect(getCommands).toHaveBeenCalled()
   })
 
   it('creates default commands object', async () => {

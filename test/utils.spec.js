@@ -1,10 +1,10 @@
 describe('Utils', () => {
   beforeEach(() => {
-    sinon.stub(console, 'error')
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
-    console.error.restore()
+    console.error.mockRestore()
   })
 
   const {

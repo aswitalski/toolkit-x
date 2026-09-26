@@ -2,11 +2,11 @@ describe('Template => describe', () => {
   const Template = opr.Toolkit.Template
 
   beforeEach(() => {
-    sinon.stub(console, 'error')
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
-    console.error.restore()
+    console.error.mockRestore()
   })
 
   describe('Component', () => {
@@ -586,14 +586,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid item',
-          undefined,
-          'at index: 2, template:',
-          element,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid item',
+        undefined,
+        'at index: 2, template:',
+        element,
       )
     })
 
@@ -606,14 +604,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid node type:',
-          null,
-          '(null) at index: 0, template:',
-          node,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid node type:',
+        null,
+        '(null) at index: 0, template:',
+        node,
       )
     })
   })
@@ -621,24 +617,24 @@ describe('Template => describe', () => {
   describe('=> valid', () => {
     it('accepts null as a template', () => {
       assert.equal(Template.describe(null), null)
-      assert(!console.error.called)
+      expect(console.error).not.toHaveBeenCalled()
     })
 
     it('accepts false as a template', () => {
       assert.equal(Template.describe(false), null)
-      assert(!console.error.called)
+      expect(console.error).not.toHaveBeenCalled()
     })
   })
 
   describe('=> invalid', () => {
     it('rejects empty array as a template', () => {
       assert.throws(() => Template.describe([]))
-      assert(console.error.called)
+      expect(console.error).toHaveBeenCalled()
     })
 
     it('rejects true as a template', () => {
       assert.throws(() => Template.describe(true))
-      assert(console.error.called)
+      expect(console.error).toHaveBeenCalled()
     })
 
     it('rejects undefined template', () => {
@@ -712,14 +708,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid node type:',
-          object,
-          '(props) at index: 0, template:',
-          template,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid node type:',
+        object,
+        '(props) at index: 0, template:',
+        template,
       )
     })
 
@@ -732,14 +726,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid node type:',
-          number,
-          '(number) at index: 0, template:',
-          template,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid node type:',
+        number,
+        '(number) at index: 0, template:',
+        template,
       )
     })
 
@@ -751,14 +743,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid node type:',
-          null,
-          '(null) at index: 0, template:',
-          template,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid node type:',
+        null,
+        '(null) at index: 0, template:',
+        template,
       )
     })
 
@@ -770,14 +760,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid node type:',
-          true,
-          '(boolean) at index: 0, template:',
-          template,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid node type:',
+        true,
+        '(boolean) at index: 0, template:',
+        template,
       )
     })
 
@@ -789,14 +777,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid node type:',
-          undefined,
-          '(undefined) at index: 0, template:',
-          template,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid node type:',
+        undefined,
+        '(undefined) at index: 0, template:',
+        template,
       )
     })
 
@@ -809,14 +795,12 @@ describe('Template => describe', () => {
       assert.throws(() => Template.describe(template))
 
       // then
-      assert(console.error.called)
-      assert(
-        console.error.calledWith(
-          'Invalid item',
-          fn,
-          'at index: 1, template:',
-          template,
-        ),
+      expect(console.error).toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith(
+        'Invalid item',
+        fn,
+        'at index: 1, template:',
+        template,
       )
     })
   })

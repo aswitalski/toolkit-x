@@ -91,7 +91,7 @@ describe('Reducers', () => {
     })
 
     it('detects name conflicts', () => {
-      sinon.stub(console, 'error')
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       // given
       const conflictingReducer = (state, command) => state
@@ -101,17 +101,15 @@ describe('Reducers', () => {
         }),
       }
 
-      class ConflictingRoot extends opr.Toolkit.Root {
-        getReducers() {
-          return [conflictingReducer]
-        }
-      }
-
-      // when
+      // then
       try {
-        assert.throws(() => opr.Toolkit.VirtualDOM.createRoot(ConflictingRoot))
+        assert.throws(
+          () => opr.Toolkit.Reducers.combine(conflictingReducer),
+          'The "update" command is already defined!',
+        )
+        assert.equal(error.mock.calls.length, 1)
       } finally {
-        console.error.restore()
+        error.mockRestore()
       }
     })
 

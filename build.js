@@ -43,7 +43,6 @@ const formatNumber = number => String(number).replace(/(\d{3})$/g, ',$1')
 const size = formatNumber(release.length)
 const lines = formatNumber(release.split('\n').length)
 
-/* eslint-disable no-console */
 console.log()
 console.log('-------------------------------------------------------')
 console.log(' Finished bundling release version of Toolkit X')
@@ -54,4 +53,3 @@ console.log(` => Lines: ${lines}`)
 console.log(` => Size: ${size} bytes`)
 console.log('-------------------------------------------------------')
 console.log()
-/* eslint-enable no-console */

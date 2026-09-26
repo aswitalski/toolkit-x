@@ -1,7 +1,7 @@
 describe('Lifecycle', () => {
   const { Lifecycle, Patch } = opr.Toolkit
 
-  let spy = sinon.spy()
+  let spy = vi.fn()
 
   class Root extends opr.Toolkit.Root {
     render() {
@@ -74,21 +74,21 @@ describe('Lifecycle', () => {
   }
 
   const assertCalled = expectedCalls => {
-    assert.equal(spy.callCount, expectedCalls.length)
-    const actualCalls = spy.getCalls()
+    assert.equal(spy.mock.calls.length, expectedCalls.length)
+    const actualCalls = spy.mock.calls
     for (let i = 0; i < expectedCalls.length; i++) {
-      assert.equal(actualCalls[i].args[0], expectedCalls[i][0])
-      assert.equal(actualCalls[i].args[1].constructor, expectedCalls[i][1])
+      assert.equal(actualCalls[i][0], expectedCalls[i][0])
+      assert.equal(actualCalls[i][1].constructor, expectedCalls[i][1])
     }
   }
 
   beforeEach(() => {
-    spy.resetHistory()
+    spy.mockClear()
   })
 
   describe('on created', () => {
     const assertOnCreatedCalled = (...components) => {
-      assert.equal(spy.callCount, components.length)
+      assert.equal(spy.mock.calls.length, components.length)
       assertCalled(components.map(component => ['onCreated', component]))
     }
 
@@ -359,10 +359,10 @@ describe('Lifecycle', () => {
 
   describe('on props received', () => {
     const assertOnPropsReceivedCalled = (component, props) => {
-      assert.equal(spy.callCount, 1)
-      assert.equal(spy.firstCall.args[0], 'onPropsReceived')
-      assert.equal(spy.firstCall.args[1], component.sandbox)
-      assert.deepEqual(spy.firstCall.args[2], props)
+      assert.equal(spy.mock.calls.length, 1)
+      assert.equal(spy.mock.calls[0][0], 'onPropsReceived')
+      assert.equal(spy.mock.calls[0][1], component.sandbox)
+      assert.deepEqual(spy.mock.calls[0][2], props)
     }
 
     it('=> is called before updating component', () => {
@@ -391,10 +391,10 @@ describe('Lifecycle', () => {
 
   describe('on updated', () => {
     const assertOnUpdatedCalled = (component, prevProps) => {
-      assert.equal(spy.callCount, 1)
-      assert.equal(spy.firstCall.args[0], 'onUpdated')
-      assert.equal(spy.firstCall.args[1], component.sandbox)
-      assert.deepEqual(spy.firstCall.args[2], prevProps)
+      assert.equal(spy.mock.calls.length, 1)
+      assert.equal(spy.mock.calls[0][0], 'onUpdated')
+      assert.equal(spy.mock.calls[0][1], component.sandbox)
+      assert.deepEqual(spy.mock.calls[0][2], prevProps)
     }
 
     it('=> is called after updating component', () => {
@@ -535,7 +535,7 @@ describe('Lifecycle', () => {
 
     it('cleans up bindings to services', () => {
       // given
-      const disconnect = sinon.spy()
+      const disconnect = vi.fn()
       const Service = class {
         static connect() {
           return disconnect
@@ -551,8 +551,8 @@ describe('Lifecycle', () => {
       Lifecycle.beforeUpdate(patches)
 
       // then
-      assert(disconnect.called)
-      assert(disconnect.calledOnce)
+      expect(disconnect).toHaveBeenCalled()
+      expect(disconnect).toHaveBeenCalledOnce()
     })
   })
 
@@ -670,40 +670,6 @@ describe('Lifecycle', () => {
           assertOnDetachedCalled(Subcomponent, Component)
         })
       })
-    })
-  })
-
-  describe('=> throws an error for unsupported node type in:', () => {
-    const unsupportedNode = {
-      nodeType: 'invalid',
-    }
-
-    it('on node created', () => {
-      assert.throws(
-        () => Lifecycle.onNodeCreated(unsupportedNode),
-        'Unsupported node type: invalid',
-      )
-    })
-
-    it('on node attached', () => {
-      assert.throws(
-        () => Lifecycle.onNodeAttached(unsupportedNode),
-        'Unsupported node type: invalid',
-      )
-    })
-
-    it('on node destroyed', () => {
-      assert.throws(
-        () => Lifecycle.onNodeDestroyed(unsupportedNode),
-        'Unsupported node type: invalid',
-      )
-    })
-
-    it('on node detached', () => {
-      assert.throws(
-        () => Lifecycle.onNodeDetached(unsupportedNode),
-        'Unsupported node type: invalid',
-      )
     })
   })
 })

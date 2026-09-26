@@ -179,7 +179,7 @@ describe('Template', () => {
     })
 
     it('warns on unknown properties', () => {
-      sinon.stub(console, 'warn')
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
       try {
         // given
         const value = {
@@ -192,14 +192,14 @@ describe('Template', () => {
 
         // then
         assert.equal(style, null)
-        assert(console.warn.calledTwice)
+        expect(console.warn).toHaveBeenCalledTimes(2)
       } finally {
-        console.warn.restore()
+        console.warn.mockRestore()
       }
     })
 
     it('handles only known style properties', () => {
-      sinon.stub(console, 'warn')
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
       try {
         // given
         const value = {
@@ -212,9 +212,9 @@ describe('Template', () => {
 
         // then
         assert.deepEqual(style, { color: 'green' })
-        assert(console.warn.called)
+        expect(console.warn).toHaveBeenCalled()
       } finally {
-        console.warn.restore()
+        console.warn.mockRestore()
       }
     })
 
@@ -285,7 +285,7 @@ describe('Template', () => {
     })
 
     it('warns on unknown events', () => {
-      sinon.stub(console, 'warn')
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
       try {
         // given
         const onMyEvent = () => {}
@@ -299,9 +299,9 @@ describe('Template', () => {
 
         // then
         assert.deepEqual(element, {})
-        assert(console.warn.calledOnce)
+        expect(console.warn).toHaveBeenCalledOnce()
       } finally {
-        console.warn.restore()
+        console.warn.mockRestore()
       }
     })
 

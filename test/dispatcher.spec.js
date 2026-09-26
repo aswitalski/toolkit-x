@@ -7,13 +7,13 @@ describe('Dispatcher', () => {
       const container = document.createElement('main')
       const root = createRootInstance(Root)
 
-      sinon.spy(root.commands, 'setState')
+      vi.spyOn(root.commands, 'setState')
 
       // when
       await root.init(container)
 
       // then
-      assert(root.commands.setState.called)
+      expect(root.commands.setState).toHaveBeenCalled()
     })
 
     it('calls "set-state" on direct request', async () => {
@@ -22,12 +22,12 @@ describe('Dispatcher', () => {
       const state = { foo: 'bar' }
 
       // when
-      sinon.spy(root.commands, 'setState')
+      vi.spyOn(root.commands, 'setState')
       root.commands.setState(state)
 
       // then
-      assert(root.commands.setState.called)
-      assert(root.commands.setState.calledWith(state))
+      expect(root.commands.setState).toHaveBeenCalled()
+      expect(root.commands.setState).toHaveBeenCalledWith(state)
     })
 
     it('calls "update" on direct request', async () => {
@@ -36,12 +36,12 @@ describe('Dispatcher', () => {
       const state = { foo: 'bar' }
 
       // when
-      sinon.spy(root.commands, 'update')
+      vi.spyOn(root.commands, 'update')
       root.commands.update(state)
 
       // then
-      assert(root.commands.update.called)
-      assert(root.commands.update.calledWith(state))
+      expect(root.commands.update).toHaveBeenCalled()
+      expect(root.commands.update).toHaveBeenCalledWith(state)
     })
   })
 
@@ -57,24 +57,22 @@ describe('Dispatcher', () => {
       }
       const container = document.createElement('main')
       const root = createRootInstance(Root)
-      sinon.spy(root.commands, 'update')
+      vi.spyOn(root.commands, 'update')
 
       // when
       const initPromise = root.init(container)
 
       // then
-      assert(!root.commands.update.called)
+      expect(root.commands.update).not.toHaveBeenCalled()
 
       // when
       await initPromise
 
       // then
-      assert(root.commands.update.called)
-      assert(
-        root.commands.update.calledWith({
-          number: 19,
-        }),
-      )
+      expect(root.commands.update).toHaveBeenCalled()
+      expect(root.commands.update).toHaveBeenCalledWith({
+        number: 19,
+      })
     })
   })
 })
