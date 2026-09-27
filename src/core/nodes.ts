@@ -461,9 +461,7 @@ class WebComponent<
    */
   getInitialState(props: P): S | Promise<S> {
     // the default state is a copy of the props
-    return Promise.resolve({
-      ...props,
-    } as unknown as S)
+    return { ...props } as unknown as S
   }
 
   /**
@@ -565,7 +563,7 @@ class WebComponent<
     // not tracked when destroyed before being initialized
     this.stopTracking?.()
     this.dispatcher.ignoreIncoming()
-    void this.plugins.destroy()
+    this.plugins.destroy()
     this.plugins = null
     this.parentNode = null
   }

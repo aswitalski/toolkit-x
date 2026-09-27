@@ -53,7 +53,7 @@ class Toolkit {
    * will require new configuration to be provided first.
    */
   reset() {
-    void this.plugins?.destroy()
+    this.plugins?.destroy()
     this.plugins = null
     this.roots.clear()
     this.settings = null

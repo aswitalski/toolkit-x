@@ -198,7 +198,7 @@ class Plugins {
   /**
    * Uninstalls all the plugins from the registry.
    */
-  async destroy() {
+  destroy() {
     for (const plugin of this.registry) {
       this.uninstall(plugin.name)
     }
