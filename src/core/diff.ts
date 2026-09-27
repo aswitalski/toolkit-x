@@ -533,6 +533,13 @@ class Diff {
       if (currentObject.constructor !== nextObject.constructor) {
         return false
       }
+      // these keep their values in internal slots, not in own keys
+      if (current instanceof Date) {
+        return Object.is(current.getTime(), (next as Date).getTime())
+      }
+      if (current instanceof Map || current instanceof Set) {
+        return this.deepEqual([...current], [...(next as typeof current)])
+      }
       const keys = Object.keys(currentObject)
       const nextKeys = Object.keys(nextObject)
       if (keys.length !== nextKeys.length) {

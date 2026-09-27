@@ -41,6 +41,10 @@ describe('Diff => deep equal', () => {
         [1, 0, null],
       ],
       [[9, 9], [9, 9, undefined], undefined, '[9,9,undefined]'],
+      [new Date(1), new Date(2), 'Date(1)', 'Date(2)'],
+      [new Map([['a', 1]]), new Map([['a', 2]]), 'Map(a => 1)', 'Map(a => 2)'],
+      [new Map([['a', 1]]), new Map(), 'Map(a => 1)', 'Map()'],
+      [new Set([1]), new Set([2]), 'Set(1)', 'Set(2)'],
     ]
 
     notEqual.forEach(([v1, v2, d1, d2]) => {
@@ -67,6 +71,10 @@ describe('Diff => deep equal', () => {
       [{}, {}],
       [{ a: { b: [1, 2, 3] } }, { a: { b: [1, 2, 3] } }],
       [{ a: 1 }, { a: 1 }],
+      [new Date(1), new Date(1), 'Date(1)', 'Date(1)'],
+      [new Date(NaN), new Date(NaN), 'Invalid Date', 'Invalid Date'],
+      [new Map([['a', 1]]), new Map([['a', 1]]), 'Map(a => 1)', 'Map(a => 1)'],
+      [new Set([{ a: 1 }]), new Set([{ a: 1 }]), 'Set({a:1})', 'Set({a:1})'],
     ]
 
     equal.forEach(([v1, v2, d1, d2]) => {
