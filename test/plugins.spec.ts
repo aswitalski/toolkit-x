@@ -81,5 +81,28 @@ describe('Plugins', () => {
       expect(install).toHaveBeenCalledWith(root)
       assert(root.plugins!.registry.isRegistered('instance'))
     })
+
+    it('uninstalls a plugin once and allows installing it again', async () => {
+      // given
+      const root = await createRoot('plugin-reinstall-root')
+      const element = root.ref as ComponentElement
+      const uninstall = vi.fn()
+      const install = vi.fn().mockReturnValue(uninstall)
+      const plugin = new toolkit.Plugins.Plugin({
+        name: 'reinstalled',
+        install,
+      })
+      element.install(plugin)
+
+      // when
+      element.uninstall(plugin)
+      element.uninstall(plugin)
+      element.install(plugin)
+
+      // then
+      expect(uninstall).toHaveBeenCalledOnce()
+      expect(install).toHaveBeenCalledTimes(2)
+      assert(root.plugins!.registry.isRegistered('reinstalled'))
+    })
   })
 })

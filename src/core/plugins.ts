@@ -118,6 +118,14 @@ class Registry {
   }
 
   /**
+   * Removes the plugin with specified name from the registry.
+   */
+  remove(name: string) {
+    this.plugins.delete(name)
+    this.updateCache()
+  }
+
+  /**
    * Checks if plugin with specified name exists in the registry.
    */
   isRegistered(name: string): boolean {
@@ -180,6 +188,8 @@ class Plugins {
    */
   uninstall(name: string) {
     const uninstall = this.uninstalls.get(name)
+    this.uninstalls.delete(name)
+    this.registry.remove(name)
     if (uninstall) {
       uninstall()
     }
