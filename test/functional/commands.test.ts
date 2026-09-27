@@ -1,4 +1,4 @@
-import toolkit, { type CommandsAPI } from '../../src/index.js'
+import toolkit, { type CommandsAPI, type Template } from '../../src/index.js'
 
 describe('Commands API', () => {
   let container: HTMLElement
@@ -109,5 +109,77 @@ describe('Commands API', () => {
       exception.message,
       'The "doNothing" command is already defined!',
     )
+  })
+
+  it('executes commands after a child component with hooks is removed', async () => {
+    // given
+    class Child extends toolkit.Component {
+      onDestroyed() {}
+      onDetached() {}
+      render(): Template {
+        return ['span']
+      }
+    }
+    class CommandsComponent extends toolkit.WebComponent<
+      object,
+      { count: number }
+    > {
+      static elementName = `commands-component-${counter++}`
+
+      getInitialState() {
+        return { count: 0 }
+      }
+
+      render(): Template {
+        return [
+          'div',
+          this.props.count === 0 && [Child],
+          String(this.props.count),
+        ]
+      }
+    }
+    const component = await toolkit.render(CommandsComponent, container)
+    component.commands.update({ count: 1 })
+
+    // when
+    component.commands.update({ count: 2 })
+
+    // then
+    assert.equal(component.shadow!.querySelector('div')!.textContent, '2')
+  })
+
+  it('ignores commands after the root with hooks in a child is destroyed', async () => {
+    // given
+    class Child extends toolkit.Component {
+      onDestroyed() {}
+      onDetached() {}
+      render(): Template {
+        return ['span']
+      }
+    }
+    class CommandsComponent extends toolkit.WebComponent<
+      object,
+      { count: number }
+    > {
+      static elementName = `commands-component-${counter++}`
+
+      getInitialState() {
+        return { count: 0 }
+      }
+
+      render(): Template {
+        return ['div', [Child], String(this.props.count)]
+      }
+    }
+    const component = await toolkit.render(CommandsComponent, container)
+
+    // when
+    component.ref.remove()
+    // the removed custom element destroys the root after 50 ms
+    await new Promise(resolve => setTimeout(resolve, 100))
+    const result = component.commands.update({ count: 1 })
+
+    // then
+    assert.isFalse(result)
   })
 })

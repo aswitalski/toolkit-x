@@ -11,6 +11,21 @@ import type {
 } from './nodes.js'
 import Patch from './patch.js'
 
+/*
+ * Calls the hook of a component being removed, ignoring the commands it
+ * issues. The dispatcher is shared with the root, so its mode is restored.
+ */
+const callIgnoringCommands = (component: Component, hook: () => void) => {
+  const { dispatcher } = component
+  const { mode } = dispatcher
+  dispatcher.ignoreIncoming()
+  try {
+    hook()
+  } finally {
+    dispatcher.mode = mode
+  }
+}
+
 const Lifecycle = {
   onComponentCreated(component: Component) {
     if (component.hasOwnMethod('onCreated')) {
@@ -129,8 +144,9 @@ const Lifecycle = {
   onComponentDestroyed(component: Component) {
     component.destroy()
     if (component.hasOwnMethod('onDestroyed')) {
-      component.dispatcher.ignoreIncoming()
-      component.onDestroyed!.call(component.sandbox)
+      callIgnoringCommands(component, () =>
+        component.onDestroyed!.call(component.sandbox),
+      )
     }
     if (component.content) {
       this.onNodeDestroyed(component.content)
@@ -164,8 +180,9 @@ const Lifecycle = {
       this.onNodeDetached(component.content)
     }
     if (component.hasOwnMethod('onDetached')) {
-      component.dispatcher.ignoreIncoming()
-      component.onDetached!.call(component.sandbox)
+      callIgnoringCommands(component, () =>
+        component.onDetached!.call(component.sandbox),
+      )
     }
   },
 
