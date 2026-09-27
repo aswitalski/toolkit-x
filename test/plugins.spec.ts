@@ -105,4 +105,36 @@ describe('Plugins', () => {
       assert(root.plugins!.registry.isRegistered('reinstalled'))
     })
   })
+
+  describe('=> Uninstall', () => {
+    it('uninstalls plugins of a root destroyed before being mounted', async () => {
+      // given
+      const uninstall = vi.fn()
+      toolkit.reset()
+      await toolkit.configure({
+        debug: true,
+        plugins: [
+          {
+            name: 'plugin',
+            install: () => uninstall,
+          },
+        ],
+      })
+
+      class SomeRoot extends toolkit.Root {
+        render(): Template {
+          return ['main']
+        }
+      }
+      const root = await toolkit.createRoot(SomeRoot)
+
+      // when
+      root.destroy()
+      root.destroy()
+
+      // then
+      expect(uninstall).toHaveBeenCalledOnce()
+      assert.equal(root.plugins, null)
+    })
+  })
 })

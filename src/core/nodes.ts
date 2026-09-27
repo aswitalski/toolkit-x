@@ -562,14 +562,15 @@ class WebComponent<
   }
 
   destroy() {
-    super.destroy()
-    try {
-      this.stopTracking!()
-    } catch {
+    if (!this.plugins) {
+      // already destroyed
       return
     }
+    super.destroy()
+    // not tracked when destroyed before being initialized
+    this.stopTracking?.()
     this.dispatcher.ignoreIncoming()
-    void this.plugins!.destroy()
+    void this.plugins.destroy()
     this.plugins = null
     this.parentNode = null
   }
