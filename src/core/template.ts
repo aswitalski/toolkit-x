@@ -293,28 +293,13 @@ const Template = {
     }
     if (Array.isArray(value)) {
       return value
-        .reduce((result: string[], item) => {
-          if (!item) {
-            return result
-          }
-          if (typeof item === 'string') {
-            result.push(item)
-            return result
-          }
-          result.push(this.getClassName(item))
-          return result
-        }, [])
-        .filter(item => item)
+        .map(item => this.getClassName(item))
+        .filter(className => className)
         .join(' ')
     }
     if (typeof value === 'object') {
-      const keys = Object.keys(value)
-      if (keys.length === 0) {
-        return ''
-      }
       return Object.keys(value)
-        .map(key => (value as Props)[key] && key)
-        .filter(item => item)
+        .filter(key => key && (value as Props)[key])
         .join(' ')
     }
     throw new Error(`Invalid value: ${JSON.stringify(value)}`)
@@ -330,30 +315,22 @@ const Template = {
       'Style must be a plain object!',
     )
 
-    const reduceToNonEmptyValues = (
-      style: Record<string, string>,
-      [name, value]: [string, unknown],
-    ) => {
+    const style: Record<string, string> = {}
+    for (const [name, value] of Object.entries(object)) {
+      if (!Browser.isStyleSupported(name)) {
+        if (toolkit.isDebug()) {
+          console.warn(
+            `Unsupported style property, key: ${name}, value:`,
+            value,
+          )
+        }
+        continue
+      }
       const string = this.getStyleProperty(value, name)
       if (isDefined(string)) {
         style[name] = string
       }
-      return style
     }
-
-    const entries = Object.entries(object)
-
-    if (toolkit.isDebug()) {
-      for (const [key, value] of entries.filter(
-        ([key]) => !Browser.isStyleSupported(key),
-      )) {
-        console.warn(`Unsupported style property, key: ${key}, value:`, value)
-      }
-    }
-
-    const style = Object.entries(object)
-      .filter(([key, value]) => Browser.isStyleSupported(key))
-      .reduce(reduceToNonEmptyValues, {})
     return isNotEmpty(style) ? style : null
   },
 
@@ -460,7 +437,7 @@ const Template = {
     object: Props,
     forComponent?: boolean,
   ): Record<string, string> | null {
-    console.assert(
+    toolkit.assert(
       object.constructor === Object,
       'Expecting object for custom attributes!',
     )
@@ -476,7 +453,7 @@ const Template = {
   },
 
   getCustomListeners(object: Props): Record<string, Listener> | null {
-    console.assert(
+    toolkit.assert(
       object.constructor === Object,
       'Expecting object for custom listeners!',
     )
