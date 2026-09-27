@@ -200,7 +200,7 @@ export class ComponentElement extends HTMLElement {
     const stylesheets = root.getStylesheets()
 
     const onSuccess = () => {
-      void root.init()
+      root.init().catch((error: Error) => root.markAsFailed(error))
     }
 
     if (stylesheets && stylesheets.length) {

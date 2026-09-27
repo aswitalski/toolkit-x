@@ -64,4 +64,25 @@ describe('Custom element', () => {
       'Error loading stylesheets: /does-not-exist.css',
     )
   })
+
+  it('rejects mounting when getting the initial state fails', async () => {
+    // given
+    class SomeRoot extends toolkit.WebComponent {
+      static elementName = `custom-element-root-${counter++}`
+
+      getInitialState(): Promise<object> {
+        throw new Error('No initial state')
+      }
+
+      render(): Template {
+        return ['div']
+      }
+    }
+
+    // when
+    const rendering = toolkit.render(SomeRoot, container)
+
+    // then
+    await expect(rendering).rejects.toThrow('No initial state')
+  })
 })
