@@ -20,6 +20,27 @@ import Template from './template.js'
 import { toolkit } from './toolkit.js'
 import VirtualDOM from './virtual-dom.js'
 
+/*
+ * Returns the keys added to, removed from and changed in the next object,
+ * in the order of the objects.
+ */
+const compareKeys = <T>(
+  current: Record<string, T>,
+  next: Record<string, T>,
+  isEqual: (value: T, nextValue: T) => boolean = (value, nextValue) =>
+    value === nextValue,
+) => {
+  const keys = Object.keys(current)
+  const nextKeys = Object.keys(next)
+  return {
+    added: nextKeys.filter(key => !keys.includes(key)),
+    removed: keys.filter(key => !nextKeys.includes(key)),
+    changed: keys.filter(
+      key => nextKeys.includes(key) && !isEqual(current[key]!, next[key]!),
+    ),
+  }
+}
+
 class Diff {
   declare root: WebComponent
   declare patches: Patch[]
@@ -69,7 +90,7 @@ class Diff {
     }
 
     if (Diff.deepEqual(currentState, nextState)) {
-      return []
+      return
     }
 
     const template: unknown[] = [this.root.constructor, nextState]
@@ -127,22 +148,17 @@ class Diff {
       return
     }
 
-    // insert
-    if (!content && description) {
-      throw new Error('Invalid component state!')
-    }
-
-    // remove
-    if (content && !description) {
+    // content and description are either both present or both missing
+    if (!content || !description) {
       throw new Error('Invalid component state!')
     }
 
     // update
-    if (content!.description.isCompatible(description!)) {
-      if (Diff.deepEqual(content!.description, description)) {
+    if (content.description.isCompatible(description)) {
+      if (Diff.deepEqual(content.description, description)) {
         return
       }
-      this.childPatches(content!, description!)
+      this.childPatches(content, description)
       return
     }
 
@@ -236,14 +252,7 @@ class Diff {
     next: Record<string, string> = {},
     target: VirtualElement,
   ) {
-    const props = Object.keys(current)
-    const nextProps = Object.keys(next)
-
-    const added = nextProps.filter(prop => !props.includes(prop))
-    const removed = props.filter(prop => !nextProps.includes(prop))
-    const changed = props.filter(
-      prop => nextProps.includes(prop) && current[prop] !== next[prop],
-    )
+    const { added, removed, changed } = compareKeys(current, next)
 
     for (const prop of added) {
       this.addPatch(Patch.setStyleProperty(prop, next[prop]!, target))
@@ -262,14 +271,7 @@ class Diff {
     target: VirtualElement | WebComponent,
     isCustom = false,
   ) {
-    const attrs = Object.keys(current)
-    const nextAttrs = Object.keys(next)
-
-    const added = nextAttrs.filter(attr => !attrs.includes(attr))
-    const removed = attrs.filter(attr => !nextAttrs.includes(attr))
-    const changed = attrs.filter(
-      attr => nextAttrs.includes(attr) && current[attr] !== next[attr],
-    )
+    const { added, removed, changed } = compareKeys(current, next)
 
     for (const attr of added) {
       this.addPatch(Patch.setAttribute(attr, next[attr]!, target, isCustom))
@@ -288,18 +290,14 @@ class Diff {
     target: VirtualElement,
     isCustom = false,
   ) {
-    const listeners = Object.keys(current)
-    const nextListeners = Object.keys(next)
-
-    const added = nextListeners.filter(event => !listeners.includes(event))
-    const removed = listeners.filter(event => !nextListeners.includes(event))
-    const changed = listeners.filter(
-      event =>
-        nextListeners.includes(event) &&
-        current[event] !== next[event] &&
-        ((current[event]!.source === undefined &&
-          next[event]!.source === undefined) ||
-          current[event]!.source !== next[event]!.source),
+    // listeners bound by the sandbox are equal when bound to the same method
+    const { added, removed, changed } = compareKeys(
+      current,
+      next,
+      (listener, nextListener) =>
+        listener === nextListener ||
+        (listener.source !== undefined &&
+          listener.source === nextListener.source),
     )
 
     for (const event of added) {
@@ -328,14 +326,7 @@ class Diff {
     next: Record<string, string> = {},
     target: VirtualElement,
   ) {
-    const attrs = Object.keys(current)
-    const nextAttrs = Object.keys(next)
-
-    const added = nextAttrs.filter(attr => !attrs.includes(attr))
-    const removed = attrs.filter(attr => !nextAttrs.includes(attr))
-    const changed = attrs.filter(
-      attr => nextAttrs.includes(attr) && current[attr] !== next[attr],
-    )
+    const { added, removed, changed } = compareKeys(current, next)
 
     for (const attr of added) {
       this.addPatch(Patch.setDataAttribute(attr, next[attr]!, target))
@@ -353,13 +344,10 @@ class Diff {
     next: Record<string, unknown> = {},
     target: VirtualElement,
   ) {
-    const keys = Object.keys(current)
-    const nextKeys = Object.keys(next)
-
-    const added = nextKeys.filter(key => !keys.includes(key))
-    const removed = keys.filter(key => !nextKeys.includes(key))
-    const changed = keys.filter(
-      key => nextKeys.includes(key) && !Diff.deepEqual(current[key], next[key]),
+    const { added, removed, changed } = compareKeys(
+      current,
+      next,
+      (value, nextValue) => Diff.deepEqual(value, nextValue),
     )
 
     for (const key of added) {
