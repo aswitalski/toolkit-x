@@ -118,9 +118,6 @@ const Renderer = {
    */
   createElement(description: ElementDescription): HTMLElement {
     const element = document.createElement(description.name)
-    if (description.text) {
-      element.textContent = description.text
-    }
     if (description.class) {
       element.className = description.class
     }

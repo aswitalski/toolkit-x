@@ -94,7 +94,6 @@ class ComponentDescription extends Description {
  * Enumerable properties:
  * - key (a unique node identifier within its parent),
  * - name (a string representing tag name),
- * - text (a string representing text content),
  * - children (an array of child nodes),
  * - props (an object) defining:
  *    - class (a class name string)
@@ -110,7 +109,6 @@ class ComponentDescription extends Description {
 class ElementDescription extends Description {
   declare name: string
   declare type: 'element'
-  declare text?: string
   declare class?: string
   declare style?: Record<string, string>
   declare attrs?: Record<string, string>
@@ -170,8 +168,6 @@ class ElementDescription extends Description {
     }
     if (this.children) {
       template.push(...this.children.map(child => child.asTemplate))
-    } else if (typeof this.text === 'string') {
-      template.push(this.text)
     }
     return template
   }

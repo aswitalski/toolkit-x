@@ -7,8 +7,6 @@ import type {
 } from './nodes.js'
 import utils from './utils.js'
 
-const noop = () => {}
-
 interface PatchDefinition {
   type: symbol
   apply: (this: Patch) => void
@@ -225,7 +223,7 @@ class Patch {
 
   constructor(def: PatchDefinition) {
     this.type = def.type
-    this.apply = def.apply || noop
+    this.apply = def.apply
   }
 
   static initRootComponent(root: WebComponent) {

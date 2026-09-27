@@ -19,10 +19,7 @@ describe('Description', () => {
     it('returns true for elements with the same name', () => {
       // given
       const firstDivDescription = new ElementDescription('div')
-      firstDivDescription.text = 'bar'
-
       const secondDivDescription = new ElementDescription('div')
-      secondDivDescription.text = 'bar'
 
       // assert
       assert(firstDivDescription.isCompatible(secondDivDescription))
@@ -141,19 +138,6 @@ describe('Description', () => {
 
       // then
       assert.deepEqual(template, ['section'])
-    })
-
-    it('returns template of text Element', () => {
-      // given
-      const text = 'text'
-      const description = new ElementDescription('section')
-      description.text = text
-
-      // when
-      const template = description.asTemplate
-
-      // then
-      assert.deepEqual(template, ['section', text])
     })
 
     it('returns template of Element with children', () => {

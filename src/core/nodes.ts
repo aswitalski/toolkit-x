@@ -53,7 +53,6 @@ abstract class VirtualNode {
   abstract ref: NodeRef
   abstract get nodeType(): string
   abstract attachDOM(): void
-  abstract detachDOM(): void
 
   constructor(
     description: NodeDescription,
@@ -323,12 +322,6 @@ class Component<P extends object = object> extends VirtualNode {
   attachDOM() {
     if (this.content) {
       this.content.attachDOM()
-    }
-  }
-
-  detachDOM() {
-    if (this.content) {
-      this.content.detachDOM()
     }
   }
 }
@@ -616,13 +609,6 @@ class VirtualElement extends VirtualNode {
     this.ref = Renderer.createElement(this.description)
     this.attachChildren()
   }
-
-  detachDOM() {
-    for (const child of this.children!) {
-      child.detachDOM()
-    }
-    this.ref = null!
-  }
 }
 
 class Comment extends VirtualNode {
@@ -643,10 +629,6 @@ class Comment extends VirtualNode {
   attachDOM() {
     this.ref = document.createComment(` ${this.description.text} `)
   }
-
-  detachDOM() {
-    this.ref = null!
-  }
 }
 
 class Text extends VirtualNode {
@@ -666,10 +648,6 @@ class Text extends VirtualNode {
 
   attachDOM() {
     this.ref = document.createTextNode(this.description.text)
-  }
-
-  detachDOM() {
-    this.ref = null!
   }
 }
 
