@@ -358,6 +358,7 @@ class WebComponent<
   declare subroots: Set<WebComponent>
   declare ready: Promise<void>
   declare markAsReady: () => void
+  declare markAsFailed: (error: Error) => void
   declare plugins: Plugins | null
   declare shadow: ShadowRoot | null
   declare state?: S
@@ -378,8 +379,9 @@ class WebComponent<
     super(description, parent, context, /*= attachDOM */ false)
     this.subroots = new Set()
     this.dispatcher = new Dispatcher(this)
-    this.ready = new Promise(resolve => {
+    this.ready = new Promise((resolve, reject) => {
       this.markAsReady = resolve
+      this.markAsFailed = reject
     })
     this.plugins = this.createPlugins()
     this.content = this.createPlaceholder()

@@ -206,7 +206,10 @@ export class ComponentElement extends HTMLElement {
     if (stylesheets && stylesheets.length) {
       const imports = cssImports(stylesheets)
       const onError = () => {
-        throw new Error(`Error loading stylesheets: ${stylesheets.join(', ')}`)
+        // rejects mounting, as thrown errors do not leave the event handler
+        root.markAsFailed(
+          new Error(`Error loading stylesheets: ${stylesheets.join(', ')}`),
+        )
       }
       const style = document.createElement('style')
       style.textContent = imports

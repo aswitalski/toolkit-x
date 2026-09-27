@@ -43,4 +43,25 @@ describe('Custom element', () => {
     // then
     expect(onDestroyed).toHaveBeenCalledOnce()
   })
+
+  it('rejects mounting when a stylesheet fails to load', async () => {
+    // given
+    class SomeRoot extends toolkit.WebComponent {
+      static elementName = `custom-element-root-${counter++}`
+
+      static styles = ['/does-not-exist.css']
+
+      render(): Template {
+        return ['div']
+      }
+    }
+
+    // when
+    const rendering = toolkit.render(SomeRoot, container)
+
+    // then
+    await expect(rendering).rejects.toThrow(
+      'Error loading stylesheets: /does-not-exist.css',
+    )
+  })
 })
