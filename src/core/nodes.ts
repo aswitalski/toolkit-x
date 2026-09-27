@@ -144,8 +144,10 @@ abstract class VirtualNode {
     )
     this.children!.splice(from, 1)
     this.children!.splice(to, 0, child)
-    this.ref.removeChild(child.ref)
-    this.ref.insertBefore(child.ref, (this.ref as Element).children[to] ?? null)
+    // the DOM position is taken from the virtual children, as element
+    // children would skip the text and comment nodes
+    const nextChild = this.children![to + 1]
+    this.ref.insertBefore(child.ref, nextChild ? nextChild.ref : null)
   }
 
   removeChild(this: ParentVirtualNode, child: VirtualNode) {

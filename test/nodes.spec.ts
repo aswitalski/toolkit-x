@@ -615,6 +615,31 @@ describe('Nodes', () => {
       })
     })
 
+    describe('move child', () => {
+      it('moves a child after a text node', () => {
+        // given
+        const parent = createFromTemplate([
+          'section',
+          'text',
+          ['a'],
+          ['b'],
+          ['i'],
+        ])
+        const i = parent.children[3]
+
+        // when
+        parent.moveChild(i, 3, 1)
+
+        // then
+        const names = [...parent.ref.childNodes].map(node => node.nodeName)
+        assert.deepEqual(names, ['#text', 'I', 'A', 'B'])
+        assert.deepEqual(
+          parent.children.map(child => child.ref.nodeName),
+          names,
+        )
+      })
+    })
+
     describe('remove child', () => {
       it('removes multiple children', () => {
         // given
