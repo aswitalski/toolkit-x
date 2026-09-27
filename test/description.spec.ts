@@ -315,6 +315,38 @@ describe('Description', () => {
         ])
       })
 
+      it('=> with custom attributes and listeners', () => {
+        // given
+        const listener = () => {}
+        const description = Template.describe([
+          'div',
+          {
+            attrs: {
+              'x-name': 'value',
+            },
+            on: {
+              'custom-event': listener,
+            },
+          },
+        ])
+
+        // when
+        const template = description!.asTemplate
+
+        // then
+        assert.deepEqual(template, [
+          'div',
+          {
+            attrs: {
+              'x-name': 'value',
+            },
+            on: {
+              'custom-event': listener,
+            },
+          },
+        ])
+      })
+
       it('=> with properties', () => {
         // given
         const description = Template.describe([

@@ -159,6 +159,12 @@ class ElementDescription extends Description {
     if (this.properties) {
       props.properties = this.properties
     }
+    if (this.custom?.attrs) {
+      props.attrs = this.custom.attrs
+    }
+    if (this.custom?.listeners) {
+      props.on = this.custom.listeners
+    }
     if (Object.keys(props).length) {
       template.push(props)
     }
