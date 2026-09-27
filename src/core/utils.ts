@@ -47,6 +47,8 @@ const debounce = <T extends AnyFunction>(
   leading = false,
 ) => {
   let taskId: ReturnType<typeof setTimeout> | null = null
+  // whether the delayed call is needed, not when only the leading call was made
+  let isTrailing = false
 
   let context: unknown
   let params: Parameters<T>
@@ -56,16 +58,19 @@ const debounce = <T extends AnyFunction>(
     if (taskId) {
       clearTimeout(taskId)
     }
+    isTrailing = !(isFirstInvocation && leading)
     taskId = setTimeout(() => {
       taskId = null
-      return fn.call(context, ...params)
+      if (isTrailing) {
+        fn.call(context, ...params)
+      }
     }, wait)
 
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- kept for the delayed call
     context = this
     params = args
 
-    if (isFirstInvocation && leading) {
+    if (!isTrailing) {
       return fn.call(context, ...params)
     }
   }

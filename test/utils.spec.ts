@@ -10,6 +10,7 @@ describe('Utils', () => {
   })
 
   const {
+    debounce,
     throttle,
     lowerDash,
     getAttributeName,
@@ -108,6 +109,60 @@ describe('Utils', () => {
       for (let i = 1; i < timestamps.length; i++) {
         assert(timestamps[i] + 1 >= timestamps[i - 1] + wait)
       }
+    })
+  })
+
+  describe('debounce', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('calls once after the calls stop', () => {
+      // given
+      const fn = vi.fn()
+      const debounced = debounce(fn, 100)
+
+      // when
+      debounced(1)
+      vi.advanceTimersByTime(50)
+      debounced(2)
+      vi.advanceTimersByTime(100)
+
+      // then
+      expect(fn).toHaveBeenCalledOnce()
+      expect(fn).toHaveBeenCalledWith(2)
+    })
+
+    it('calls once for a single leading call', () => {
+      // given
+      const fn = vi.fn()
+      const debounced = debounce(fn, 100, true)
+
+      // when
+      debounced(1)
+      vi.advanceTimersByTime(200)
+
+      // then
+      expect(fn).toHaveBeenCalledOnce()
+      expect(fn).toHaveBeenCalledWith(1)
+    })
+
+    it('calls again after the wait for the following calls', () => {
+      // given
+      const fn = vi.fn()
+      const debounced = debounce(fn, 100, true)
+
+      // when
+      debounced(1)
+      debounced(2)
+      vi.advanceTimersByTime(100)
+
+      // then
+      expect(fn.mock.calls).toEqual([[1], [2]])
     })
   })
 
