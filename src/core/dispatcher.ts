@@ -61,9 +61,9 @@ const createCommandsAPI = (...apis: CommandsAPI[]) => {
   for (const api of [coreAPI, ...apis]) {
     const defined = Object.keys(commandsAPI)
     const incoming = Object.keys(api)
-    const overriden = incoming.find(key => defined.includes(key))
-    if (overriden) {
-      throw new Error(`The "${overriden}" command is already defined!`)
+    const overridden = incoming.find(key => defined.includes(key))
+    if (overridden) {
+      throw new Error(`The "${overridden}" command is already defined!`)
     }
     Object.assign(commandsAPI, api)
   }
@@ -129,7 +129,6 @@ class Dispatcher {
         )
     }
 
-    this.mode = Mode.EXECUTE
     let level = 0
 
     for (const name of this.names) {

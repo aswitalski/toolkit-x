@@ -54,14 +54,14 @@ class Reducers {
       const defined = Object.keys(commands)
       const incoming = Object.keys(reducer.commands)
 
-      const overriden = incoming.find(key => defined.includes(key))
-      if (overriden) {
+      const overridden = incoming.find(key => defined.includes(key))
+      if (overridden) {
         console.error(
           'Reducer:',
           reducer,
-          `conflicts an with exiting one with method: "${overriden}"`,
+          `conflicts with an existing one with method: "${overridden}"`,
         )
-        throw new Error(`The "${overriden}" command is already defined!`)
+        throw new Error(`The "${overridden}" command is already defined!`)
       }
       Object.assign(commands, reducer.commands)
     }

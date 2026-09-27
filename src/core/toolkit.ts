@@ -40,10 +40,7 @@ class Toolkit {
    * Configures Toolkit with given options object.
    */
   async configure(options: Options) {
-    const settings = {} as Settings
-    settings.debug = options.debug || false
-    Object.freeze(settings)
-    this.settings = settings
+    this.settings = Object.freeze({ debug: options.debug || false })
     this.plugins = this.createPlugins(options.plugins)
     this[INIT](true)
   }

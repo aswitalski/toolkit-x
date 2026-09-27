@@ -186,13 +186,9 @@ const Types = {
 }
 type PatchName = keyof typeof Types
 
-const PatchTypes = (Object.keys(Types) as PatchName[]).reduce(
-  (result, key) => {
-    result[key] = Types[key].type
-    return result
-  },
-  {} as Record<PatchName, symbol>,
-)
+const PatchTypes = Object.fromEntries(
+  Object.entries(Types).map(([name, { type }]) => [name, type]),
+) as Record<PatchName, symbol>
 
 /*
  * A single change of the virtual and rendered DOM. The fields are set by

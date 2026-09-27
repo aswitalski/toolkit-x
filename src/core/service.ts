@@ -14,9 +14,7 @@ class Service {
         this.events.length > 0,
         `Service "${this.name}" returned an empty list of valid events, the "static events" list must contain at least one event name`,
       )
-      const unsupportedKeys = Object.keys(listeners).filter(
-        key => !this.events.includes(key),
-      )
+      const unsupportedKeys = keys.filter(key => !this.events.includes(key))
       for (const unsupportedKey of unsupportedKeys) {
         toolkit.warn(
           `Unsupported listener specified "${unsupportedKey}" when connecting to ${this.name}`,

@@ -112,7 +112,7 @@ const Template = {
   },
 
   /**
-   * Returns a new props object supplemented by overriden values.
+   * Returns a new props object supplemented by overridden values.
    */
   normalizeProps(...overrides: Array<Props | undefined>): Props {
     const result: Props = {}
