@@ -231,7 +231,11 @@ export class ComponentElement extends HTMLElement {
   }
 
   destroy() {
-    const root = this.$root!
+    const root = this.$root
+    if (!root) {
+      // already destroyed, e.g. directly before the scheduled destruction
+      return
+    }
     Lifecycle.onComponentDestroyed(root)
     Lifecycle.onComponentDetached(root)
     root.ref = null
