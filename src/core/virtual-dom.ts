@@ -7,7 +7,6 @@ import {
   type VirtualNode,
   WebComponent,
 } from './nodes.js'
-import Renderer from './renderer.js'
 
 const VirtualDOM = {
   /**
@@ -55,8 +54,7 @@ const VirtualDOM = {
       )
     }
     const component = new ComponentClass(description, parent, context)
-    const nodeDescription = Renderer.render(
-      component,
+    const nodeDescription = component.renderDescription(
       description.props,
       description.childrenAsTemplates,
     )

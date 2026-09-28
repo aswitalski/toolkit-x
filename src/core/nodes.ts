@@ -1,3 +1,5 @@
+import type { Child, RenderResult } from './bragi.js'
+import { createComponentElement } from './custom-element.js'
 import {
   CommentDescription,
   type ComponentDescription,
@@ -6,19 +8,18 @@ import {
   type Props,
   type TextDescription,
 } from './description.js'
-import type { Child, RenderResult } from './bragi.js'
 import Dispatcher, {
   type BoundCommands,
   type Commands,
   type CommandsAPI,
 } from './dispatcher.js'
+import DOM from './dom.js'
 import Plugins from './plugins.js'
 import type { Reducer, State } from './reducers.js'
-import { type AnyFunction, invariant } from './utils.js'
-import Renderer from './renderer.js'
+import { runtime } from './runtime.js'
 import Sandbox, { type ComponentSandbox } from './sandbox.js'
 import Template from './template.js'
-import { runtime } from './runtime.js'
+import { type AnyFunction, invariant } from './utils.js'
 import VirtualDOM from './virtual-dom.js'
 
 /* The DOM node rendered for a virtual node. */
@@ -292,6 +293,24 @@ class Component<P extends object = object> extends VirtualNode {
     return undefined
   }
 
+  /**
+   * Calls the render method and transforms the returned template
+   * into the normalised description of the rendered node.
+   */
+  renderDescription(
+    props: Props = {},
+    children: unknown[] = [],
+  ): NodeDescription | null {
+    this.sandbox.props = props
+    this.sandbox.children = children
+    const template = this.render.call(this.sandbox)
+    if (template) {
+      return Template.describe(template)
+    }
+    const text = (this.constructor as ComponentClass).displayName
+    return new CommentDescription(text)
+  }
+
   /* The commands of the root component, whose types are not known here. */
   get commands(): Commands<unknown> & Record<string, AnyFunction> {
     return this.context ? this.context.commands : this.rootNode.commands
@@ -384,7 +403,7 @@ class WebComponent<
 
   attachDOM() {
     if ((this.constructor as typeof WebComponent).elementName) {
-      this.ref = Renderer.createCustomElement(this)
+      this.ref = createComponentElement(this)
       this.plugins!.installAll()
       if (this.description.children) {
         // the child nodes are rendered in the light DOM
@@ -604,7 +623,7 @@ class VirtualElement extends VirtualNode {
   }
 
   attachDOM() {
-    this.ref = Renderer.createElement(this.description)
+    this.ref = DOM.createElement(this.description)
     this.attachChildren()
   }
 }

@@ -15,7 +15,6 @@ import type {
 import Patch from './patch.js'
 import Reconciler from './reconciler.js'
 import type { State } from './reducers.js'
-import Renderer from './renderer.js'
 import Template from './template.js'
 import { runtime } from './runtime.js'
 import VirtualDOM from './virtual-dom.js'
@@ -128,8 +127,7 @@ class Diff {
       return
     }
 
-    const nodeDescription = Renderer.render(
-      component,
+    const nodeDescription = component.renderDescription(
       description.props,
       description.childrenAsTemplates,
     )

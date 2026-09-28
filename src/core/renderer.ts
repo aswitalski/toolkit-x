@@ -1,8 +1,7 @@
-import {
-  CommentDescription,
-  type ElementDescription,
-  type NodeDescription,
-  type Props,
+import type {
+  ElementDescription,
+  NodeDescription,
+  Props,
 } from './description.js'
 import {
   type ComponentElement,
@@ -14,7 +13,6 @@ import DOM from './dom.js'
 import type { Component, WebComponent } from './nodes.js'
 import type Patch from './patch.js'
 import type { State } from './reducers.js'
-import Template from './template.js'
 
 /* Information about a root component update, passed to plugin listeners. */
 export interface Update {
@@ -37,14 +35,7 @@ const Renderer = {
     props: Props = {},
     children: unknown[] = [],
   ): NodeDescription | null {
-    component.sandbox.props = props
-    component.sandbox.children = children
-    const template = component.render.call(component.sandbox)
-    if (template) {
-      return Template.describe(template)
-    }
-    const text = (component.constructor as typeof Component).displayName
-    return new CommentDescription(text)
+    return component.renderDescription(props, children)
   },
 
   /**
