@@ -74,10 +74,38 @@ class Diff {
   apply(): Patch[] {
     if (this.patches.length) {
       Lifecycle.beforeUpdate(this.patches)
+      // a nested root failing to render its props keeps its description,
+      // to render them on the next update, and its error is thrown only
+      // when the remaining patches are applied
+      const errors: unknown[] = []
+      const failedRoots = new Set<VirtualNode>()
+      const applied: Patch[] = []
       for (const patch of this.patches) {
-        Patch.apply(patch)
+        if (patch.type === Patch.Type.UPDATE_ROOT) {
+          try {
+            Patch.apply(patch)
+          } catch (error) {
+            errors.push(error)
+            failedRoots.add(patch.root)
+            continue
+          }
+        } else if (
+          patch.type === Patch.Type.UPDATE_NODE &&
+          failedRoots.has(patch.node)
+        ) {
+          continue
+        } else {
+          Patch.apply(patch)
+        }
+        applied.push(patch)
       }
-      Lifecycle.afterUpdate(this.patches)
+      Lifecycle.afterUpdate(applied)
+      if (errors.length === 1) {
+        throw errors[0]
+      }
+      if (errors.length > 1) {
+        throw new AggregateError(errors, 'Nested roots failed to render')
+      }
     }
     return this.patches
   }

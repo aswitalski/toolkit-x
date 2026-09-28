@@ -198,6 +198,94 @@ describe('Custom element', () => {
     assert.equal(nested.shadow!.textContent, '2')
   })
 
+  it('updates the parent when a nested root fails to render', async () => {
+    // given
+    class Nested extends toolkit.WebComponent<{ value: number }> {
+      static elementName = `custom-element-root-${counter++}`
+
+      render(): Template {
+        if (this.props.value < 0) {
+          throw new Error('Negative value')
+        }
+        return ['span', String(this.props.value)]
+      }
+    }
+    class App extends toolkit.WebComponent<object, { value: number }> {
+      getInitialState() {
+        return { value: 1 }
+      }
+
+      render(): Template {
+        const { value } = this.props
+        return ['main', [Nested, { value }], ['output', String(value)]]
+      }
+    }
+    const app = await toolkit.render(App, container)
+    const main = app.content as VirtualElement
+    const nested = main.children![0] as WebComponent
+    await nested.ready
+
+    // when
+    const update = () => app.commands.update({ value: -1 })
+
+    // then
+    expect(update).toThrow('Negative value')
+    // the patches after the nested root are applied
+    assert.equal(main.ref.querySelector('output')!.textContent, '-1')
+    // the nested root keeps its description and its content
+    assert.deepEqual(nested.description.props, { value: 1 })
+    assert.equal(nested.shadow!.textContent, '1')
+
+    // when
+    app.commands.update({ value: 2 })
+
+    // then
+    assert.equal(nested.shadow!.textContent, '2')
+    assert.equal(main.ref.querySelector('output')!.textContent, '2')
+  })
+
+  it('throws the errors of all nested roots failing to render', async () => {
+    // given
+    class Nested extends toolkit.WebComponent<{ value: number }> {
+      static elementName = `custom-element-root-${counter++}`
+
+      render(): Template {
+        if (this.props.value < 0) {
+          throw new Error(`Negative value: ${this.props.value}`)
+        }
+        return ['span', String(this.props.value)]
+      }
+    }
+    class App extends toolkit.WebComponent<object, { value: number }> {
+      getInitialState() {
+        return { value: 1 }
+      }
+
+      render(): Template {
+        const { value } = this.props
+        return ['main', [Nested, { value }], [Nested, { value: value * 2 }]]
+      }
+    }
+    const app = await toolkit.render(App, container)
+    const main = app.content as VirtualElement
+    await Promise.all(main.children!.map(node => (node as WebComponent).ready))
+
+    // when
+    let error: unknown
+    try {
+      app.commands.update({ value: -1 })
+    } catch (thrown) {
+      error = thrown
+    }
+
+    // then
+    assert(error instanceof AggregateError)
+    assert.deepEqual(
+      error.errors.map((cause: Error) => cause.message),
+      ['Negative value: -1', 'Negative value: -2'],
+    )
+  })
+
   it('renders and updates the child nodes in the light DOM', async () => {
     // given
     class List extends toolkit.WebComponent {
