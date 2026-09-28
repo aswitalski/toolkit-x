@@ -1,4 +1,4 @@
-import type { ComponentElement } from '../../src/core/renderer.js'
+import type { ComponentElement } from '../../src/core/custom-element.js'
 import toolkit, { type Template } from '../../src/index.js'
 
 describe('Custom element', () => {
