@@ -1,18 +1,14 @@
 import type { Listener, NodeDescription } from './description.js'
+import DOM from './dom.js'
 import type {
   Component,
   VirtualElement,
   VirtualNode,
   WebComponent,
 } from './nodes.js'
-import utils from './utils.js'
 
 /* A node rendered as an HTML element, e.g. a root with a custom element. */
 type PatchTarget = VirtualNode & { ref: HTMLElement }
-
-/* Style and properties are set by name, as by the original assignments. */
-type StyleMap = Record<string, string | null>
-type PropertyMap = Record<string, unknown>
 
 const Type = {
   INIT_ROOT_COMPONENT: 'init-root-component',
@@ -148,71 +144,49 @@ const Patch = {
         patch.node.description = patch.description
         return
       case Type.SET_ATTRIBUTE: {
-        const attr = patch.isCustom
-          ? patch.name
-          : utils.getAttributeName(patch.name)
-        patch.target.ref.setAttribute(attr, patch.value)
+        const { target, name, value, isCustom } = patch
+        DOM.setAttribute(target.ref, name, value, isCustom)
         return
       }
-      case Type.REMOVE_ATTRIBUTE: {
-        const attr = patch.isCustom
-          ? patch.name
-          : utils.getAttributeName(patch.name)
-        patch.target.ref.removeAttribute(attr)
+      case Type.REMOVE_ATTRIBUTE:
+        DOM.removeAttribute(patch.target.ref, patch.name, patch.isCustom)
         return
-      }
       case Type.SET_DATA_ATTRIBUTE:
-        patch.target.ref.dataset[patch.name] = patch.value
+        DOM.setDataAttribute(patch.target.ref, patch.name, patch.value)
         return
       case Type.REMOVE_DATA_ATTRIBUTE:
-        delete patch.target.ref.dataset[patch.name]
+        DOM.removeDataAttribute(patch.target.ref, patch.name)
         return
       case Type.SET_STYLE_PROPERTY:
-        if (patch.property.startsWith('--')) {
-          patch.target.ref.style.setProperty(patch.property, ` ${patch.value}`)
-        } else {
-          ;(patch.target.ref.style as unknown as StyleMap)[patch.property] =
-            patch.value
-        }
+        DOM.setStyleProperty(patch.target.ref, patch.property, patch.value)
         return
       case Type.REMOVE_STYLE_PROPERTY:
-        if (patch.property.startsWith('--')) {
-          patch.target.ref.style.removeProperty(patch.property)
-        } else {
-          ;(patch.target.ref.style as unknown as StyleMap)[patch.property] =
-            null
-        }
+        DOM.removeStyleProperty(patch.target.ref, patch.property)
         return
       case Type.SET_CLASS_NAME:
-        patch.target.ref.className = patch.className
+        DOM.setClassName(patch.target.ref, patch.className)
         return
       case Type.ADD_LISTENER: {
-        const event = patch.isCustom
-          ? patch.name
-          : utils.getEventName(patch.name)
-        patch.target.ref.addEventListener(event, patch.listener)
+        const { target, name, listener, isCustom } = patch
+        DOM.addListener(target.ref, name, listener, isCustom)
         return
       }
       case Type.REPLACE_LISTENER: {
-        const event = patch.isCustom
-          ? patch.name
-          : utils.getEventName(patch.name)
-        patch.target.ref.removeEventListener(event, patch.removed)
-        patch.target.ref.addEventListener(event, patch.added)
+        const { target, name, removed, added, isCustom } = patch
+        DOM.removeListener(target.ref, name, removed, isCustom)
+        DOM.addListener(target.ref, name, added, isCustom)
         return
       }
       case Type.REMOVE_LISTENER: {
-        const event = patch.isCustom
-          ? patch.name
-          : utils.getEventName(patch.name)
-        patch.target.ref.removeEventListener(event, patch.listener)
+        const { target, name, listener, isCustom } = patch
+        DOM.removeListener(target.ref, name, listener, isCustom)
         return
       }
       case Type.SET_PROPERTY:
-        ;(patch.target.ref as unknown as PropertyMap)[patch.key] = patch.value
+        DOM.setProperty(patch.target.ref, patch.key, patch.value)
         return
       case Type.DELETE_PROPERTY:
-        delete (patch.target.ref as unknown as PropertyMap)[patch.key]
+        DOM.deleteProperty(patch.target.ref, patch.key)
         return
       case Type.INSERT_CHILD:
         patch.parent.insertChild(patch.node, patch.at)

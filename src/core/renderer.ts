@@ -6,13 +6,13 @@ import {
 } from './description.js'
 import Diff from './diff.js'
 import type { Command } from './dispatcher.js'
+import DOM from './dom.js'
 import Lifecycle from './lifecycle.js'
 import type { Component, WebComponent } from './nodes.js'
 import type Patch from './patch.js'
 import Plugins, { type Plugin, type PluginManifest } from './plugins.js'
 import type { State } from './reducers.js'
 import Template from './template.js'
-import utils from './utils.js'
 
 /* Information about a root component update, passed to plugin listeners. */
 export interface Update {
@@ -104,11 +104,9 @@ const Renderer = {
       root.constructor as typeof WebComponent,
     )
     const element = new ElementClass(root)
-    if (root.description.attrs) {
-      const attrs = Object.entries(root.description.attrs)
-      for (const [name, value] of attrs) {
-        element.setAttribute(name, value)
-      }
+    // the attributes of a root are custom, as set by the diff
+    for (const [name, value] of Object.entries(root.description.attrs ?? {})) {
+      DOM.setAttribute(element, name, value, true)
     }
     return element
   },
@@ -117,56 +115,7 @@ const Renderer = {
    * Creates a new DOM Element based on the specified description.
    */
   createElement(description: ElementDescription): HTMLElement {
-    const element = document.createElement(description.name)
-    if (description.class) {
-      element.className = description.class
-    }
-    if (description.style) {
-      for (const [prop, value] of Object.entries(description.style)) {
-        if (prop.startsWith('--')) {
-          element.style.setProperty(prop, ` ${value}`)
-        } else {
-          ;(element.style as unknown as Record<string, string>)[prop] = value
-        }
-      }
-    }
-    if (description.listeners) {
-      for (const [name, listener] of Object.entries(description.listeners)) {
-        const event = utils.getEventName(name)
-        element.addEventListener(event, listener)
-      }
-    }
-    if (description.attrs) {
-      for (const [attr, value] of Object.entries(description.attrs)) {
-        const name = utils.getAttributeName(attr)
-        element.setAttribute(name, value)
-      }
-    }
-    if (description.dataset) {
-      for (const [attr, value] of Object.entries(description.dataset)) {
-        element.dataset[attr] = value
-      }
-    }
-    if (description.properties) {
-      for (const [prop, value] of Object.entries(description.properties)) {
-        ;(element as unknown as Record<string, unknown>)[prop] = value
-      }
-    }
-    if (description.custom) {
-      if (description.custom.attrs) {
-        const customAttributes = Object.entries(description.custom.attrs)
-        for (const [name, value] of customAttributes) {
-          element.setAttribute(name, value)
-        }
-      }
-      if (description.custom.listeners) {
-        const customListeners = Object.entries(description.custom.listeners)
-        for (const [event, listener] of customListeners) {
-          element.addEventListener(event, listener)
-        }
-      }
-    }
-    return element
+    return DOM.createElement(description)
   },
 }
 
