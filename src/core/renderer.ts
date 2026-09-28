@@ -60,6 +60,8 @@ const Renderer = {
     this.onBeforeUpdate(update, root)
 
     const diff = new Diff(root, from, to)
+    // set when the patches are calculated, kept when rendering them fails
+    root.state = to
     update.patches = diff.apply()
 
     this.onAfterUpdate(update, root)

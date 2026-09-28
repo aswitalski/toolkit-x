@@ -1,4 +1,4 @@
-import toolkit from '../src/index.js'
+import toolkit, { type Template } from '../src/index.js'
 import { createRootInstance, createWebComponent } from './helpers.js'
 
 describe('Dispatcher', () => {
@@ -128,6 +128,36 @@ describe('Dispatcher', () => {
         'Too many cycles updating state in lifecycle methods!',
       )
       expect(dispatcher.queue).toEqual([])
+    })
+
+    it('keeps the state when rendering it fails', async () => {
+      // given
+      class Root extends toolkit.Root<object, { value: number }> {
+        getInitialState() {
+          return { value: 1 }
+        }
+        render(): Template {
+          if (this.props.value < 0) {
+            throw new Error('Negative value')
+          }
+          return ['span', String(this.props.value)]
+        }
+      }
+      const root = await createWebComponent(Root)
+
+      // when
+      const update = () => root.commands.update({ value: -1 })
+
+      // then
+      expect(update).toThrow('Negative value')
+      expect(root.state).toEqual({ value: 1 })
+
+      // when
+      root.commands.update({ value: 2 })
+
+      // then
+      expect(root.state).toEqual({ value: 2 })
+      expect(root.content!.ref.textContent).toBe('2')
     })
 
     it('executes commands after a lifecycle method has thrown', async () => {

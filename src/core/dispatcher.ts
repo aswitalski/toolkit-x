@@ -96,7 +96,6 @@ class Dispatcher {
   execute(command: Command, root: WebComponent) {
     const prevState = root.state as State | undefined
     const nextState = command.invoke(prevState)
-    root.state = nextState
     Renderer.update(root, prevState, nextState, command)
   }
 
