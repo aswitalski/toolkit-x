@@ -2,7 +2,14 @@
 logs
 *.log
 npm-debug.log*
+
+# Editor, operating system and local tool files
 .idea/
+.vscode/
+.DS_Store
+.claude/settings.local.json
+.eslintcache
+*.tsbuildinfo
 
 # Runtime data
 pids
