@@ -1,5 +1,6 @@
 import toolkit, { type ComponentClass, type Template } from '../src/index.js'
 import {
+  type AnyElement,
   type AnyNode,
   createFromTemplate,
   createRootInstance,
@@ -170,7 +171,7 @@ describe('Lifecycle', () => {
         const root = createRootInstance(Root)
         const element = createFromTemplate(['div'], root)
         const component = createFromTemplate([Component], root)
-        const patches = [Patch.insertChild(component, 0, element)]
+        const patches = [Patch.insertChild(component, 0, element as AnyElement)]
 
         // when
         Lifecycle.beforeUpdate(patches)
@@ -185,7 +186,7 @@ describe('Lifecycle', () => {
         const div = createFromTemplate(['div', ['span']], root)
         const span = div.children[0]
         const component = createFromTemplate([Component, [Subcomponent]], root)
-        const patches = [Patch.insertChild(component, 1, span)]
+        const patches = [Patch.insertChild(component, 1, span as AnyElement)]
 
         // when
         Lifecycle.beforeUpdate(patches)
@@ -199,7 +200,7 @@ describe('Lifecycle', () => {
         const root = createRootInstance(Root)
         const div = createFromTemplate(['div'], root)
         const span = createFromTemplate(['span', [Component]], root)
-        const patches = [Patch.insertChild(span, 0, div)]
+        const patches = [Patch.insertChild(span, 0, div as AnyElement)]
 
         // when
         Lifecycle.beforeUpdate(patches)
@@ -216,7 +217,7 @@ describe('Lifecycle', () => {
           ['span', [Component, [Subcomponent]]],
           root,
         )
-        const patches = [Patch.insertChild(span, 0, div)]
+        const patches = [Patch.insertChild(span, 0, div as AnyElement)]
 
         // when
         Lifecycle.beforeUpdate(patches)
@@ -305,7 +306,7 @@ describe('Lifecycle', () => {
         const root = createRootInstance(Root)
         const element = createFromTemplate(['div'], root)
         const component = createFromTemplate([Component], element)
-        const patches = [Patch.insertChild(component, 0, element)]
+        const patches = [Patch.insertChild(component, 0, element as AnyElement)]
 
         // when
         Lifecycle.afterUpdate(patches)
@@ -320,7 +321,7 @@ describe('Lifecycle', () => {
         const div = createFromTemplate(['div', ['span']], root)
         const span = div.children[0]
         const component = createFromTemplate([Component, [Subcomponent]], span)
-        const patches = [Patch.insertChild(component, 1, span)]
+        const patches = [Patch.insertChild(component, 1, span as AnyElement)]
 
         // when
         Lifecycle.afterUpdate(patches)
@@ -334,7 +335,7 @@ describe('Lifecycle', () => {
         const root = createRootInstance(Root)
         const div = createFromTemplate(['div'], root)
         const span = createFromTemplate(['span', [Component]], div)
-        const patches = [Patch.insertChild(span, 0, div)]
+        const patches = [Patch.insertChild(span, 0, div as AnyElement)]
 
         // when
         Lifecycle.afterUpdate(patches)
@@ -351,7 +352,7 @@ describe('Lifecycle', () => {
           ['span', [Component, [Subcomponent]]],
           div,
         )
-        const patches = [Patch.insertChild(span, 0, div)]
+        const patches = [Patch.insertChild(span, 0, div as AnyElement)]
 
         // when
         Lifecycle.afterUpdate(patches)
@@ -479,7 +480,9 @@ describe('Lifecycle', () => {
           // given
           const element = createRootWith(['div', [Component]])
           const component = element.children[0]
-          const patches = [Patch.removeChild(component, 0, element)]
+          const patches = [
+            Patch.removeChild(component, 0, element as AnyElement),
+          ]
 
           // when
           Lifecycle.beforeUpdate(patches)
@@ -492,7 +495,9 @@ describe('Lifecycle', () => {
           // given
           const element = createRootWith(['div', [Component, [Subcomponent]]])
           const component = element.children[0]
-          const patches = [Patch.removeChild(component, 0, element)]
+          const patches = [
+            Patch.removeChild(component, 0, element as AnyElement),
+          ]
 
           // when
           Lifecycle.beforeUpdate(patches)
@@ -505,7 +510,7 @@ describe('Lifecycle', () => {
           // given
           const div = createRootWith(['div', ['span', [Component]]])
           const span = div.children[0]
-          const patches = [Patch.removeChild(span, 0, div)]
+          const patches = [Patch.removeChild(span, 0, div as AnyElement)]
 
           // when
           Lifecycle.beforeUpdate(patches)
@@ -521,7 +526,7 @@ describe('Lifecycle', () => {
             ['span', [Component, ['span', [Subcomponent]]]],
           ])
           const span = div.children[0]
-          const patches = [Patch.removeChild(span, 0, div)]
+          const patches = [Patch.removeChild(span, 0, div as AnyElement)]
 
           // when
           Lifecycle.beforeUpdate(patches)
@@ -543,7 +548,7 @@ describe('Lifecycle', () => {
       const root = createRootInstance(Root)
       const element = createFromTemplate(['div', [Component]], root)
       const component = element.children[0]
-      const patches = [Patch.removeChild(component, 0, element)]
+      const patches = [Patch.removeChild(component, 0, element as AnyElement)]
 
       // when
       component.connectTo(Service, {})
@@ -618,7 +623,9 @@ describe('Lifecycle', () => {
           // given
           const element = createRootWith(['div', [Component]])
           const component = element.children[0]
-          const patches = [Patch.removeChild(component, 0, element)]
+          const patches = [
+            Patch.removeChild(component, 0, element as AnyElement),
+          ]
 
           // when
           Lifecycle.afterUpdate(patches)
@@ -631,7 +638,9 @@ describe('Lifecycle', () => {
           // given
           const element = createRootWith(['div', [Component, [Subcomponent]]])
           const component = element.children[0]
-          const patches = [Patch.removeChild(component, 0, element)]
+          const patches = [
+            Patch.removeChild(component, 0, element as AnyElement),
+          ]
 
           // when
           Lifecycle.afterUpdate(patches)
@@ -644,7 +653,7 @@ describe('Lifecycle', () => {
           // given
           const div = createRootWith(['div', ['span', [Component]]])
           const span = div.children[0]
-          const patches = [Patch.removeChild(span, 0, div)]
+          const patches = [Patch.removeChild(span, 0, div as AnyElement)]
 
           // when
           Lifecycle.afterUpdate(patches)
@@ -660,7 +669,7 @@ describe('Lifecycle', () => {
             ['span', [Component, [Subcomponent]]],
           ])
           const span = div.children[0]
-          const patches = [Patch.removeChild(span, 0, div)]
+          const patches = [Patch.removeChild(span, 0, div as AnyElement)]
 
           // when
           Lifecycle.afterUpdate(patches)

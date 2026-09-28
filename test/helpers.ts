@@ -13,7 +13,6 @@ import type {
   NodeDescription,
   TextDescription,
 } from '../src/core/description.js'
-import type { ParentVirtualNode } from '../src/core/nodes.js'
 
 type TestTemplate = Parameters<typeof Template.describe>[0]
 
@@ -98,8 +97,7 @@ export const createRoot = (template: TestTemplate = null) => {
   const node = VirtualDOM.createFromDescription(Template.describe(template))
   if (node) {
     // inserted as a light DOM child node
-    const parent = root as unknown as ParentVirtualNode
-    parent.insertChild(node)
+    root.insertChild(node)
   }
   return root
 }

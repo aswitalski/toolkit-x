@@ -177,8 +177,7 @@ class Diff {
     if (child.isComponent()) {
       if (child.isRoot()) {
         // the child nodes of a Web Component are rendered in the light DOM
-        const parent = child as unknown as ParentVirtualNode
-        this.childrenPatches(parent.children, description.children, child)
+        this.childrenPatches(child.childNodes, description.children, child)
         this.addPatch(Patch.updateNode(child, description))
         return child.update(description as ComponentDescription)
       }
@@ -362,7 +361,7 @@ class Diff {
   childrenPatches(
     sourceNodes: VirtualNode[] = [],
     targetDescriptions: NodeDescription[] = [],
-    parent: VirtualNode,
+    parent: ParentVirtualNode,
   ) {
     const Move = Reconciler.Move
 
@@ -453,7 +452,7 @@ class Diff {
   elementChildPatches(
     child: VirtualNode,
     description: NodeDescription,
-    parent: VirtualNode,
+    parent: ParentVirtualNode,
   ) {
     if (child.description.isCompatible(description)) {
       if (Diff.deepEqual(child.description, description)) {

@@ -29,7 +29,7 @@ export type NodeRef = Element | CharacterData
  * A node with child nodes: an element, or a Web Component
  * with the child nodes rendered in its light DOM.
  */
-export type ParentVirtualNode = VirtualNode & { children?: VirtualNode[] }
+export type ParentVirtualNode = VirtualElement | WebComponent
 
 /* A task run when a component is destroyed, e.g. disconnecting a service. */
 export type CleanUpTask = (() => void) & { service?: unknown }
@@ -66,16 +66,6 @@ abstract class VirtualNode {
     this.context = context
   }
 
-  createChildren(this: ParentVirtualNode) {
-    this.children = this.description.children!.map(childDescription =>
-      this.createChild(childDescription)!,
-    )
-  }
-
-  createChild(description: NodeDescription): VirtualNode | null {
-    return VirtualDOM.createFromDescription(description, this, this.context)
-  }
-
   get parentElement(): VirtualNode | null {
     if (this.parentNode) {
       return this.parentNode.isElement()
@@ -100,64 +90,6 @@ abstract class VirtualNode {
       return this.parentNode.rootNode
     }
     throw new Error('Inconsistent virtual DOM tree detected!')
-  }
-
-  attachChildren(this: ParentVirtualNode) {
-    if (this.children) {
-      for (const child of this.children) {
-        this.ref.appendChild(child.ref)
-      }
-    }
-  }
-
-  insertChild(this: ParentVirtualNode, child: VirtualNode, index?: number) {
-    if (!this.children) {
-      this.children = []
-    }
-    if (index === undefined) {
-      index = this.children.length
-    }
-    const nextChild = this.children[index]
-    this.children.splice(index, 0, child)
-    this.ref.insertBefore(child.ref, (nextChild && nextChild.ref) || null)
-    child.parentNode = this
-  }
-
-  replaceChild(this: ParentVirtualNode, child: VirtualNode, node: VirtualNode) {
-    const index = this.children!.indexOf(child)
-    invariant(index >= 0, 'Specified node is not a child of this element!')
-    this.children!.splice(index, 1, node)
-    child.parentNode = null
-    node.parentNode = this
-    child.ref.replaceWith(node.ref)
-  }
-
-  moveChild(
-    this: ParentVirtualNode,
-    child: VirtualNode,
-    from: number,
-    to: number,
-  ) {
-    invariant(
-      this.children![from] === child,
-      'Specified node is not a child of this element!',
-    )
-    this.children!.splice(from, 1)
-    this.children!.splice(to, 0, child)
-    // the DOM position is taken from the virtual children, as element
-    // children would skip the text and comment nodes
-    const nextChild = this.children![to + 1]
-    this.ref.insertBefore(child.ref, nextChild ? nextChild.ref : null)
-  }
-
-  removeChild(this: ParentVirtualNode, child: VirtualNode) {
-    const index = this.children!.indexOf(child)
-    invariant(index >= 0, 'Specified node is not a child of this element!')
-    this.children!.splice(index, 1)
-    if (!this.children!.length) {
-      delete this.children
-    }
-    this.ref.removeChild(child.ref)
   }
 
   isRoot(): this is WebComponent {
@@ -367,6 +299,11 @@ class WebComponent<
 
   static styles: string[] = []
 
+  /*
+   * The child nodes rendered in the light DOM of the custom element,
+   * separate from the `children` templates available when rendering.
+   */
+  declare childNodes?: VirtualNode[]
   declare subroots: Set<WebComponent>
   declare ready: Promise<void>
   declare markAsReady: () => void
@@ -406,10 +343,8 @@ class WebComponent<
       this.ref = createComponentElement(this)
       this.plugins!.installAll()
       if (this.description.children) {
-        // the child nodes are rendered in the light DOM
-        const parent = this as unknown as ParentVirtualNode
-        parent.createChildren()
-        parent.attachChildren()
+        ChildNodes.create(this)
+        ChildNodes.attach(this)
       }
     } else {
       this.plugins!.installAll()
@@ -587,6 +522,22 @@ class WebComponent<
     this.parentNode = null
   }
 
+  insertChild(child: VirtualNode, index?: number) {
+    ChildNodes.insert(this, child, index)
+  }
+
+  replaceChild(child: VirtualNode, node: VirtualNode) {
+    ChildNodes.replace(this, child, node)
+  }
+
+  moveChild(child: VirtualNode, from: number, to: number) {
+    ChildNodes.move(this, child, from, to)
+  }
+
+  removeChild(child: VirtualNode) {
+    ChildNodes.remove(this, child)
+  }
+
   get nodeType(): string {
     return WebComponent.NodeType
   }
@@ -606,9 +557,22 @@ class VirtualElement extends VirtualNode {
   ) {
     super(description, parent, context)
     if (description.children) {
-      this.createChildren()
+      ChildNodes.create(this)
     }
     this.attachDOM()
+  }
+
+  /* The child nodes, as shared with Web Components. */
+  get childNodes(): VirtualNode[] | undefined {
+    return this.children
+  }
+
+  set childNodes(nodes: VirtualNode[] | undefined) {
+    if (nodes) {
+      this.children = nodes
+    } else {
+      delete this.children
+    }
   }
 
   get nodeType(): string {
@@ -622,9 +586,25 @@ class VirtualElement extends VirtualNode {
     )
   }
 
+  insertChild(child: VirtualNode, index?: number) {
+    ChildNodes.insert(this, child, index)
+  }
+
+  replaceChild(child: VirtualNode, node: VirtualNode) {
+    ChildNodes.replace(this, child, node)
+  }
+
+  moveChild(child: VirtualNode, from: number, to: number) {
+    ChildNodes.move(this, child, from, to)
+  }
+
+  removeChild(child: VirtualNode) {
+    ChildNodes.remove(this, child)
+  }
+
   attachDOM() {
     this.ref = DOM.createElement(this.description)
-    this.attachChildren()
+    ChildNodes.attach(this)
   }
 }
 
@@ -666,6 +646,76 @@ class Text extends VirtualNode {
   attachDOM() {
     this.ref = document.createTextNode(this.description.text)
   }
+}
+
+/*
+ * Operations on the child nodes of the parent nodes, which store them
+ * as `children` of an element or `childNodes` of a Web Component.
+ */
+const ChildNodes = {
+  create(parent: ParentVirtualNode) {
+    parent.childNodes = parent.description.children!.map(description =>
+      VirtualDOM.createFromDescription(description, parent, parent.context)!,
+    )
+  },
+
+  attach(parent: ParentVirtualNode) {
+    for (const child of parent.childNodes ?? []) {
+      parent.ref.appendChild(child.ref)
+    }
+  },
+
+  insert(parent: ParentVirtualNode, child: VirtualNode, index?: number) {
+    const nodes = parent.childNodes ?? []
+    if (index === undefined) {
+      index = nodes.length
+    }
+    const nextChild = nodes[index]
+    nodes.splice(index, 0, child)
+    parent.childNodes = nodes
+    parent.ref.insertBefore(child.ref, (nextChild && nextChild.ref) || null)
+    child.parentNode = parent
+  },
+
+  replace(parent: ParentVirtualNode, child: VirtualNode, node: VirtualNode) {
+    const nodes = parent.childNodes ?? []
+    const index = nodes.indexOf(child)
+    invariant(index >= 0, 'Specified node is not a child of this element!')
+    nodes.splice(index, 1, node)
+    child.parentNode = null
+    node.parentNode = parent
+    child.ref.replaceWith(node.ref)
+  },
+
+  move(
+    parent: ParentVirtualNode,
+    child: VirtualNode,
+    from: number,
+    to: number,
+  ) {
+    const nodes = parent.childNodes ?? []
+    invariant(
+      nodes[from] === child,
+      'Specified node is not a child of this element!',
+    )
+    nodes.splice(from, 1)
+    nodes.splice(to, 0, child)
+    // the DOM position is taken from the virtual children, as element
+    // children would skip the text and comment nodes
+    const nextChild = nodes[to + 1]
+    parent.ref.insertBefore(child.ref, nextChild ? nextChild.ref : null)
+  },
+
+  remove(parent: ParentVirtualNode, child: VirtualNode) {
+    const nodes = parent.childNodes ?? []
+    const index = nodes.indexOf(child)
+    invariant(index >= 0, 'Specified node is not a child of this element!')
+    nodes.splice(index, 1)
+    if (!nodes.length) {
+      parent.childNodes = undefined
+    }
+    parent.ref.removeChild(child.ref)
+  },
 }
 
 const CoreTypes = {

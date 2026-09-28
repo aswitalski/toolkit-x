@@ -2,6 +2,7 @@ import type { Listener, NodeDescription } from './description.js'
 import DOM from './dom.js'
 import type {
   Component,
+  ParentVirtualNode,
   VirtualElement,
   VirtualNode,
   WebComponent,
@@ -95,25 +96,30 @@ type Patch =
     }
   | { type: 'set-property'; key: string; value: unknown; target: PatchTarget }
   | { type: 'delete-property'; key: string; target: PatchTarget }
-  | { type: 'insert-child'; node: VirtualNode; at: number; parent: VirtualNode }
+  | {
+      type: 'insert-child'
+      node: VirtualNode
+      at: number
+      parent: ParentVirtualNode
+    }
   | {
       type: 'replace-child'
       child: VirtualNode
       node: VirtualNode
-      parent: VirtualNode
+      parent: ParentVirtualNode
     }
   | {
       type: 'move-child'
       child: VirtualNode
       from: number
       to: number
-      parent: VirtualNode
+      parent: ParentVirtualNode
     }
   | {
       type: 'remove-child'
       child: VirtualNode
       at: number
-      parent: VirtualNode
+      parent: ParentVirtualNode
     }
   | {
       type: 'set-content'
@@ -232,7 +238,7 @@ const Patch = {
   insertChild(
     node: VirtualNode,
     at: number,
-    parent: VirtualNode,
+    parent: ParentVirtualNode,
   ): PatchOf<'insert-child'> {
     return { type: Type.INSERT_CHILD, node, at, parent }
   },
@@ -241,7 +247,7 @@ const Patch = {
     child: VirtualNode,
     from: number,
     to: number,
-    parent: VirtualNode,
+    parent: ParentVirtualNode,
   ): PatchOf<'move-child'> {
     return { type: Type.MOVE_CHILD, child, from, to, parent }
   },
@@ -249,7 +255,7 @@ const Patch = {
   replaceChild(
     child: VirtualNode,
     node: VirtualNode,
-    parent: VirtualNode,
+    parent: ParentVirtualNode,
   ): PatchOf<'replace-child'> {
     return { type: Type.REPLACE_CHILD, child, node, parent }
   },
@@ -257,7 +263,7 @@ const Patch = {
   removeChild(
     child: VirtualNode,
     at: number,
-    parent: VirtualNode,
+    parent: ParentVirtualNode,
   ): PatchOf<'remove-child'> {
     return { type: Type.REMOVE_CHILD, child, at, parent }
   },

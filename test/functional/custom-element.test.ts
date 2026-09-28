@@ -1,5 +1,9 @@
 import type { ComponentElement } from '../../src/core/custom-element.js'
-import toolkit, { type Template } from '../../src/index.js'
+import toolkit, {
+  type Template,
+  type VirtualElement,
+  type WebComponent,
+} from '../../src/index.js'
 
 describe('Custom element', () => {
   let container: HTMLElement
@@ -84,5 +88,54 @@ describe('Custom element', () => {
 
     // then
     await expect(rendering).rejects.toThrow('No initial state')
+  })
+
+  it('renders and updates the child nodes in the light DOM', async () => {
+    // given
+    class List extends toolkit.WebComponent {
+      static elementName = `custom-element-root-${counter++}`
+
+      render(): Template {
+        return ['slot']
+      }
+    }
+    class App extends toolkit.WebComponent<object, { items: string[] }> {
+      getInitialState() {
+        return { items: ['a', 'b'] }
+      }
+
+      render(): Template {
+        return [
+          'main',
+          [
+            List,
+            ...this.props.items.map(
+              item => ['span', { key: item }, item] as const,
+            ),
+          ],
+        ]
+      }
+    }
+    const app = await toolkit.render(App, container)
+    const list = (app.content as VirtualElement).children![0] as WebComponent
+    const texts = () => [...list.ref.childNodes].map(node => node.textContent)
+
+    // then
+    assert.deepEqual(texts(), ['a', 'b'])
+    assert.equal(list.childNodes!.length, 2)
+
+    // when
+    app.commands.update({ items: ['b', 'c', 'a'] })
+
+    // then
+    assert.deepEqual(texts(), ['b', 'c', 'a'])
+    assert.equal(list.childNodes!.length, 3)
+
+    // when
+    app.commands.update({ items: ['c'] })
+
+    // then
+    assert.deepEqual(texts(), ['c'])
+    assert.equal(list.childNodes!.length, 1)
   })
 })
