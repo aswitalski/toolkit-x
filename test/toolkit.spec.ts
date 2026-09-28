@@ -1,4 +1,5 @@
 import toolkit, { type Template } from '../src/index.js'
+import { createFromTemplate, createRootInstance } from './helpers.js'
 
 describe('Toolkit', () => {
   it('calls lifecycle methods in proper order', async () => {
@@ -99,5 +100,26 @@ describe('Toolkit', () => {
 
     // then
     assert.equal(toolkit.tracked.length, 0)
+  })
+
+  it('forgets plugin methods when reset', async () => {
+    // given
+    class Root extends toolkit.Root {}
+    class Component extends toolkit.Component {}
+    const root = createRootInstance(Root)
+    Object.assign(root, { getValue: 'root value' })
+    const component = createFromTemplate([Component], root)
+    const sandbox = component.sandbox as unknown as Record<string, unknown>
+    toolkit.Sandbox.registerPluginMethod('getValue')
+
+    // then
+    assert.equal(sandbox.getValue, 'root value')
+
+    // when
+    toolkit.reset()
+    await toolkit.configure({ debug: true })
+
+    // then
+    assert.equal(sandbox.getValue, undefined)
   })
 })

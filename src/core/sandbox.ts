@@ -27,7 +27,8 @@ const delegated: PropertyKey[] = [
   'elementName',
 ]
 const methods: PropertyKey[] = ['connectTo']
-const pluginMethods: PropertyKey[] = []
+/* Registered again with each root the plugins are inherited by. */
+const pluginMethods = new Set<PropertyKey>()
 
 const createBoundListener = (
   listener: AnyFunction,
@@ -42,7 +43,11 @@ const createBoundListener = (
 
 class Sandbox {
   static registerPluginMethod(name: string) {
-    pluginMethods.push(name)
+    pluginMethods.add(name)
+  }
+
+  static clearPluginMethods() {
+    pluginMethods.clear()
   }
 
   static create(component: Component): ComponentSandbox {
@@ -83,7 +88,7 @@ class Sandbox {
             target,
           )
         }
-        if (pluginMethods.includes(property)) {
+        if (pluginMethods.has(property)) {
           return get(target.rootNode, property)
         }
         if (blacklist.includes(property)) {

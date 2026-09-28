@@ -3,6 +3,7 @@ import type { ComponentDescription, Props } from './description.js'
 import { Component, type ComponentClass, WebComponent } from './nodes.js'
 import Plugins, { type PluginManifest } from './plugins.js'
 import { provideRuntime } from './runtime.js'
+import Sandbox from './sandbox.js'
 import Template, { type ItemType } from './template.js'
 import VirtualDOM from './virtual-dom.js'
 
@@ -56,6 +57,7 @@ class Toolkit {
     this.roots.clear()
     this.settings = null
     pureComponentClassRegistry.clear()
+    Sandbox.clearPluginMethods()
     this.ready = new Promise(resolve => {
       this[INIT] = resolve
     })
