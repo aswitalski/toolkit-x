@@ -9,7 +9,7 @@ import {
   TextDescription,
 } from './description.js'
 import { Component, type ComponentClass } from './nodes.js'
-import { toolkit } from './toolkit.js'
+import { runtime } from './runtime.js'
 import utils from './utils.js'
 
 export type ItemType =
@@ -57,7 +57,7 @@ const Template = {
             case 'component':
             case 'function':
               description = new ComponentDescription(
-                toolkit.resolveComponentClass(item, type),
+                runtime().resolveComponentClass(item, type),
               )
               break
             default:
@@ -101,7 +101,7 @@ const Template = {
         }
       }
 
-      if (toolkit.isDebug()) {
+      if (runtime().isDebug()) {
         utils.deepFreeze(description)
       }
       return description
@@ -222,7 +222,7 @@ const Template = {
             description.attrs = description.attrs || {}
             description.attrs[key] = attr
           }
-          if (toolkit.isDebug()) {
+          if (runtime().isDebug()) {
             const element = description.name
             if (attr === undefined) {
               console.warn(
@@ -310,7 +310,7 @@ const Template = {
    * styling rules or null.
    */
   getStyle(object: Props): Record<string, string> | null {
-    toolkit.assert(
+    runtime().assert(
       object.constructor === Object,
       'Style must be a plain object!',
     )
@@ -318,7 +318,7 @@ const Template = {
     const style: Record<string, string> = {}
     for (const [name, value] of Object.entries(object)) {
       if (!Browser.isStyleSupported(name)) {
-        if (toolkit.isDebug()) {
+        if (runtime().isDebug()) {
           console.warn(
             `Unsupported style property, key: ${name}, value:`,
             value,
@@ -437,7 +437,7 @@ const Template = {
     object: Props,
     forComponent?: boolean,
   ): Record<string, string> | null {
-    toolkit.assert(
+    runtime().assert(
       object.constructor === Object,
       'Expecting object for custom attributes!',
     )
@@ -453,7 +453,7 @@ const Template = {
   },
 
   getCustomListeners(object: Props): Record<string, Listener> | null {
-    toolkit.assert(
+    runtime().assert(
       object.constructor === Object,
       'Expecting object for custom listeners!',
     )

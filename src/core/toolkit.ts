@@ -2,6 +2,7 @@ import type { PureComponent, RenderResult } from './bragi.js'
 import type { ComponentDescription, Props } from './description.js'
 import { Component, type ComponentClass, WebComponent } from './nodes.js'
 import Plugins, { type PluginManifest } from './plugins.js'
+import { provideRuntime } from './runtime.js'
 import Template, { type ItemType } from './template.js'
 import VirtualDOM from './virtual-dom.js'
 
@@ -160,5 +161,7 @@ class Toolkit {
 
 /* The Toolkit singleton, exposed globally as opr.Toolkit. */
 export const toolkit = new Toolkit()
+
+provideRuntime(toolkit)
 
 export default Toolkit

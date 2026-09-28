@@ -1,7 +1,7 @@
 import type { WebComponent } from './nodes.js'
 import type { Update } from './renderer.js'
 import Sandbox from './sandbox.js'
-import { toolkit } from './toolkit.js'
+import { runtime } from './runtime.js'
 
 const Permission = {
   LISTEN_FOR_UPDATES: 'listen-for-updates',
@@ -36,7 +36,7 @@ class Plugin {
   declare getStylesheets?: () => string[]
 
   constructor(manifest: PluginManifest) {
-    toolkit.assert(
+    runtime().assert(
       typeof manifest.name === 'string' && manifest.name.length,
       'Plugin name must be a non-empty string!',
     )
@@ -47,7 +47,7 @@ class Plugin {
     if (this.permissions === undefined) {
       this.permissions = []
     } else {
-      toolkit.assert(
+      runtime().assert(
         Array.isArray(this.permissions),
         'Plugin permissions must be an array',
       )
@@ -63,7 +63,7 @@ class Plugin {
     if (typeof manifest.install === 'function') {
       this.install = root => {
         const uninstall = manifest.install!(root)
-        toolkit.assert(
+        runtime().assert(
           typeof uninstall === 'function',
           'The plugin installation must return the uninstall function!',
         )
@@ -109,7 +109,7 @@ class Registry {
    * Adds the plugin to the registry
    */
   add(plugin: Plugin) {
-    toolkit.assert(
+    runtime().assert(
       !this.isRegistered(plugin.name),
       `Plugin '${plugin.name}' is already registered!`,
     )

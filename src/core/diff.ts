@@ -17,7 +17,7 @@ import Reconciler from './reconciler.js'
 import type { State } from './reducers.js'
 import Renderer from './renderer.js'
 import Template from './template.js'
-import { toolkit } from './toolkit.js'
+import { runtime } from './runtime.js'
 import VirtualDOM from './virtual-dom.js'
 
 /*
@@ -400,7 +400,7 @@ class Diff {
       return createNode(targetDescriptions[index]!, key)
     }
 
-    if (toolkit.isDebug()) {
+    if (runtime().isDebug()) {
       const assertUniqueKeys = (keys: string[]) => {
         if (keys.length) {
           const uniqueKeys = [...new Set(keys)]

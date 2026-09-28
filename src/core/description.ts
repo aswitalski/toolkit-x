@@ -1,4 +1,4 @@
-import { type ComponentClass, Root } from './nodes.js'
+import type { ComponentClass } from './nodes.js'
 
 export type Props = Record<string, unknown>
 
@@ -73,7 +73,8 @@ class ComponentDescription extends Description {
   }
 
   get isRoot(): boolean {
-    return this.component.prototype instanceof Root
+    // the node type is inherited from the Root class
+    return this.component.NodeType === 'root'
   }
 
   get asTemplate(): unknown[] {

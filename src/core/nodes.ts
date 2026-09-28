@@ -18,7 +18,7 @@ import { type AnyFunction, invariant } from './utils.js'
 import Renderer from './renderer.js'
 import Sandbox, { type ComponentSandbox } from './sandbox.js'
 import Template from './template.js'
-import { toolkit } from './toolkit.js'
+import { runtime } from './runtime.js'
 import VirtualDOM from './virtual-dom.js'
 
 /* The DOM node rendered for a virtual node. */
@@ -256,12 +256,12 @@ class Component<P extends object = object> extends VirtualNode {
   }
 
   connectTo(service: Connectable, listeners: Record<string, unknown>) {
-    toolkit.assert(
+    runtime().assert(
       typeof service.connect === 'function',
       'Services have to define the connect() method',
     )
     const disconnect: CleanUpTask = service.connect(listeners)
-    toolkit.assert(
+    runtime().assert(
       typeof disconnect === 'function',
       'The result of the connect() method has to be a disconnect() method',
     )
@@ -410,7 +410,7 @@ class WebComponent<
    * Triggers the initial rendering of the component in given container.
    */
   async init() {
-    toolkit.track(this)
+    runtime().track(this)
 
     // props are passed from templates, which are not checked against P
     const state = await this.getInitialState.call(
@@ -491,7 +491,7 @@ class WebComponent<
     const plugins = new Plugins(this)
     const inherited = this.parentNode
       ? (this.parentNode as WebComponent).plugins
-      : toolkit.plugins
+      : runtime().plugins
     for (const plugin of inherited!) {
       plugins.register(plugin)
     }

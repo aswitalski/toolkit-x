@@ -1,5 +1,3 @@
-import Diff from './diff.js'
-
 const Name = {
   INSERT: Symbol('insert'),
   MOVE: Symbol('move'),
@@ -129,7 +127,10 @@ const Reconciler = {
       moves.push(move)
     }
 
-    if (Diff.deepEqual(result, target)) {
+    if (
+      result.length === target.length &&
+      result.every((key, index) => key === target[index])
+    ) {
       moves.result = result
       return moves
     }
