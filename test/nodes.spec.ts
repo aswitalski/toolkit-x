@@ -681,6 +681,45 @@ describe('Nodes', () => {
       })
     })
 
+    describe('with asserts not throwing, as in production', () => {
+      const testAssert = toolkit.assert
+
+      beforeEach(() => {
+        toolkit.assert = () => {}
+      })
+
+      afterEach(() => {
+        toolkit.assert = testAssert
+      })
+
+      it('rejects replacing node not being child', () => {
+        // given
+        const parent = createElement('section')
+        const child = createElement('div')
+        parent.insertChild(child)
+        const node = createElement('span')
+
+        // when
+        assert.throws(() => parent.replaceChild(node, createElement('p')))
+
+        // then
+        assert.deepEqual(parent.children, [child])
+      })
+
+      it('rejects removing node not being child', () => {
+        // given
+        const parent = createElement('section')
+        const child = createElement('div')
+        parent.insertChild(child)
+
+        // when
+        assert.throws(() => parent.removeChild(createElement('span')))
+
+        // then
+        assert.deepEqual(parent.children, [child])
+      })
+    })
+
     describe('create commands dispatcher', () => {
       it('creates a dispatcher', () => {
         // given

@@ -3,6 +3,19 @@ import Browser from './browser.js'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any[]) => unknown
 
+/*
+ * Checks a condition the toolkit relies on internally. Unlike
+ * toolkit.assert, which reports invalid usage, it throws in all modes.
+ */
+export function invariant(
+  condition: unknown,
+  message: string,
+): asserts condition {
+  if (!condition) {
+    throw new Error(message)
+  }
+}
+
 const throttle = <T extends AnyFunction>(
   fn: T,
   wait = 200,

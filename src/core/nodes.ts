@@ -14,7 +14,7 @@ import Dispatcher, {
 } from './dispatcher.js'
 import Plugins from './plugins.js'
 import type { Reducer, State } from './reducers.js'
-import type { AnyFunction } from './utils.js'
+import { type AnyFunction, invariant } from './utils.js'
 import Renderer from './renderer.js'
 import Sandbox, { type ComponentSandbox } from './sandbox.js'
 import Template from './template.js'
@@ -124,7 +124,7 @@ abstract class VirtualNode {
 
   replaceChild(this: ParentVirtualNode, child: VirtualNode, node: VirtualNode) {
     const index = this.children!.indexOf(child)
-    toolkit.assert(index >= 0, 'Specified node is not a child of this element!')
+    invariant(index >= 0, 'Specified node is not a child of this element!')
     this.children!.splice(index, 1, node)
     child.parentNode = null
     node.parentNode = this
@@ -137,7 +137,7 @@ abstract class VirtualNode {
     from: number,
     to: number,
   ) {
-    toolkit.assert(
+    invariant(
       this.children![from] === child,
       'Specified node is not a child of this element!',
     )
@@ -151,7 +151,7 @@ abstract class VirtualNode {
 
   removeChild(this: ParentVirtualNode, child: VirtualNode) {
     const index = this.children!.indexOf(child)
-    toolkit.assert(index >= 0, 'Specified node is not a child of this element!')
+    invariant(index >= 0, 'Specified node is not a child of this element!')
     this.children!.splice(index, 1)
     if (!this.children!.length) {
       delete this.children
@@ -240,7 +240,7 @@ class Component<P extends object = object> extends VirtualNode {
    * Sets the component content.
    */
   setContent(node: VirtualNode) {
-    toolkit.assert(
+    invariant(
       node.parentNode === this,
       'Specified node does not have a valid parent!',
     )

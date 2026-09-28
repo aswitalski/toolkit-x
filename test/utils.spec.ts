@@ -1,4 +1,5 @@
 import toolkit from '../src/index.js'
+import { invariant } from '../src/core/utils.js'
 
 describe('Utils', () => {
   beforeEach(() => {
@@ -19,6 +20,16 @@ describe('Utils', () => {
     createUUID,
     isSupportedAttribute,
   } = toolkit.utils
+
+  describe('invariant', () => {
+    it('throws when the condition is not met', () => {
+      expect(() => invariant(false, 'Invalid state!')).toThrow('Invalid state!')
+    })
+
+    it('does not throw when the condition is met', () => {
+      expect(() => invariant(true, 'Invalid state!')).not.toThrow()
+    })
+  })
 
   describe('throttle', () => {
     it('throttles using specified wait time', async () => {
