@@ -7,7 +7,6 @@ import nodes from './core/nodes.js'
 import Patch from './core/patch.js'
 import Plugins from './core/plugins.js'
 import Reconciler from './core/reconciler.js'
-import Reducers from './core/reducers.js'
 import Renderer from './core/renderer.js'
 import Sandbox from './core/sandbox.js'
 import Service from './core/service.js'
@@ -26,7 +25,6 @@ type ToolkitModules = typeof nodes & {
   Patch: typeof Patch
   Plugins: typeof Plugins
   Reconciler: typeof Reconciler
-  Reducers: typeof Reducers
   Renderer: typeof Renderer
   Sandbox: typeof Sandbox
   Service: typeof Service
@@ -45,7 +43,6 @@ Object.assign(Toolkit.prototype, nodes, {
   Patch,
   Plugins,
   Reconciler,
-  Reducers,
   Renderer,
   Sandbox,
   Service,
@@ -84,16 +81,11 @@ export type {
   BoundCommands,
   Commands,
   CommandsAPI,
+  State,
   StateUpdate,
 } from './core/dispatcher.js'
 export type { ComponentClass, Connectable } from './core/nodes.js'
 export type { PluginManifest, PluginSandbox } from './core/plugins.js'
-export type {
-  CommandCreator,
-  Reducer,
-  ReducerCommand,
-  State,
-} from './core/reducers.js'
 export type { Update } from './core/renderer.js'
 export type { Options, Settings } from './core/toolkit.js'
 
@@ -106,7 +98,6 @@ export {
   Patch,
   Plugins,
   Reconciler,
-  Reducers,
   Renderer,
   Sandbox,
   Service,

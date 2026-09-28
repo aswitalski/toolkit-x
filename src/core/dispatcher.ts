@@ -1,7 +1,9 @@
 import type { WebComponent } from './nodes.js'
-import Reducers, { type State } from './reducers.js'
 import Renderer from './renderer.js'
 import type { AnyFunction } from './utils.js'
+
+/* The state of a root component. */
+export type State = Record<string, unknown>
 
 /* A state transformation returned by a command. */
 export type StateUpdate<S = State> = (state: S) => S
@@ -104,32 +106,20 @@ class Dispatcher {
     this.queue = []
     this.commands = {} as Commands & Record<string, AnyFunction>
 
-    let createCommand: (name: string, args: unknown[]) => Command
-
+    const customAPIs: CommandsAPI[] = []
     const ComponentClass = root.constructor as typeof WebComponent
     if (typeof ComponentClass.getCommands === 'function') {
       const customAPI = ComponentClass.getCommands()
       if (!customAPI) {
         throw new Error('No API returned in getCommands() method')
       }
-      const customAPIs = Array.isArray(customAPI) ? customAPI : [customAPI]
-      const api = createCommandsAPI(...customAPIs)
-
-      this.names = Object.keys(api)
-      createCommand = (name, args) => new Command(name, args, api[name]!)
-    } else {
-      const reducers = root.getReducers ? root.getReducers() : []
-      const combinedReducer = Reducers.combine(...reducers)
-      const api = combinedReducer.commands
-
-      this.names = Object.keys(api)
-      createCommand = (name, args) =>
-        new Command(
-          name,
-          args,
-          () => (state: State) => combinedReducer(state, api[name]!(...args)),
-        )
+      customAPIs.push(...(Array.isArray(customAPI) ? customAPI : [customAPI]))
     }
+    const api = createCommandsAPI(...customAPIs)
+
+    this.names = Object.keys(api)
+    const createCommand = (name: string, args: unknown[]) =>
+      new Command(name, args, api[name]!)
 
     for (const name of this.names) {
       this.commands[name] = (...args: unknown[]) => {

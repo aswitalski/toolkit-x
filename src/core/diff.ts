@@ -14,7 +14,7 @@ import type {
 } from './nodes.js'
 import Patch from './patch.js'
 import Reconciler from './reconciler.js'
-import type { State } from './reducers.js'
+import type { State } from './dispatcher.js'
 import Template from './template.js'
 import { runtime } from './runtime.js'
 import VirtualDOM from './virtual-dom.js'

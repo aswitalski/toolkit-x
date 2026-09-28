@@ -8,11 +8,10 @@ import {
   createComponentElement,
 } from './custom-element.js'
 import Diff from './diff.js'
-import type { Command } from './dispatcher.js'
+import type { Command, State } from './dispatcher.js'
 import DOM from './dom.js'
 import type { Component, WebComponent } from './nodes.js'
 import type Patch from './patch.js'
-import type { State } from './reducers.js'
 
 /* Information about a root component update, passed to plugin listeners. */
 export interface Update {

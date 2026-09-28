@@ -12,7 +12,7 @@ A solution dedicated for a single browser asks for a different approach, an atte
 ## Design principles
 
 - **native** - take advantage of the latest Chromium engine features,
-- **modular** - define each component, reducer, service as a separate module,
+- **modular** - define each component, commands API, service as a separate module,
 - **dynamic** - build in discovery service, lazy-load modules for flexibility or preload for performance,
 - **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
 - **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and unidirectional data flow,

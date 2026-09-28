@@ -12,10 +12,10 @@ import Dispatcher, {
   type BoundCommands,
   type Commands,
   type CommandsAPI,
+  type State,
 } from './dispatcher.js'
 import DOM from './dom.js'
 import Plugins from './plugins.js'
-import type { Reducer, State } from './reducers.js'
 import { runtime } from './runtime.js'
 import Sandbox, { type ComponentSandbox } from './sandbox.js'
 import Template from './template.js'
@@ -317,8 +317,6 @@ class WebComponent<
   declare [CONTAINER]?: Element;
   declare [CUSTOM_ELEMENT]?: HTMLElement | null;
   declare [DISPATCHER]: Dispatcher
-
-  getReducers?(): Reducer[]
 
   constructor(
     description: ComponentDescription,
