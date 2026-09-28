@@ -178,8 +178,13 @@ class Diff {
       if (child.isRoot()) {
         // the child nodes of a Web Component are rendered in the light DOM
         this.childrenPatches(child.childNodes, description.children, child)
+        // the root renders its own content when the patches are applied,
+        // before the node is updated, as it compares its description
+        this.addPatch(
+          Patch.updateRoot(child, description as ComponentDescription),
+        )
         this.addPatch(Patch.updateNode(child, description))
-        return child.update(description as ComponentDescription)
+        return
       }
       return this.componentPatches(child, description as ComponentDescription)
     }

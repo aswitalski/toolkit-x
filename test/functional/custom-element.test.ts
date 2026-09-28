@@ -90,6 +90,39 @@ describe('Custom element', () => {
     await expect(rendering).rejects.toThrow('No initial state')
   })
 
+  it('renders the props passed to a nested root', async () => {
+    // given
+    class Nested extends toolkit.WebComponent<{ value: number }> {
+      static elementName = `custom-element-root-${counter++}`
+
+      render(): Template {
+        return ['span', String(this.props.value)]
+      }
+    }
+    class App extends toolkit.WebComponent<object, { value: number }> {
+      getInitialState() {
+        return { value: 1 }
+      }
+
+      render(): Template {
+        return ['main', [Nested, { value: this.props.value }]]
+      }
+    }
+    const app = await toolkit.render(App, container)
+    const nested = (app.content as VirtualElement).children![0] as WebComponent
+    await nested.ready
+
+    // then
+    assert.equal(nested.shadow!.textContent, '1')
+
+    // when
+    app.commands.update({ value: 2 })
+
+    // then
+    assert.deepEqual(nested.state, { value: 2 })
+    assert.equal(nested.shadow!.textContent, '2')
+  })
+
   it('renders and updates the child nodes in the light DOM', async () => {
     // given
     class List extends toolkit.WebComponent {

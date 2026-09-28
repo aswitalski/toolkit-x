@@ -1,4 +1,8 @@
-import type { Listener, NodeDescription } from './description.js'
+import type {
+  ComponentDescription,
+  Listener,
+  NodeDescription,
+} from './description.js'
 import DOM from './dom.js'
 import type {
   Component,
@@ -14,6 +18,7 @@ type PatchTarget = VirtualNode & { ref: HTMLElement }
 const Type = {
   INIT_ROOT_COMPONENT: 'init-root-component',
   UPDATE_NODE: 'update-node',
+  UPDATE_ROOT: 'update-root',
   SET_ATTRIBUTE: 'set-attribute',
   REMOVE_ATTRIBUTE: 'remove-attribute',
   SET_DATA_ATTRIBUTE: 'set-data-attribute',
@@ -43,6 +48,11 @@ type Patch =
       node: VirtualNode
       prevDescription: NodeDescription
       description: NodeDescription
+    }
+  | {
+      type: 'update-root'
+      root: WebComponent
+      description: ComponentDescription
     }
   | {
       type: 'set-attribute'
@@ -149,6 +159,9 @@ const Patch = {
       case Type.UPDATE_NODE:
         patch.node.description = patch.description
         return
+      case Type.UPDATE_ROOT:
+        patch.root.update(patch.description)
+        return
       case Type.SET_ATTRIBUTE: {
         const { target, name, value, isCustom } = patch
         DOM.setAttribute(target.ref, name, value, isCustom)
@@ -233,6 +246,14 @@ const Patch = {
       prevDescription: node.description,
       description,
     }
+  },
+
+  /* Passes the props to a nested root, which renders them itself. */
+  updateRoot(
+    root: WebComponent,
+    description: ComponentDescription,
+  ): PatchOf<'update-root'> {
+    return { type: Type.UPDATE_ROOT, root, description }
   },
 
   insertChild(

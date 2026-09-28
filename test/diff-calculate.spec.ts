@@ -1442,9 +1442,21 @@ describe('Diff => calculate patches', () => {
           const patches = calculatePatches(element, description)
 
           // then
-          assert.equal(patches.length, 2)
-          assertUpdatesNode(patches[0], root)
-          assertUpdatesNode(patches[1], element)
+          assert.equal(patches.length, 3)
+          assert.equal(patches[0].type, Patch.Type.UPDATE_ROOT)
+          assert.equal(patches[0].root, root)
+          assert.equal(patches[0].description, description.children[0])
+          assertUpdatesNode(patches[1], root)
+          assertUpdatesNode(patches[2], element)
+          // the root is updated only when the patches are applied
+          expect(update).not.toHaveBeenCalled()
+
+          // when
+          for (const patch of patches) {
+            Patch.apply(patch as never)
+          }
+
+          // then
           expect(update).toHaveBeenCalledOnce()
           expect(update).toHaveBeenCalledWith(description.children[0])
         })
