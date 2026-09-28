@@ -90,6 +90,81 @@ describe('Custom element', () => {
     await expect(rendering).rejects.toThrow('No initial state')
   })
 
+  it('destroys the roots created by an update that fails', async () => {
+    // given
+    class Nested extends toolkit.WebComponent {
+      static elementName = `custom-element-root-${counter++}`
+
+      render(): Template {
+        return ['span']
+      }
+    }
+    class Failing extends toolkit.Component {
+      render(): Template {
+        throw new Error('Failed to render')
+      }
+    }
+    class App extends toolkit.WebComponent<object, { failing: boolean }> {
+      getInitialState() {
+        return { failing: false }
+      }
+
+      render(): Template {
+        return this.props.failing ? ['main', [Nested], [Failing]] : ['main']
+      }
+    }
+    const app = await toolkit.render(App, container)
+    const tracked = toolkit.tracked.length
+    const destroy = vi.spyOn(Nested.prototype, 'destroy')
+
+    // when
+    const update = () => app.commands.update({ failing: true })
+
+    // then
+    expect(update).toThrow('Failed to render')
+    expect(destroy).toHaveBeenCalledOnce()
+    const nested = destroy.mock.contexts[0] as WebComponent
+    assert.equal(nested.plugins, null)
+    assert.equal(toolkit.tracked.length, tracked)
+    assert.equal(container.querySelector(Nested.elementName), null)
+  })
+
+  it('destroys a root failing to create its light DOM nodes', async () => {
+    // given
+    class Nested extends toolkit.WebComponent {
+      static elementName = `custom-element-root-${counter++}`
+
+      render(): Template {
+        return ['slot']
+      }
+    }
+    class Failing extends toolkit.Component {
+      render(): Template {
+        throw new Error('Failed to render')
+      }
+    }
+    class App extends toolkit.WebComponent<object, { failing: boolean }> {
+      getInitialState() {
+        return { failing: false }
+      }
+
+      render(): Template {
+        return this.props.failing ? ['main', [Nested, [Failing]]] : ['main']
+      }
+    }
+    const app = await toolkit.render(App, container)
+    const tracked = toolkit.tracked.length
+    const destroy = vi.spyOn(Nested.prototype, 'destroy')
+
+    // when
+    const update = () => app.commands.update({ failing: true })
+
+    // then
+    expect(update).toThrow('Failed to render')
+    expect(destroy).toHaveBeenCalledOnce()
+    assert.equal(toolkit.tracked.length, tracked)
+  })
+
   it('renders the props passed to a nested root', async () => {
     // given
     class Nested extends toolkit.WebComponent<{ value: number }> {

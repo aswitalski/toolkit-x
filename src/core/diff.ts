@@ -55,7 +55,10 @@ class Diff {
   ) {
     this.root = root
     this.patches = []
-    this.calculate(currentState, nextState)
+    // nothing is applied when the calculation fails, e.g. when rendering
+    VirtualDOM.destroyingRootsOnError(() =>
+      this.calculate(currentState, nextState),
+    )
   }
 
   /**

@@ -326,6 +326,8 @@ class WebComponent<
     context: WebComponent | null = null,
   ) {
     super(description, parent, context, /*= attachDOM */ false)
+    // before being tracked, to be destroyed when rendering it fails
+    VirtualDOM.collectRoot(this)
     this.subroots = new Set()
     this.dispatcher = new Dispatcher(this)
     this.ready = new Promise((resolve, reject) => {
