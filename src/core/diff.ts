@@ -101,7 +101,13 @@ class Diff {
 
     const description = Template.describe(template) as ComponentDescription
 
-    this.componentPatches(this.root, description)
+    // the root is rendered initially even when the description is equal
+    if (
+      !this.root.isInitialized ||
+      !Diff.deepEqual(this.root.description, description)
+    ) {
+      this.componentPatches(this.root, description)
+    }
     if (this.root.description.attrs || description.attrs) {
       this.attributePatches(
         this.root.description.attrs,
@@ -120,13 +126,6 @@ class Diff {
    * to match the given description.
    */
   componentPatches(component: Component, description: ComponentDescription) {
-    if (
-      component.isInitialized &&
-      Diff.deepEqual(component.description, description)
-    ) {
-      return
-    }
-
     const nodeDescription = component.renderDescription(
       description.props,
       description.childrenAsTemplates,
@@ -153,9 +152,6 @@ class Diff {
 
     // update
     if (content.description.isCompatible(description)) {
-      if (Diff.deepEqual(content.description, description)) {
-        return
-      }
       this.childPatches(content, description)
       return
     }
@@ -174,6 +170,10 @@ class Diff {
    * to match given description.
    */
   childPatches(child: VirtualNode, description: NodeDescription): void {
+    // the only comparison of the descriptions, as they are compared deeply
+    if (Diff.deepEqual(child.description, description)) {
+      return
+    }
     if (child.isComponent()) {
       if (child.isRoot()) {
         // the child nodes of a Web Component are rendered in the light DOM
@@ -194,10 +194,6 @@ class Diff {
    * description.
    */
   elementPatches(element: VirtualElement, description: ElementDescription) {
-    if (Diff.deepEqual(element.description, description)) {
-      return
-    }
-
     this.classNamePatches(element.description.class, description.class, element)
     this.stylePatches(element.description.style, description.style, element)
     this.attributePatches(element.description.attrs, description.attrs, element)
@@ -445,9 +441,6 @@ class Diff {
     parent: ParentVirtualNode,
   ) {
     if (child.description.isCompatible(description)) {
-      if (Diff.deepEqual(child.description, description)) {
-        return
-      }
       this.childPatches(child, description)
     } else {
       const node = VirtualDOM.createFromDescription(
@@ -516,19 +509,15 @@ class Diff {
         return this.deepEqual([...current], [...(next as typeof current)])
       }
       const keys = Object.keys(currentObject)
-      const nextKeys = Object.keys(nextObject)
-      if (keys.length !== nextKeys.length) {
+      if (keys.length !== Object.keys(nextObject).length) {
         return false
       }
-      keys.sort()
-      nextKeys.sort()
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i]
-        if (key !== nextKeys[i]) {
-          return false
-        }
-        const equal = this.deepEqual(currentObject[key!], nextObject[key!])
-        if (!equal) {
+      // with as many keys, the same keys when each one is in both objects
+      for (const key of keys) {
+        if (
+          !Object.prototype.propertyIsEnumerable.call(nextObject, key) ||
+          !this.deepEqual(currentObject[key], nextObject[key])
+        ) {
           return false
         }
       }
