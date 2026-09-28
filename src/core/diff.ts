@@ -361,7 +361,7 @@ class Diff {
   ) {
     const Move = Reconciler.Move
 
-    const created: VirtualNode[] = []
+    const created = new Set<VirtualNode>()
     const createdNodesMap = new Map<string, VirtualNode>()
 
     const createNode = (description: NodeDescription, key: string) => {
@@ -370,7 +370,7 @@ class Diff {
         parent,
         this.root,
       )
-      created.push(node!)
+      created.add(node!)
       createdNodesMap.set(key, node!)
       return node!
     }
@@ -381,17 +381,6 @@ class Diff {
     const to = targetDescriptions.map(
       (description, index) => description.key || Diff.createKey(index),
     )
-
-    const getNode = (key: string, isMove: boolean): VirtualNode => {
-      if (from.includes(key)) {
-        return sourceNodes[from.indexOf(key)]!
-      }
-      if (isMove) {
-        return createdNodesMap.get(key)!
-      }
-      const index = to.indexOf(key)
-      return createNode(targetDescriptions[index]!, key)
-    }
 
     if (runtime().isDebug()) {
       const assertUniqueKeys = (keys: string[]) => {
@@ -404,6 +393,42 @@ class Diff {
       }
       assertUniqueKeys(from)
       assertUniqueKeys(to)
+    }
+
+    // with the same keys in the same order, there are no nodes to move
+    if (from.length === to.length && from.every((key, i) => key === to[i])) {
+      for (let i = 0; i < sourceNodes.length; i++) {
+        this.elementChildPatches(
+          sourceNodes[i]!,
+          targetDescriptions[i]!,
+          parent,
+        )
+      }
+      return
+    }
+
+    // the first of the items with the same key, which only debug rejects
+    const mapByKey = <T>(keys: string[], items: T[]) => {
+      const map = new Map<string, T>()
+      keys.forEach((key, index) => {
+        if (!map.has(key)) {
+          map.set(key, items[index]!)
+        }
+      })
+      return map
+    }
+    const sourceNodesMap = mapByKey(from, sourceNodes)
+    const targetDescriptionsMap = mapByKey(to, targetDescriptions)
+
+    const getNode = (key: string, isMove: boolean): VirtualNode => {
+      const sourceNode = sourceNodesMap.get(key)
+      if (sourceNode) {
+        return sourceNode
+      }
+      if (isMove) {
+        return createdNodesMap.get(key)!
+      }
+      return createNode(targetDescriptionsMap.get(key)!, key)
     }
 
     const moves = Reconciler.calculateMoves(from, to)
@@ -428,7 +453,7 @@ class Diff {
     }
     for (let i = 0; i < children.length; i++) {
       const child = children[i]!
-      if (!created.includes(child)) {
+      if (!created.has(child)) {
         const targetDescription = targetDescriptions[i]!
         this.elementChildPatches(child, targetDescription, parent)
       }

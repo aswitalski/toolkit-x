@@ -1285,6 +1285,169 @@ describe('Diff => calculate patches', () => {
           assert.equal(patches[0].listener, onClick)
           assertUpdatesNode(patches[1], element)
         })
+
+        describe('with unchanged keys', () => {
+          const childOperations: string[] = [
+            Patch.Type.INSERT_CHILD,
+            Patch.Type.MOVE_CHILD,
+            Patch.Type.REMOVE_CHILD,
+          ]
+
+          it('updates keyed children in place', () => {
+            // given
+            const template = [
+              'ul',
+              ['li', { key: 'a' }, 'A'],
+              ['li', { key: 'b' }, 'B'],
+            ]
+            const nextTemplate = [
+              'ul',
+              ['li', { key: 'a' }, 'A'],
+              ['li', { key: 'b', class: 'changed' }, 'B'],
+            ]
+
+            // when
+            const [element, description] = renderNodeAndDescription(
+              template,
+              nextTemplate,
+            )
+            const [a, b] = element.children
+            const patches = calculatePatches(element, description)
+
+            // then
+            assert.equal(patches.length, 3)
+            assert.equal(patches[0].type, Patch.Type.SET_CLASS_NAME)
+            assert.equal(patches[0].target, b)
+            assertUpdatesNode(patches[1], b)
+            assertUpdatesNode(patches[2], element)
+            assert.deepEqual(element.children, [a, b])
+          })
+
+          it('updates unkeyed children in place', () => {
+            // given
+            const template = ['ul', ['li', 'A'], ['li', 'B'], ['li', 'C']]
+            const nextTemplate = ['ul', ['li', 'A'], ['li', 'X'], ['li', 'C']]
+
+            // when
+            const [element, description] = renderNodeAndDescription(
+              template,
+              nextTemplate,
+            )
+            const patches = calculatePatches(element, description)
+
+            // then
+            assert(
+              patches.every(patch => !childOperations.includes(patch.type)),
+            )
+            assert.equal(patches[0].type, Patch.Type.REPLACE_CHILD)
+            assert.equal(patches[0].parent, element.children[1])
+            assertUpdatesNode(patches[1], element.children[1])
+            assertUpdatesNode(patches[2], element)
+          })
+
+          it('returns no patches for equal children', () => {
+            // given
+            const template = [
+              'ul',
+              ['li', { key: 'a' }, 'A'],
+              ['li', { key: 'b' }, 'B'],
+            ]
+
+            // when
+            const [element, description] = renderNodeAndDescription(
+              template,
+              template,
+            )
+            const patches = calculatePatches(element, description)
+
+            // then
+            assert.equal(patches.length, 0)
+          })
+        })
+
+        it('moves a keyed child and updates it', () => {
+          // given
+          const template = [
+            'ul',
+            ['li', { key: 'a' }, 'A'],
+            ['li', { key: 'b' }, 'B'],
+          ]
+          const nextTemplate = [
+            'ul',
+            ['li', { key: 'b', class: 'changed' }, 'B'],
+            ['li', { key: 'a' }, 'A'],
+          ]
+
+          // when
+          const [element, description] = renderNodeAndDescription(
+            template,
+            nextTemplate,
+          )
+          const [a, b] = element.children
+          const patches = calculatePatches(element, description)
+
+          // then
+          assert.equal(patches.length, 4)
+          assert.equal(patches[0].type, Patch.Type.MOVE_CHILD)
+          assert.equal(patches[1].type, Patch.Type.SET_CLASS_NAME)
+          assert.equal(patches[1].target, b)
+          assertUpdatesNode(patches[2], b)
+          assertUpdatesNode(patches[3], element)
+          assert.deepEqual(element.children, [a, b])
+        })
+      })
+
+      describe('update nested roots', () => {
+        class NestedRoot extends toolkit.Root {
+          static elementName = 'diff-calculate-nested-root'
+
+          render(): Template {
+            return null
+          }
+        }
+
+        afterEach(() => {
+          vi.restoreAllMocks()
+        })
+
+        it('skips a root with an equal description', () => {
+          // given
+          const update = vi.spyOn(NestedRoot.prototype, 'update')
+          const template = ['section', [NestedRoot, { value: 1 }]]
+
+          // when
+          const [element, description] = renderNodeAndDescription(
+            template,
+            template,
+          )
+          const patches = calculatePatches(element, description)
+
+          // then
+          assert.equal(patches.length, 0)
+          expect(update).not.toHaveBeenCalled()
+        })
+
+        it('updates a root with changed props', () => {
+          // given
+          const update = vi.spyOn(NestedRoot.prototype, 'update')
+          const template = ['section', [NestedRoot, { value: 1 }]]
+          const nextTemplate = ['section', [NestedRoot, { value: 2 }]]
+
+          // when
+          const [element, description] = renderNodeAndDescription(
+            template,
+            nextTemplate,
+          )
+          const root = element.children[0]
+          const patches = calculatePatches(element, description)
+
+          // then
+          assert.equal(patches.length, 2)
+          assertUpdatesNode(patches[0], root)
+          assertUpdatesNode(patches[1], element)
+          expect(update).toHaveBeenCalledOnce()
+          expect(update).toHaveBeenCalledWith(description.children[0])
+        })
       })
     })
 
