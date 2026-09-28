@@ -74,9 +74,8 @@ const SUPPORTED_EVENTS = [
   'onTimeUpdate',
   'onVolumeChange',
   'onWaiting',
-  // image events
+  // image events, besides the error event above
   'onLoad',
-  'onError',
   // animation events
   'onAnimationStart',
   'onAnimationEnd',
@@ -335,8 +334,6 @@ const SUPPORTED_ATTRIBUTES = [
   ['ariaValueText'],
 ] as const
 
-const SUPPORTED_STYLES = Object.keys(document.documentElement.style)
-
 const SUPPORTED_FILTERS = [
   'blur',
   'brightness',
@@ -379,6 +376,13 @@ for (const [key, whitelist] of SUPPORTED_ATTRIBUTES) {
   supportedAttributes.set(key, whitelist || '*')
 }
 
+const supportedEvents = new Set<string>(SUPPORTED_EVENTS)
+
+/* The style properties of the browser, read when first needed. */
+let supportedStyles: Set<string> | null = null
+const getSupportedStyles = () =>
+  (supportedStyles ??= new Set(Object.keys(document.documentElement.style)))
+
 const Browser = {
   isAttributeSupported(this: void, key: string): boolean {
     return supportedAttributes.has(key)
@@ -400,11 +404,11 @@ const Browser = {
   },
 
   isEventSupported(this: void, key: string): boolean {
-    return (SUPPORTED_EVENTS as readonly string[]).includes(key)
+    return supportedEvents.has(key)
   },
 
   isStyleSupported(this: void, key: string): boolean {
-    return key.startsWith('--') || SUPPORTED_STYLES.includes(key)
+    return key.startsWith('--') || getSupportedStyles().has(key)
   },
 
   isFilterSupported(this: void, key: string): boolean {
