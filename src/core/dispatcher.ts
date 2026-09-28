@@ -27,6 +27,9 @@ const Mode = {
   IGNORE: Symbol('ignore-commands'),
 }
 
+/* The limit of lifecycle methods queueing commands in response to others. */
+const MAX_FLUSH_CYCLES = 3
+
 const coreAPI = {
   setState(state: State): StateUpdate {
     return () => state
@@ -129,8 +132,6 @@ class Dispatcher {
         )
     }
 
-    let level = 0
-
     for (const name of this.names) {
       this.commands[name] = (...args: unknown[]) => {
         const command = createCommand(name, args)
@@ -144,36 +145,38 @@ class Dispatcher {
         }
 
         if (this.mode === Mode.IGNORE) {
-          level = 0
           return false
         }
 
         this.execute(command, root)
 
-        if (this.queue.length) {
-          level = level + 1
-          if (level > 3) {
-            try {
-              throw new Error(
-                'Too many cycles updating state in lifecycle methods!',
-              )
-            } finally {
-              level = 0
-            }
-          }
-          const tasks = [...this.queue]
-          setTimeout(() => {
-            for (const command of tasks) {
-              this.execute(command, root)
-              command.done!()
-            }
-          })
-          this.queue.length = 0
-        } else {
-          level = 0
+        if (!this.queue.length) {
           return true
         }
+        const tasks = this.queue.splice(0)
+        setTimeout(() => this.flush(tasks, root))
       }
+    }
+  }
+
+  /**
+   * Executes the commands queued by lifecycle methods, followed by the ones
+   * these commands queue in turn, until there are none left.
+   */
+  flush(tasks: Command[], root: WebComponent) {
+    for (let cycle = 1; tasks.length; cycle++) {
+      if (cycle > MAX_FLUSH_CYCLES) {
+        this.queue.length = 0
+        throw new Error('Too many cycles updating state in lifecycle methods!')
+      }
+      for (const command of tasks) {
+        // the root can be destroyed before the queued commands are executed
+        if (this.mode !== Mode.IGNORE) {
+          this.execute(command, root)
+        }
+        command.done!()
+      }
+      tasks = this.queue.splice(0)
     }
   }
 }

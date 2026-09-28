@@ -28,12 +28,18 @@ const callIgnoringCommands = (component: Component, hook: () => void) => {
 
 /*
  * Calls the hook of a component, queueing the commands it issues
- * until the current update has completed.
+ * until the current update has completed. The mode is restored
+ * also when the hook throws, not to leave the commands queued.
  */
 const callQueueingCommands = (component: Component, hook: () => void) => {
-  component.dispatcher.queueIncoming()
-  hook()
-  component.dispatcher.executeIncoming()
+  const { dispatcher } = component
+  const { mode } = dispatcher
+  dispatcher.queueIncoming()
+  try {
+    hook()
+  } finally {
+    dispatcher.mode = mode
+  }
 }
 
 const Lifecycle = {
