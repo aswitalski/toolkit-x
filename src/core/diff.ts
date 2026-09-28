@@ -73,7 +73,7 @@ class Diff {
     if (this.patches.length) {
       Lifecycle.beforeUpdate(this.patches)
       for (const patch of this.patches) {
-        patch.apply()
+        Patch.apply(patch)
       }
       Lifecycle.afterUpdate(this.patches)
     }

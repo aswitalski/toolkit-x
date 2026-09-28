@@ -15,9 +15,9 @@ describe('Patch element => apply', () => {
     const element = createFromTemplate<AnyElement>(['input'])
 
     // when
-    Patch.setAttribute('name', 'value', element, false).apply()
-    Patch.setAttribute('noValidate', '', element, false).apply()
-    Patch.setAttribute('minLength', '100px', element, false).apply()
+    Patch.apply(Patch.setAttribute('name', 'value', element, false))
+    Patch.apply(Patch.setAttribute('noValidate', '', element, false))
+    Patch.apply(Patch.setAttribute('minLength', '100px', element, false))
 
     // then
     assert.equal(element.ref.getAttribute('name'), 'value')
@@ -43,8 +43,8 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.getAttribute('minlength'), '50px')
 
     // when
-    Patch.setAttribute('name', 'value', element, false).apply()
-    Patch.setAttribute('minLength', '100px', element, false).apply()
+    Patch.apply(Patch.setAttribute('name', 'value', element, false))
+    Patch.apply(Patch.setAttribute('minLength', '100px', element, false))
 
     // then
     assert.equal(element.ref.getAttribute('name'), 'value')
@@ -69,8 +69,8 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.getAttribute('minlength'), '50px')
 
     // when
-    Patch.removeAttribute('name', element, false).apply()
-    Patch.removeAttribute('minLength', element, false).apply()
+    Patch.apply(Patch.removeAttribute('name', element, false))
+    Patch.apply(Patch.removeAttribute('minLength', element, false))
 
     // then
     assert.equal(element.ref.attributes.length, 0)
@@ -81,8 +81,8 @@ describe('Patch element => apply', () => {
     const element = createFromTemplate<AnyElement>(['div'])
 
     // when
-    Patch.setDataAttribute('id', '10', element).apply()
-    Patch.setDataAttribute('customAttribute', 'true', element).apply()
+    Patch.apply(Patch.setDataAttribute('id', '10', element))
+    Patch.apply(Patch.setDataAttribute('customAttribute', 'true', element))
 
     // then
     assert.equal(Object.keys(element.ref.dataset).length, 2)
@@ -106,7 +106,7 @@ describe('Patch element => apply', () => {
     ])
 
     // when
-    Patch.setDataAttribute('toolkitId', '23', element).apply()
+    Patch.apply(Patch.setDataAttribute('toolkitId', '23', element))
 
     assert.equal(Object.keys(element.ref.dataset).length, 2)
     assert.equal(element.ref.dataset.toolkitId, '23')
@@ -116,8 +116,8 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.getAttribute('data-some-name'), 'Some Name')
 
     // when
-    Patch.setDataAttribute('toolkitId', '23', element).apply()
-    Patch.setDataAttribute('someName', 'Other Name', element).apply()
+    Patch.apply(Patch.setDataAttribute('toolkitId', '23', element))
+    Patch.apply(Patch.setDataAttribute('someName', 'Other Name', element))
 
     // then
     assert.equal(Object.keys(element.ref.dataset).length, 2)
@@ -152,8 +152,8 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.dataset.anything, 'true')
 
     // when
-    Patch.removeDataAttribute('name', element).apply()
-    Patch.removeDataAttribute('anything', element).apply()
+    Patch.apply(Patch.removeDataAttribute('name', element))
+    Patch.apply(Patch.removeDataAttribute('anything', element))
 
     // then
     assert.equal(element.ref.dataset.name, undefined)
@@ -165,7 +165,7 @@ describe('Patch element => apply', () => {
     const element = createFromTemplate<AnyElement>(['div'])
 
     // when
-    Patch.setStyleProperty('color', 'black', element).apply()
+    Patch.apply(Patch.setStyleProperty('color', 'black', element))
 
     // then
     assert.equal(element.ref.style.color, 'black')
@@ -186,7 +186,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.style.textDecoration, 'underline')
 
     // when
-    Patch.setStyleProperty('textDecoration', 'overline', element).apply()
+    Patch.apply(Patch.setStyleProperty('textDecoration', 'overline', element))
 
     // then
     assert.equal(element.ref.style.textDecoration, 'overline')
@@ -207,7 +207,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.style.visibility, 'hidden')
 
     // when
-    Patch.removeStyleProperty('visibility', element).apply()
+    Patch.apply(Patch.removeStyleProperty('visibility', element))
 
     // then
     assert.equal(element.ref.style.visibility, '')
@@ -226,7 +226,7 @@ describe('Patch element => apply', () => {
     assert.deepEqual([...element.ref.classList], [])
 
     // when
-    Patch.setClassName('test', element).apply()
+    Patch.apply(Patch.setClassName('test', element))
 
     // then
     assert.deepEqual([...element.ref.classList], ['test'])
@@ -245,7 +245,7 @@ describe('Patch element => apply', () => {
     assert.deepEqual([...element.ref.classList], ['test'])
 
     // when
-    Patch.setClassName('', element).apply()
+    Patch.apply(Patch.setClassName('', element))
 
     // then
     assert.deepEqual([...element.ref.classList], [])
@@ -257,7 +257,7 @@ describe('Patch element => apply', () => {
     const onClick = vi.fn()
 
     // when
-    Patch.addListener('onClick', onClick, element, false).apply()
+    Patch.apply(Patch.addListener('onClick', onClick, element, false))
     element.ref.click()
 
     // then
@@ -276,13 +276,15 @@ describe('Patch element => apply', () => {
     ])
 
     // when
-    Patch.replaceListener(
-      'onClick',
-      doSomething,
-      doSomethingElse,
-      element,
-      false,
-    ).apply()
+    Patch.apply(
+      Patch.replaceListener(
+        'onClick',
+        doSomething,
+        doSomethingElse,
+        element,
+        false,
+      ),
+    )
     element.ref.click()
 
     // then
@@ -297,7 +299,7 @@ describe('Patch element => apply', () => {
     element.ref.click()
 
     // when
-    Patch.removeListener('onClick', onClick, element, false).apply()
+    Patch.apply(Patch.removeListener('onClick', onClick, element, false))
     element.ref.click()
 
     // then
@@ -312,7 +314,7 @@ describe('Patch element => apply', () => {
     assert.equal(getProperty(element, 'customAttribute'), undefined)
 
     // when
-    Patch.setProperty('customAttribute', 'customValue', element).apply()
+    Patch.apply(Patch.setProperty('customAttribute', 'customValue', element))
 
     // then
     assert.equal(getProperty(element, 'customAttribute'), 'customValue')
@@ -333,7 +335,7 @@ describe('Patch element => apply', () => {
     assert.equal(getProperty(element, 'customAttribute'), 'customValue')
 
     // when
-    Patch.deleteProperty('customAttribute', element).apply()
+    Patch.apply(Patch.deleteProperty('customAttribute', element))
 
     // then
     assert.equal(getProperty(element, 'customAttribute'), undefined)
@@ -354,7 +356,7 @@ describe('Patch element => apply', () => {
     assert.equal(getProperty(element, 'customAttribute'), 'customValue')
 
     // when
-    Patch.setProperty('customAttribute', 'anotherValue', element).apply()
+    Patch.apply(Patch.setProperty('customAttribute', 'anotherValue', element))
 
     // then
     assert.equal(getProperty(element, 'customAttribute'), 'anotherValue')
@@ -369,7 +371,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.childNodes.length, 0)
 
     // when
-    Patch.insertChild(span, 0, element).apply()
+    Patch.apply(Patch.insertChild(span, 0, element))
 
     // then
     assert.equal(element.children.length, 1)
@@ -394,7 +396,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.childNodes.length, 3)
 
     // when
-    Patch.insertChild(link, 0, element).apply()
+    Patch.apply(Patch.insertChild(link, 0, element))
 
     // then
     assert.equal(element.children.length, 4)
@@ -415,7 +417,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.childNodes.length, 1)
 
     // when
-    Patch.insertChild(link, 1, element).apply()
+    Patch.apply(Patch.insertChild(link, 1, element))
 
     // then
     assert.equal(element.children.length, 2)
@@ -447,7 +449,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 3)
 
       // when
-      Patch.moveChild(paragraph, 0, 2, element).apply()
+      Patch.apply(Patch.moveChild(paragraph, 0, 2, element))
 
       // then
       assert.equal(element.children.length, 3)
@@ -478,7 +480,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 3)
 
       // when
-      Patch.moveChild(component, 1, 0, element).apply()
+      Patch.apply(Patch.moveChild(component, 1, 0, element))
 
       // then
       assert.equal(element.children.length, 3)
@@ -508,7 +510,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 2)
 
       // when
-      Patch.moveChild(component, 0, 1, element).apply()
+      Patch.apply(Patch.moveChild(component, 0, 1, element))
 
       // then
       assert.equal(element.children.length, 2)
@@ -537,7 +539,7 @@ describe('Patch element => apply', () => {
       const component = createFromTemplate<AnyElement>([Component])
 
       // when
-      Patch.replaceChild(child, component, element).apply()
+      Patch.apply(Patch.replaceChild(child, component, element))
 
       // then
       assert.equal(element.children[0], component)
@@ -552,7 +554,7 @@ describe('Patch element => apply', () => {
       const span = createFromTemplate<AnyElement>(['span'])
 
       // when
-      Patch.replaceChild(child, span, element).apply()
+      Patch.apply(Patch.replaceChild(child, span, element))
 
       // then
       assert.equal(element.children[0], span)
@@ -567,7 +569,7 @@ describe('Patch element => apply', () => {
       const component = createFromTemplate<AnyElement>([Component])
 
       // when
-      Patch.replaceChild(child, component, element).apply()
+      Patch.apply(Patch.replaceChild(child, component, element))
 
       // then
       assert.equal(element.children[0], component)
@@ -582,7 +584,7 @@ describe('Patch element => apply', () => {
       const span = createFromTemplate<AnyElement>(['span'])
 
       // when
-      Patch.replaceChild(child, span, element).apply()
+      Patch.apply(Patch.replaceChild(child, span, element))
 
       // then
       assert.equal(element.children[0], span)
@@ -612,7 +614,7 @@ describe('Patch element => apply', () => {
       assert.equal(element.ref.childNodes.length, 3)
 
       // when
-      Patch.removeChild(div, 1, element).apply()
+      Patch.apply(Patch.removeChild(div, 1, element))
 
       // then
       assert.equal(element.children.length, 2)
@@ -628,7 +630,7 @@ describe('Patch element => apply', () => {
       const p = element.children[0]
 
       // when
-      Patch.removeChild(p, 0, element).apply()
+      Patch.apply(Patch.removeChild(p, 0, element))
 
       // then
       assert.equal(element.children.length, 1)
@@ -641,7 +643,7 @@ describe('Patch element => apply', () => {
       const span = element.children[0]
 
       // when
-      Patch.removeChild(span, 0, element).apply()
+      Patch.apply(Patch.removeChild(span, 0, element))
 
       // then
       assert.equal(element.children, undefined)
@@ -665,7 +667,7 @@ describe('Patch element => apply', () => {
       assert.equal((element.ref.childNodes[1] as Element).tagName, 'SPAN')
 
       // when
-      Patch.removeChild(component, 1, element).apply()
+      Patch.apply(Patch.removeChild(component, 1, element))
 
       // then
       assert.equal(element.children.length, 1)
@@ -689,7 +691,7 @@ describe('Patch element => apply', () => {
       assert(element.ref.childNodes[1].textContent!.includes('Component'))
 
       // when
-      Patch.removeChild(component, 1, element).apply()
+      Patch.apply(Patch.removeChild(component, 1, element))
 
       // then
       assert.equal(element.children.length, 1)
@@ -711,7 +713,7 @@ describe('Patch element => apply', () => {
     const two = VirtualDOM.createFromDescription(
       new Description.TextDescription('two'),
     )!
-    Patch.replaceChild(element.children[0], two, element).apply()
+    Patch.apply(Patch.replaceChild(element.children[0], two, element))
 
     // then
     assert.equal(element.ref.textContent, 'two')
@@ -725,7 +727,7 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.textContent, 'one')
 
     // when
-    Patch.removeChild(element.children[0], 0, element).apply()
+    Patch.apply(Patch.removeChild(element.children[0], 0, element))
 
     // then
     assert.equal(element.ref.textContent, '')

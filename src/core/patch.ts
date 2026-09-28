@@ -7,11 +7,6 @@ import type {
 } from './nodes.js'
 import utils from './utils.js'
 
-interface PatchDefinition {
-  type: symbol
-  apply: (this: Patch) => void
-}
-
 /* A node rendered as an HTML element, e.g. a root with a custom element. */
 type PatchTarget = VirtualNode & { ref: HTMLElement }
 
@@ -19,400 +14,398 @@ type PatchTarget = VirtualNode & { ref: HTMLElement }
 type StyleMap = Record<string, string | null>
 type PropertyMap = Record<string, unknown>
 
-const INIT_ROOT_COMPONENT: PatchDefinition = {
-  type: Symbol('init-root-component'),
-  apply: function (this: Patch) {
-    const container = this.root.container
-      ? this.root.container
-      : this.root.shadow!
-    container.appendChild(this.root.content!.ref)
-  },
-}
-const UPDATE_NODE: PatchDefinition = {
-  type: Symbol('update-node'),
-  apply: function (this: Patch) {
-    this.node.description = this.description
-  },
-}
-
-const SET_ATTRIBUTE: PatchDefinition = {
-  type: Symbol('set-attribute'),
-  apply: function (this: Patch) {
-    const attr = this.isCustom ? this.name : utils.getAttributeName(this.name)
-    this.target.ref.setAttribute(attr, this.value as string)
-  },
-}
-const REMOVE_ATTRIBUTE: PatchDefinition = {
-  type: Symbol('remove-attribute'),
-  apply: function (this: Patch) {
-    const attr = this.isCustom ? this.name : utils.getAttributeName(this.name)
-    this.target.ref.removeAttribute(attr)
-  },
-}
-
-const SET_DATA_ATTRIBUTE: PatchDefinition = {
-  type: Symbol('set-data-attribute'),
-  apply: function (this: Patch) {
-    this.target.ref.dataset[this.name] = this.value as string
-  },
-}
-const REMOVE_DATA_ATTRIBUTE: PatchDefinition = {
-  type: Symbol('remove-data-attribute'),
-  apply: function (this: Patch) {
-    delete this.target.ref.dataset[this.name]
-  },
-}
-
-const SET_STYLE_PROPERTY: PatchDefinition = {
-  type: Symbol('set-style-property'),
-  apply: function (this: Patch) {
-    if (this.property.startsWith('--')) {
-      this.target.ref.style.setProperty(
-        this.property,
-        ` ${this.value as string}`,
-      )
-    } else {
-      ;(this.target.ref.style as unknown as StyleMap)[this.property] = this
-        .value as string
-    }
-  },
-}
-const REMOVE_STYLE_PROPERTY: PatchDefinition = {
-  type: Symbol('remove-style-property'),
-  apply: function (this: Patch) {
-    if (this.property.startsWith('--')) {
-      this.target.ref.style.removeProperty(this.property)
-    } else {
-      ;(this.target.ref.style as unknown as StyleMap)[this.property] = null
-    }
-  },
-}
-
-const SET_CLASS_NAME: PatchDefinition = {
-  type: Symbol('set-class-name'),
-  apply: function (this: Patch) {
-    this.target.ref.className = this.className
-  },
-}
-
-const ADD_LISTENER: PatchDefinition = {
-  type: Symbol('add-listener'),
-  apply: function (this: Patch) {
-    const event = this.isCustom ? this.name : utils.getEventName(this.name)
-    this.target.ref.addEventListener(event, this.listener)
-  },
-}
-const REPLACE_LISTENER: PatchDefinition = {
-  type: Symbol('replace-listener'),
-  apply: function (this: Patch) {
-    const event = this.isCustom ? this.name : utils.getEventName(this.name)
-    this.target.ref.removeEventListener(event, this.removed)
-    this.target.ref.addEventListener(event, this.added)
-  },
-}
-const REMOVE_LISTENER: PatchDefinition = {
-  type: Symbol('remove-listener'),
-  apply: function (this: Patch) {
-    const event = this.isCustom ? this.name : utils.getEventName(this.name)
-    this.target.ref.removeEventListener(event, this.listener)
-  },
-}
-
-const SET_PROPERTY: PatchDefinition = {
-  type: Symbol('set-property'),
-  apply: function (this: Patch) {
-    ;(this.target.ref as unknown as PropertyMap)[this.key] = this.value
-  },
-}
-const DELETE_PROPERTY: PatchDefinition = {
-  type: Symbol('delete-property'),
-  apply: function (this: Patch) {
-    delete (this.target.ref as unknown as PropertyMap)[this.key]
-  },
-}
-
-const INSERT_CHILD: PatchDefinition = {
-  type: Symbol('insert-child'),
-  apply: function (this: Patch) {
-    this.parent.insertChild(this.node, this.at)
-  },
-}
-const REPLACE_CHILD: PatchDefinition = {
-  type: Symbol('replace-child'),
-  apply: function (this: Patch) {
-    this.parent.replaceChild(this.child, this.node)
-  },
-}
-const MOVE_CHILD: PatchDefinition = {
-  type: Symbol('move-child'),
-  apply: function (this: Patch) {
-    this.parent.moveChild(this.child, this.from, this.to)
-  },
-}
-const REMOVE_CHILD: PatchDefinition = {
-  type: Symbol('remove-child'),
-  apply: function (this: Patch) {
-    this.parent.removeChild(this.child)
-  },
-}
-
-const SET_CONTENT: PatchDefinition = {
-  type: Symbol('set-content'),
-  apply: function (this: Patch) {
-    ;(this.parent as Component).setContent(this.node)
-  },
-}
-
-const Types = {
-  INIT_ROOT_COMPONENT,
-  UPDATE_NODE,
-  SET_ATTRIBUTE,
-  REMOVE_ATTRIBUTE,
-  SET_DATA_ATTRIBUTE,
-  REMOVE_DATA_ATTRIBUTE,
-  SET_STYLE_PROPERTY,
-  REMOVE_STYLE_PROPERTY,
-  SET_CLASS_NAME,
-  ADD_LISTENER,
-  REPLACE_LISTENER,
-  REMOVE_LISTENER,
-  SET_PROPERTY,
-  DELETE_PROPERTY,
-  INSERT_CHILD,
-  REPLACE_CHILD,
-  MOVE_CHILD,
-  REMOVE_CHILD,
-  SET_CONTENT,
-}
-type PatchName = keyof typeof Types
-
-const PatchTypes = Object.fromEntries(
-  Object.entries(Types).map(([name, { type }]) => [name, type]),
-) as Record<PatchName, symbol>
+const Type = {
+  INIT_ROOT_COMPONENT: 'init-root-component',
+  UPDATE_NODE: 'update-node',
+  SET_ATTRIBUTE: 'set-attribute',
+  REMOVE_ATTRIBUTE: 'remove-attribute',
+  SET_DATA_ATTRIBUTE: 'set-data-attribute',
+  REMOVE_DATA_ATTRIBUTE: 'remove-data-attribute',
+  SET_STYLE_PROPERTY: 'set-style-property',
+  REMOVE_STYLE_PROPERTY: 'remove-style-property',
+  SET_CLASS_NAME: 'set-class-name',
+  ADD_LISTENER: 'add-listener',
+  REPLACE_LISTENER: 'replace-listener',
+  REMOVE_LISTENER: 'remove-listener',
+  SET_PROPERTY: 'set-property',
+  DELETE_PROPERTY: 'delete-property',
+  INSERT_CHILD: 'insert-child',
+  REPLACE_CHILD: 'replace-child',
+  MOVE_CHILD: 'move-child',
+  REMOVE_CHILD: 'remove-child',
+  SET_CONTENT: 'set-content',
+} as const
 
 /*
- * A single change of the virtual and rendered DOM. The fields are set by
- * the factory method of the given patch type.
+ * A single change of the virtual and rendered DOM, applied by Patch.apply().
  */
-class Patch {
-  declare type: symbol
-  declare apply: () => void
-  declare root: WebComponent
-  declare node: VirtualNode
-  declare child: VirtualNode
-  declare parent: VirtualNode
-  declare description: NodeDescription
-  declare prevDescription: NodeDescription
-  declare at: number
-  declare from: number
-  declare to: number
-  declare name: string
-  declare value: unknown
-  declare target: PatchTarget
-  declare isCustom: boolean
-  declare property: string
-  declare className: string
-  declare listener: Listener
-  declare removed: Listener
-  declare added: Listener
-  declare key: string
+type Patch =
+  | { type: 'init-root-component'; root: WebComponent }
+  | {
+      type: 'update-node'
+      node: VirtualNode
+      prevDescription: NodeDescription
+      description: NodeDescription
+    }
+  | {
+      type: 'set-attribute'
+      name: string
+      value: string
+      target: PatchTarget
+      isCustom: boolean
+    }
+  | {
+      type: 'remove-attribute'
+      name: string
+      target: PatchTarget
+      isCustom: boolean
+    }
+  | {
+      type: 'set-data-attribute'
+      name: string
+      value: string
+      target: PatchTarget
+    }
+  | { type: 'remove-data-attribute'; name: string; target: PatchTarget }
+  | {
+      type: 'set-style-property'
+      property: string
+      value: string
+      target: PatchTarget
+    }
+  | { type: 'remove-style-property'; property: string; target: PatchTarget }
+  | { type: 'set-class-name'; className: string; target: PatchTarget }
+  | {
+      type: 'add-listener'
+      name: string
+      listener: Listener
+      target: PatchTarget
+      isCustom: boolean
+    }
+  | {
+      type: 'replace-listener'
+      name: string
+      removed: Listener
+      added: Listener
+      target: PatchTarget
+      isCustom: boolean
+    }
+  | {
+      type: 'remove-listener'
+      name: string
+      listener: Listener
+      target: PatchTarget
+      isCustom: boolean
+    }
+  | { type: 'set-property'; key: string; value: unknown; target: PatchTarget }
+  | { type: 'delete-property'; key: string; target: PatchTarget }
+  | { type: 'insert-child'; node: VirtualNode; at: number; parent: VirtualNode }
+  | {
+      type: 'replace-child'
+      child: VirtualNode
+      node: VirtualNode
+      parent: VirtualNode
+    }
+  | {
+      type: 'move-child'
+      child: VirtualNode
+      from: number
+      to: number
+      parent: VirtualNode
+    }
+  | {
+      type: 'remove-child'
+      child: VirtualNode
+      at: number
+      parent: VirtualNode
+    }
+  | {
+      type: 'set-content'
+      node: VirtualNode
+      child: VirtualNode
+      parent: Component
+    }
 
-  constructor(def: PatchDefinition) {
-    this.type = def.type
-    this.apply = def.apply
-  }
+/* The patch of the given type. */
+type PatchOf<T extends Patch['type']> = Extract<Patch, { type: T }>
 
-  static initRootComponent(root: WebComponent) {
-    const patch = new Patch(INIT_ROOT_COMPONENT)
-    patch.root = root
-    return patch
-  }
+const Patch = {
+  Type,
 
-  static updateNode(node: VirtualNode, description: NodeDescription) {
-    const patch = new Patch(UPDATE_NODE)
-    patch.node = node
-    patch.prevDescription = node.description
-    patch.description = description
-    return patch
-  }
+  /**
+   * Applies the change to the virtual and rendered DOM.
+   */
+  apply(patch: Patch) {
+    switch (patch.type) {
+      case Type.INIT_ROOT_COMPONENT: {
+        const container = patch.root.container
+          ? patch.root.container
+          : patch.root.shadow!
+        container.appendChild(patch.root.content!.ref)
+        return
+      }
+      case Type.UPDATE_NODE:
+        patch.node.description = patch.description
+        return
+      case Type.SET_ATTRIBUTE: {
+        const attr = patch.isCustom
+          ? patch.name
+          : utils.getAttributeName(patch.name)
+        patch.target.ref.setAttribute(attr, patch.value)
+        return
+      }
+      case Type.REMOVE_ATTRIBUTE: {
+        const attr = patch.isCustom
+          ? patch.name
+          : utils.getAttributeName(patch.name)
+        patch.target.ref.removeAttribute(attr)
+        return
+      }
+      case Type.SET_DATA_ATTRIBUTE:
+        patch.target.ref.dataset[patch.name] = patch.value
+        return
+      case Type.REMOVE_DATA_ATTRIBUTE:
+        delete patch.target.ref.dataset[patch.name]
+        return
+      case Type.SET_STYLE_PROPERTY:
+        if (patch.property.startsWith('--')) {
+          patch.target.ref.style.setProperty(patch.property, ` ${patch.value}`)
+        } else {
+          ;(patch.target.ref.style as unknown as StyleMap)[patch.property] =
+            patch.value
+        }
+        return
+      case Type.REMOVE_STYLE_PROPERTY:
+        if (patch.property.startsWith('--')) {
+          patch.target.ref.style.removeProperty(patch.property)
+        } else {
+          ;(patch.target.ref.style as unknown as StyleMap)[patch.property] =
+            null
+        }
+        return
+      case Type.SET_CLASS_NAME:
+        patch.target.ref.className = patch.className
+        return
+      case Type.ADD_LISTENER: {
+        const event = patch.isCustom
+          ? patch.name
+          : utils.getEventName(patch.name)
+        patch.target.ref.addEventListener(event, patch.listener)
+        return
+      }
+      case Type.REPLACE_LISTENER: {
+        const event = patch.isCustom
+          ? patch.name
+          : utils.getEventName(patch.name)
+        patch.target.ref.removeEventListener(event, patch.removed)
+        patch.target.ref.addEventListener(event, patch.added)
+        return
+      }
+      case Type.REMOVE_LISTENER: {
+        const event = patch.isCustom
+          ? patch.name
+          : utils.getEventName(patch.name)
+        patch.target.ref.removeEventListener(event, patch.listener)
+        return
+      }
+      case Type.SET_PROPERTY:
+        ;(patch.target.ref as unknown as PropertyMap)[patch.key] = patch.value
+        return
+      case Type.DELETE_PROPERTY:
+        delete (patch.target.ref as unknown as PropertyMap)[patch.key]
+        return
+      case Type.INSERT_CHILD:
+        patch.parent.insertChild(patch.node, patch.at)
+        return
+      case Type.REPLACE_CHILD:
+        patch.parent.replaceChild(patch.child, patch.node)
+        return
+      case Type.MOVE_CHILD:
+        patch.parent.moveChild(patch.child, patch.from, patch.to)
+        return
+      case Type.REMOVE_CHILD:
+        patch.parent.removeChild(patch.child)
+        return
+      case Type.SET_CONTENT:
+        patch.parent.setContent(patch.node)
+        return
+      default: {
+        // fails to compile when a patch type is not handled above
+        const unsupported: never = patch
+        throw new Error(
+          `Unsupported patch type: ${(unsupported as Patch).type}`,
+        )
+      }
+    }
+  },
 
-  static insertChild(node: VirtualNode, at: number, parent: VirtualNode) {
-    const patch = new Patch(INSERT_CHILD)
-    patch.node = node
-    patch.at = at
-    patch.parent = parent
-    return patch
-  }
+  initRootComponent(root: WebComponent): PatchOf<'init-root-component'> {
+    return { type: Type.INIT_ROOT_COMPONENT, root }
+  },
 
-  static moveChild(
+  updateNode(
+    node: VirtualNode,
+    description: NodeDescription,
+  ): PatchOf<'update-node'> {
+    return {
+      type: Type.UPDATE_NODE,
+      node,
+      prevDescription: node.description,
+      description,
+    }
+  },
+
+  insertChild(
+    node: VirtualNode,
+    at: number,
+    parent: VirtualNode,
+  ): PatchOf<'insert-child'> {
+    return { type: Type.INSERT_CHILD, node, at, parent }
+  },
+
+  moveChild(
     child: VirtualNode,
     from: number,
     to: number,
     parent: VirtualNode,
-  ) {
-    const patch = new Patch(MOVE_CHILD)
-    patch.child = child
-    patch.from = from
-    patch.to = to
-    patch.parent = parent
-    return patch
-  }
+  ): PatchOf<'move-child'> {
+    return { type: Type.MOVE_CHILD, child, from, to, parent }
+  },
 
-  static replaceChild(
+  replaceChild(
     child: VirtualNode,
     node: VirtualNode,
     parent: VirtualNode,
-  ) {
-    const patch = new Patch(REPLACE_CHILD)
-    patch.child = child
-    patch.node = node
-    patch.parent = parent
-    return patch
-  }
+  ): PatchOf<'replace-child'> {
+    return { type: Type.REPLACE_CHILD, child, node, parent }
+  },
 
-  static removeChild(child: VirtualNode, at: number, parent: VirtualNode) {
-    const patch = new Patch(REMOVE_CHILD)
-    patch.child = child
-    patch.at = at
-    patch.parent = parent
-    return patch
-  }
+  removeChild(
+    child: VirtualNode,
+    at: number,
+    parent: VirtualNode,
+  ): PatchOf<'remove-child'> {
+    return { type: Type.REMOVE_CHILD, child, at, parent }
+  },
 
-  static setContent(node: VirtualNode, parent: Component) {
-    const patch = new Patch(SET_CONTENT)
-    patch.node = node
-    patch.child = parent.content!
-    patch.parent = parent
-    return patch
-  }
+  setContent(node: VirtualNode, parent: Component): PatchOf<'set-content'> {
+    return { type: Type.SET_CONTENT, node, child: parent.content!, parent }
+  },
 
-  static setAttribute(
+  setAttribute(
     name: string,
     value: string,
     target: VirtualElement | WebComponent,
     isCustom: boolean,
-  ) {
-    const patch = new Patch(SET_ATTRIBUTE)
-    patch.name = name
-    patch.value = value
-    patch.target = target as PatchTarget
-    patch.isCustom = isCustom
-    return patch
-  }
+  ): PatchOf<'set-attribute'> {
+    return {
+      type: Type.SET_ATTRIBUTE,
+      name,
+      value,
+      target: target as PatchTarget,
+      isCustom,
+    }
+  },
 
-  static removeAttribute(
+  removeAttribute(
     name: string,
     target: VirtualElement | WebComponent,
     isCustom: boolean,
-  ) {
-    const patch = new Patch(REMOVE_ATTRIBUTE)
-    patch.name = name
-    patch.target = target as PatchTarget
-    patch.isCustom = isCustom
-    return patch
-  }
+  ): PatchOf<'remove-attribute'> {
+    return {
+      type: Type.REMOVE_ATTRIBUTE,
+      name,
+      target: target as PatchTarget,
+      isCustom,
+    }
+  },
 
-  static setDataAttribute(name: string, value: string, target: VirtualElement) {
-    const patch = new Patch(SET_DATA_ATTRIBUTE)
-    patch.name = name
-    patch.value = value
-    patch.target = target
-    return patch
-  }
+  setDataAttribute(
+    name: string,
+    value: string,
+    target: VirtualElement,
+  ): PatchOf<'set-data-attribute'> {
+    return { type: Type.SET_DATA_ATTRIBUTE, name, value, target }
+  },
 
-  static removeDataAttribute(name: string, target: VirtualElement) {
-    const patch = new Patch(REMOVE_DATA_ATTRIBUTE)
-    patch.name = name
-    patch.target = target
-    return patch
-  }
+  removeDataAttribute(
+    name: string,
+    target: VirtualElement,
+  ): PatchOf<'remove-data-attribute'> {
+    return { type: Type.REMOVE_DATA_ATTRIBUTE, name, target }
+  },
 
-  static setStyleProperty(
+  setStyleProperty(
     property: string,
     value: string,
     target: VirtualElement,
-  ) {
-    const patch = new Patch(SET_STYLE_PROPERTY)
-    patch.property = property
-    patch.value = value
-    patch.target = target
-    return patch
-  }
+  ): PatchOf<'set-style-property'> {
+    return { type: Type.SET_STYLE_PROPERTY, property, value, target }
+  },
 
-  static removeStyleProperty(property: string, target: VirtualElement) {
-    const patch = new Patch(REMOVE_STYLE_PROPERTY)
-    patch.property = property
-    patch.target = target
-    return patch
-  }
+  removeStyleProperty(
+    property: string,
+    target: VirtualElement,
+  ): PatchOf<'remove-style-property'> {
+    return { type: Type.REMOVE_STYLE_PROPERTY, property, target }
+  },
 
-  static setClassName(className: string, target: VirtualElement) {
-    const patch = new Patch(SET_CLASS_NAME)
-    patch.className = className
-    patch.target = target
-    return patch
-  }
+  setClassName(
+    className: string,
+    target: VirtualElement,
+  ): PatchOf<'set-class-name'> {
+    return { type: Type.SET_CLASS_NAME, className, target }
+  },
 
-  static addListener(
+  addListener(
     name: string,
     listener: Listener,
     target: VirtualElement,
     isCustom: boolean,
-  ) {
-    const patch = new Patch(ADD_LISTENER)
-    patch.name = name
-    patch.listener = listener
-    patch.target = target
-    patch.isCustom = isCustom
-    return patch
-  }
+  ): PatchOf<'add-listener'> {
+    return { type: Type.ADD_LISTENER, name, listener, target, isCustom }
+  },
 
-  static replaceListener(
+  replaceListener(
     name: string,
     removed: Listener,
     added: Listener,
     target: VirtualElement,
     isCustom: boolean,
-  ) {
-    const patch = new Patch(REPLACE_LISTENER)
-    patch.name = name
-    patch.removed = removed
-    patch.added = added
-    patch.target = target
-    patch.isCustom = isCustom
-    return patch
-  }
+  ): PatchOf<'replace-listener'> {
+    return {
+      type: Type.REPLACE_LISTENER,
+      name,
+      removed,
+      added,
+      target,
+      isCustom,
+    }
+  },
 
-  static removeListener(
+  removeListener(
     name: string,
     listener: Listener,
     target: VirtualElement,
     isCustom: boolean,
-  ) {
-    const patch = new Patch(REMOVE_LISTENER)
-    patch.name = name
-    patch.listener = listener
-    patch.target = target
-    patch.isCustom = isCustom
-    return patch
-  }
+  ): PatchOf<'remove-listener'> {
+    return { type: Type.REMOVE_LISTENER, name, listener, target, isCustom }
+  },
 
-  static setProperty(key: string, value: unknown, target: VirtualElement) {
-    const patch = new Patch(SET_PROPERTY)
-    patch.key = key
-    patch.value = value
-    patch.target = target
-    return patch
-  }
+  setProperty(
+    key: string,
+    value: unknown,
+    target: VirtualElement,
+  ): PatchOf<'set-property'> {
+    return { type: Type.SET_PROPERTY, key, value, target }
+  },
 
-  static deleteProperty(key: string, target: VirtualElement) {
-    const patch = new Patch(DELETE_PROPERTY)
-    patch.key = key
-    patch.target = target
-    return patch
-  }
-
-  static Type = PatchTypes
+  deleteProperty(
+    key: string,
+    target: VirtualElement,
+  ): PatchOf<'delete-property'> {
+    return { type: Type.DELETE_PROPERTY, key, target }
+  },
 }
 
 export default Patch

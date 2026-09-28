@@ -32,11 +32,11 @@ describe('Patch component => apply', () => {
     const root = createRootInstance(Root) as AnyComponent
     container = document.createElement('main')
     root.container = container
-    Patch.initRootComponent(root).apply()
+    Patch.apply(Patch.initRootComponent(root))
     let node = null
     if (template) {
       node = createFromTemplate(template, root)
-      Patch.setContent(node, root).apply()
+      Patch.apply(Patch.setContent(node, root))
     }
     return [root, node] as [AnyComponent, T]
   }
@@ -55,7 +55,7 @@ describe('Patch component => apply', () => {
     root.shadow = container as unknown as ShadowRoot
 
     // when
-    Patch.initRootComponent(root).apply()
+    Patch.apply(Patch.initRootComponent(root))
 
     // then
     assert.equal(root.ref.nodeType, Node.COMMENT_NODE)
@@ -76,7 +76,7 @@ describe('Patch component => apply', () => {
       },
     ]) as ComponentDescription
 
-    Patch.updateNode(component, description).apply()
+    Patch.apply(Patch.updateNode(component, description))
 
     // then
     assert.deepEqual(component.description.props, description.props)
@@ -90,7 +90,7 @@ describe('Patch component => apply', () => {
       const component = createFromTemplate<AnyComponent>([Component], root)
 
       // when
-      Patch.setContent(component, root).apply()
+      Patch.apply(Patch.setContent(component, root))
 
       // then
       assert.equal(root.container, container)
@@ -114,7 +114,7 @@ describe('Patch component => apply', () => {
       // given
       const [root] = createRootWith([Subcomponent])
       const commentNode = createComment(root)
-      Patch.setContent(commentNode, root).apply()
+      Patch.apply(Patch.setContent(commentNode, root))
       const component = createFromTemplate<AnyComponent>([Component], root)
 
       // then
@@ -125,7 +125,7 @@ describe('Patch component => apply', () => {
       assert.equal(container.firstChild, root.placeholder.ref)
 
       // when
-      Patch.setContent(component, root).apply()
+      Patch.apply(Patch.setContent(component, root))
 
       // then
       assert.equal(root.container, container)
@@ -175,7 +175,7 @@ describe('Patch component => apply', () => {
       )
 
       // when
-      Patch.setContent(subcomponent, component).apply()
+      Patch.apply(Patch.setContent(subcomponent, component))
 
       // then
       assert.equal(component.content, subcomponent)
@@ -224,7 +224,7 @@ describe('Patch component => apply', () => {
       )
 
       // when
-      Patch.setContent(component, parentComponent).apply()
+      Patch.apply(Patch.setContent(component, parentComponent))
 
       // then
       assert.equal(parentComponent.content, component)
@@ -257,7 +257,7 @@ describe('Patch component => apply', () => {
       )
 
       // when
-      Patch.setContent(component, root).apply()
+      Patch.apply(Patch.setContent(component, root))
 
       // then
       assert.equal(root.container, container)
@@ -300,7 +300,7 @@ describe('Patch component => apply', () => {
       )
 
       // when
-      Patch.setContent(subcomponent, component).apply()
+      Patch.apply(Patch.setContent(subcomponent, component))
 
       // then
       assert.equal(component.content, subcomponent)
@@ -344,7 +344,7 @@ describe('Patch component => apply', () => {
       )
 
       // when
-      Patch.setContent(component, parentComponent).apply()
+      Patch.apply(Patch.setContent(component, parentComponent))
 
       // then
       assert.equal(parentComponent.content, component)
@@ -369,7 +369,7 @@ describe('Patch component => apply', () => {
       const element = createFromTemplate(['div', ['span']], root)
 
       // when
-      Patch.setContent(element, root).apply()
+      Patch.apply(Patch.setContent(element, root))
 
       // then
       assert.equal(root.container, container)
@@ -396,7 +396,7 @@ describe('Patch component => apply', () => {
       const element = createFromTemplate(['div', ['span']], component)
 
       // when
-      Patch.setContent(element, component).apply()
+      Patch.apply(Patch.setContent(element, component))
 
       // then
       assert.equal(root.content, component)
@@ -427,7 +427,7 @@ describe('Patch component => apply', () => {
       const element = createFromTemplate(['div', ['span']], subcomponent)
 
       // when
-      Patch.setContent(element, subcomponent).apply()
+      Patch.apply(Patch.setContent(element, subcomponent))
 
       // then
       assert.equal(element.container, container)
@@ -456,7 +456,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(root)
-      Patch.setContent(placeholder, root).apply()
+      Patch.apply(Patch.setContent(placeholder, root))
 
       // then
       assert(root.placeholder)
@@ -487,7 +487,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(component)
-      Patch.setContent(placeholder, component).apply()
+      Patch.apply(Patch.setContent(placeholder, component))
 
       // then
       assert(root.placeholder)
@@ -519,7 +519,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(subcomponent)
-      Patch.setContent(placeholder, subcomponent).apply()
+      Patch.apply(Patch.setContent(placeholder, subcomponent))
 
       // then
       assert(root.placeholder)
@@ -547,7 +547,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(root)
-      Patch.setContent(placeholder, root).apply()
+      Patch.apply(Patch.setContent(placeholder, root))
 
       // then
       assert(root.placeholder)
@@ -575,7 +575,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(root)
-      Patch.setContent(placeholder, root).apply()
+      Patch.apply(Patch.setContent(placeholder, root))
 
       // then
       assert(root.placeholder)
@@ -604,7 +604,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(component)
-      Patch.setContent(placeholder, component).apply()
+      Patch.apply(Patch.setContent(placeholder, component))
 
       // then
       assert(root.placeholder)
@@ -633,7 +633,7 @@ describe('Patch component => apply', () => {
 
       // when
       const placeholder = createComment(component)
-      Patch.setContent(placeholder, component).apply()
+      Patch.apply(Patch.setContent(placeholder, component))
 
       // then
       assert(root.placeholder)
@@ -659,7 +659,7 @@ describe('Patch component => apply', () => {
       )
 
       // when
-      Patch.setContent(subcomponent, component).apply()
+      Patch.apply(Patch.setContent(subcomponent, component))
 
       // then
       assert.equal(component.content, subcomponent)
@@ -673,7 +673,7 @@ describe('Patch component => apply', () => {
       const span = createFromTemplate(['span'], component)
 
       // when
-      Patch.setContent(span, component).apply()
+      Patch.apply(Patch.setContent(span, component))
 
       // then
       assert.equal(component.content, span)
@@ -693,7 +693,7 @@ describe('Patch component => apply', () => {
       )
 
       // when
-      Patch.setContent(subcomponent, component).apply()
+      Patch.apply(Patch.setContent(subcomponent, component))
 
       // then
       assert.equal(component.content, subcomponent)
@@ -710,7 +710,7 @@ describe('Patch component => apply', () => {
       const div = createFromTemplate(['div'], component)
 
       // when
-      Patch.setContent(div, component).apply()
+      Patch.apply(Patch.setContent(div, component))
 
       // then
       assert.equal(component.content, div)

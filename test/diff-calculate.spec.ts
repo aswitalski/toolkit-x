@@ -36,13 +36,12 @@ describe('Diff => calculate patches', () => {
     }
   }
 
-  /* A patch as inspected by the tests. */
-  type TestPatch = Omit<
-    InstanceType<typeof Patch>,
-    'node' | 'child' | 'description' | 'target'
-  > & {
+  /* A patch as inspected by the tests, with the fields of all patch types. */
+  type TestPatch = Record<string, unknown> & {
+    type: string
     node: AnyNode
     child: AnyNode
+    parent: AnyNode
     description: AnyDescription
     target: AnyNode
   }
