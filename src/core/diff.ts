@@ -410,17 +410,7 @@ class Diff {
       assertUniqueKeys(to)
     }
 
-    const nodeFavoredToMove = sourceNodes.find(
-      node =>
-        (node.description as ComponentDescription).props &&
-        (node.description as ComponentDescription).props!.beingDragged,
-    )
-
-    const moves = Reconciler.calculateMoves(
-      from,
-      to,
-      nodeFavoredToMove && nodeFavoredToMove.key,
-    )
+    const moves = Reconciler.calculateMoves(from, to)
 
     const children = [...sourceNodes]
     for (const move of moves) {

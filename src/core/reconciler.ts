@@ -70,11 +70,7 @@ const Reconciler = {
     return a.key > b.key ? 1 : -1
   },
 
-  calculateMoves(
-    source: string[],
-    target: string[],
-    favoredToMove: string | null = null,
-  ): Moves {
+  calculateMoves(source: string[], target: string[]): Moves {
     const moves: Moves = []
 
     const createItem = function (key: string, index: number): Item {
@@ -166,12 +162,7 @@ const Reconciler = {
     }
 
     const defaultMoves = calculateIndexChanges([...result], target)
-    if (
-      defaultMoves.length > 1 ||
-      (favoredToMove &&
-        defaultMoves.length === 1 &&
-        defaultMoves[0]!.item !== favoredToMove)
-    ) {
+    if (defaultMoves.length > 1) {
       const alternativeMoves = calculateIndexChanges(
         [...result],
         target,
