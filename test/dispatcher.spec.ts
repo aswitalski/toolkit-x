@@ -100,6 +100,7 @@ describe('Dispatcher', () => {
 
     it('stops executing commands queued in an endless cycle', async () => {
       // given
+      const queued: unknown[] = []
       class Root extends toolkit.Root<
         object,
         { endless: boolean; count: number }
@@ -109,7 +110,7 @@ describe('Dispatcher', () => {
         }
         onUpdated() {
           if (this.props.endless) {
-            this.commands.update({ count: this.props.count + 1 })
+            queued.push(this.commands.update({ count: this.props.count + 1 }))
           }
         }
       }
@@ -128,6 +129,45 @@ describe('Dispatcher', () => {
         'Too many cycles updating state in lifecycle methods!',
       )
       expect(dispatcher.queue).toEqual([])
+      // the last queued command is not executed, but still resolves
+      const results = await Promise.all(queued)
+      expect(results.at(-1)).toBe(false)
+      expect(results.slice(0, -1)).toEqual(
+        Array(queued.length - 1).fill(undefined),
+      )
+    })
+
+    it('resolves the queued commands not executed when one throws', async () => {
+      // given
+      class Root extends toolkit.Root<object, { value: number }> {
+        getInitialState() {
+          return { value: 1 }
+        }
+        render(): Template {
+          if (this.props.value < 0) {
+            throw new Error('Negative value')
+          }
+          return ['span', String(this.props.value)]
+        }
+      }
+      const root = await createWebComponent(Root)
+      const { dispatcher } = root
+      dispatcher.queueIncoming()
+      const executed = root.commands.update({ value: 2 })
+      const failing = root.commands.update({ value: -1 })
+      const skipped = root.commands.update({ value: 3 })
+      dispatcher.executeIncoming()
+      const tasks = dispatcher.queue.splice(0)
+
+      // when
+      const flush = () => dispatcher.flush(tasks, root)
+
+      // then
+      expect(flush).toThrow('Negative value')
+      await expect(executed).resolves.toBeUndefined()
+      await expect(failing).resolves.toBe(false)
+      await expect(skipped).resolves.toBe(false)
+      expect(root.state).toEqual({ value: 2 })
     })
 
     it('keeps the state when rendering it fails', async () => {

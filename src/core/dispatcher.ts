@@ -163,19 +163,31 @@ class Dispatcher {
    * these commands queue in turn, until there are none left.
    */
   flush(tasks: Command[], root: WebComponent) {
-    for (let cycle = 1; tasks.length; cycle++) {
-      if (cycle > MAX_FLUSH_CYCLES) {
-        this.queue.length = 0
-        throw new Error('Too many cycles updating state in lifecycle methods!')
-      }
-      for (const command of tasks) {
-        // the root can be destroyed before the queued commands are executed
-        if (this.mode !== Mode.IGNORE) {
-          this.execute(command, root)
+    let command: Command | undefined
+    try {
+      for (let cycle = 1; tasks.length; cycle++) {
+        if (cycle > MAX_FLUSH_CYCLES) {
+          throw new Error(
+            'Too many cycles updating state in lifecycle methods!',
+          )
         }
-        command.done!()
+        while ((command = tasks.shift())) {
+          // the root can be destroyed before the queued commands are executed
+          if (this.mode === Mode.IGNORE) {
+            command.done!(false)
+            continue
+          }
+          this.execute(command, root)
+          command.done!()
+        }
+        tasks = this.queue.splice(0)
       }
-      tasks = this.queue.splice(0)
+    } catch (error) {
+      // the commands not executed resolve as ignored ones return
+      for (const pending of [command, ...tasks, ...this.queue.splice(0)]) {
+        pending?.done!(false)
+      }
+      throw error
     }
   }
 }
