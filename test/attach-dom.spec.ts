@@ -1,9 +1,9 @@
-import toolkit, { type Template } from '../src/index.js'
+import toolkit from '../src/index.js'
+import Template from '../src/core/template.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
 import { type AnyNode, createRootInstance } from './helpers.js'
 
 describe('Virtual Element => Attach DOM', () => {
-  const { Template, VirtualDOM } = toolkit
-
   class Root extends toolkit.Root {
     render(): Template {
       return null

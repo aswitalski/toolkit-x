@@ -1,4 +1,5 @@
-import toolkit, { type Template, type VirtualElement } from '../../src/index.js'
+import toolkit, { type Template } from '../../src/index.js'
+import { type VirtualElement } from '../../src/core/nodes.js'
 
 /* A pseudo-random number generator, repeating the cases for a seed. */
 const createRandom = (seed: number) => () => {

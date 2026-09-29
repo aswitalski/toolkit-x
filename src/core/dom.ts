@@ -1,5 +1,5 @@
 import type { ElementDescription, Listener } from './description.js'
-import utils from './utils.js'
+import { getAttributeName, getEventName } from './utils.js'
 
 /* Style and properties are set by name, as by the original assignments. */
 type StyleMap = Record<string, string | null>
@@ -37,12 +37,12 @@ const DOM = {
     value: string,
     isCustom: boolean,
   ) {
-    const attr = isCustom ? name : utils.getAttributeName(name)
+    const attr = isCustom ? name : getAttributeName(name)
     element.setAttribute(attr, value)
   },
 
   removeAttribute(element: HTMLElement, name: string, isCustom: boolean) {
-    const attr = isCustom ? name : utils.getAttributeName(name)
+    const attr = isCustom ? name : getAttributeName(name)
     element.removeAttribute(attr)
   },
 
@@ -60,7 +60,7 @@ const DOM = {
     listener: Listener,
     isCustom: boolean,
   ) {
-    const event = isCustom ? name : utils.getEventName(name)
+    const event = isCustom ? name : getEventName(name)
     element.addEventListener(event, listener)
   },
 
@@ -70,7 +70,7 @@ const DOM = {
     listener: Listener,
     isCustom: boolean,
   ) {
-    const event = isCustom ? name : utils.getEventName(name)
+    const event = isCustom ? name : getEventName(name)
     element.removeEventListener(event, listener)
   },
 

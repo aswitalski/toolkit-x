@@ -1,4 +1,9 @@
-import toolkit, { type Template, type VirtualNode } from '../src/index.js'
+import toolkit from '../src/index.js'
+import Description from '../src/core/description.js'
+import Patch from '../src/core/patch.js'
+import Template from '../src/core/template.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
+import { type VirtualNode } from '../src/core/nodes.js'
 import type { ComponentDescription } from '../src/core/description.js'
 import {
   type AnyComponent,
@@ -8,8 +13,6 @@ import {
 } from './helpers.js'
 
 describe('Patch component => apply', () => {
-  const { Description, Patch, Template, VirtualDOM } = toolkit
-
   let container: HTMLElement
 
   class Root extends toolkit.Root {

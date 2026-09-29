@@ -1,5 +1,10 @@
 import toolkit from '../src/index.js'
-import { invariant } from '../src/core/utils.js'
+import {
+  getAttributeName,
+  getEventName,
+  invariant,
+  lowerDash,
+} from '../src/core/utils.js'
 
 describe('Utils', () => {
   beforeEach(() => {
@@ -10,16 +15,7 @@ describe('Utils', () => {
     vi.restoreAllMocks()
   })
 
-  const {
-    debounce,
-    throttle,
-    lowerDash,
-    getAttributeName,
-    getEventName,
-    addDataPrefix,
-    createUUID,
-    isSupportedAttribute,
-  } = toolkit.utils
+  const { debounce, throttle, createUUID } = toolkit.utils
 
   describe('invariant', () => {
     it('throws when the condition is not met', () => {
@@ -226,56 +222,10 @@ describe('Utils', () => {
     })
   })
 
-  describe('add data prefix', () => {
-    const convertions: [string, string][] = [
-      ['reactorId', 'dataReactorId'],
-      ['someCustomAttribute', 'dataSomeCustomAttribute'],
-      ['name', 'dataName'],
-    ]
-
-    convertions.forEach(([from, to]) => {
-      it(`converts "${from}" to "${to}"`, () => {
-        assert.equal(addDataPrefix(from), to)
-      })
-    })
-  })
-
   describe('create UUID', () => {
     it('creates valid UUID', () => {
       const uuid = createUUID()
       assert.equal(/........-....-....-............/.test(uuid), true)
-    })
-  })
-
-  describe('is supported attribute', () => {
-    it('returns true for standard attributes', () => {
-      assert(isSupportedAttribute('name'))
-      assert(isSupportedAttribute('id'))
-      assert(isSupportedAttribute('tabIndex'))
-    })
-
-    it('returns true for "key" attribute', () => {
-      assert.equal(isSupportedAttribute('key'), true)
-    })
-
-    it('returns true for "class" attribute', () => {
-      assert.equal(isSupportedAttribute('class'), true)
-    })
-
-    it('returns true for "style" attribute', () => {
-      assert.equal(isSupportedAttribute('style'), true)
-    })
-
-    it('returns true for "dataset" attribute', () => {
-      assert.equal(isSupportedAttribute('dataset'), true)
-    })
-
-    it('returns true for "properties" attribute', () => {
-      assert.equal(isSupportedAttribute('properties'), true)
-    })
-
-    it('returns false for invalid attribute', () => {
-      assert.equal(isSupportedAttribute('invalid'), false)
     })
   })
 })

@@ -1,4 +1,7 @@
-import toolkit, { type ComponentClass, type Template } from '../src/index.js'
+import toolkit, { type ComponentClass } from '../src/index.js'
+import Lifecycle from '../src/core/lifecycle.js'
+import Patch from '../src/core/patch.js'
+import Template from '../src/core/template.js'
 import {
   type AnyElement,
   type AnyNode,
@@ -7,8 +10,6 @@ import {
 } from './helpers.js'
 
 describe('Lifecycle', () => {
-  const { Lifecycle, Patch } = toolkit
-
   const spy = vi.fn<(method: string, sandbox: object, props?: object) => void>()
 
   class Root extends toolkit.Root {
@@ -380,7 +381,7 @@ describe('Lifecycle', () => {
       const updatedProps = {
         test: 'test',
       }
-      const description = toolkit.Template.describe([Component, updatedProps])!
+      const description = Template.describe([Component, updatedProps])!
 
       const patches = [Patch.updateNode(component, description)]
 
@@ -409,7 +410,7 @@ describe('Lifecycle', () => {
       const updatedProps = {
         foo: 'bar',
       }
-      const description = toolkit.Template.describe([Component, updatedProps])!
+      const description = Template.describe([Component, updatedProps])!
       const patches = [Patch.updateNode(component, description)]
 
       // when

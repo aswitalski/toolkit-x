@@ -1,9 +1,10 @@
 import toolkit, { type Template } from '../src/index.js'
+import Description from '../src/core/description.js'
+import Patch from '../src/core/patch.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
 import { type AnyElement, createFromTemplate } from './helpers.js'
 
 describe('Patch element => apply', () => {
-  const { Patch } = toolkit
-
   /* Reads a property set directly on the DOM element. */
   const getProperty = (element: AnyElement, name: string): unknown =>
     Reflect.get(element.ref, name)
@@ -707,8 +708,6 @@ describe('Patch element => apply', () => {
     assert.equal(element.ref.textContent, 'one')
 
     // when
-
-    const { Description, VirtualDOM } = toolkit
 
     const two = VirtualDOM.createFromDescription(
       new Description.TextDescription('two'),

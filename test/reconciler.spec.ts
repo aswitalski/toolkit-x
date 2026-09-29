@@ -1,7 +1,6 @@
-import toolkit from '../src/index.js'
+import Reconciler from '../src/core/reconciler.js'
 
 describe('Reconciler', () => {
-  const Reconciler = toolkit.Reconciler
   const MoveName = Reconciler.Move.Name
 
   type Move = InstanceType<typeof Reconciler.Move<string>>

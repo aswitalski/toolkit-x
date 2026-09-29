@@ -1,5 +1,6 @@
 import type { ComponentElement } from '../src/core/custom-element.js'
 import toolkit, { type Template } from '../src/index.js'
+import Plugins from '../src/core/plugins.js'
 
 describe('Plugins', () => {
   const plugin = {
@@ -69,7 +70,7 @@ describe('Plugins', () => {
       const root = await createRoot('plugin-instance-root')
       const element = root.ref as ComponentElement
       const install = vi.fn().mockReturnValue(toolkit.noop)
-      const plugin = new toolkit.Plugins.Plugin({
+      const plugin = new Plugins.Plugin({
         name: 'instance',
         install,
       })
@@ -88,7 +89,7 @@ describe('Plugins', () => {
       const element = root.ref as ComponentElement
       const uninstall = vi.fn()
       const install = vi.fn().mockReturnValue(uninstall)
-      const plugin = new toolkit.Plugins.Plugin({
+      const plugin = new Plugins.Plugin({
         name: 'reinstalled',
         install,
       })

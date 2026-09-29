@@ -1,8 +1,7 @@
 import toolkit from '../src/index.js'
+import Template from '../src/core/template.js'
 
 describe('Template.describe(template)', () => {
-  const { Template } = toolkit
-
   const onClick = () => {}
 
   class Component extends toolkit.Component {}

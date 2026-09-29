@@ -1,5 +1,3 @@
-import Browser from './browser.js'
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any[]) => unknown
 
@@ -89,9 +87,6 @@ const debounce = <T extends AnyFunction>(
   }
 }
 
-const addDataPrefix = (attr: string) =>
-  `data${attr[0]!.toUpperCase()}${attr.slice(1)}`
-
 const createUUID = () => {
   const s4 = () =>
     Math.floor((1 + Math.random()) * 0x10000)
@@ -100,10 +95,10 @@ const createUUID = () => {
   return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`
 }
 
-const lowerDash = (name: string) =>
+export const lowerDash = (name: string) =>
   name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 
-const getAttributeName = (key: string) => {
+export const getAttributeName = (key: string) => {
   if (key === 'acceptCharset' || key === 'httpEquiv') {
     return lowerDash(key)
   } else if (key.startsWith('aria')) {
@@ -112,16 +107,8 @@ const getAttributeName = (key: string) => {
   return key.toLowerCase()
 }
 
-const getEventName = (key: string) =>
+export const getEventName = (key: string) =>
   key === 'onDoubleClick' ? 'dblclick' : key.slice(2).toLowerCase()
-
-const isSpecialProperty = (prop: string) =>
-  ['key', 'class', 'style', 'dataset', 'properties'].includes(prop)
-
-const isSupportedAttribute = (attr: string) =>
-  isSpecialProperty(attr) ||
-  Browser.isAttributeSupported(attr) ||
-  Browser.isEventSupported(attr)
 
 const postRender = (fn: FrameRequestCallback) => {
   // since Chromium 64 there are some problems with animations not being
@@ -134,7 +121,7 @@ const postRender = (fn: FrameRequestCallback) => {
   /* eslint-enable prefer-arrow-callback */
 }
 
-const deepFreeze = <T>(obj: T): T => {
+export const deepFreeze = <T>(obj: T): T => {
   if (obj === null || typeof obj !== 'object' || Object.isFrozen(obj)) {
     // functions are intentionally not frozen
     return obj
@@ -146,18 +133,12 @@ const deepFreeze = <T>(obj: T): T => {
   return obj
 }
 
+/* The helpers of the public API, the others are used internally. */
 const Utils = {
   throttle,
   debounce,
-  addDataPrefix,
-  lowerDash,
-  getAttributeName,
-  getEventName,
   createUUID,
-  isSupportedAttribute,
-  isSpecialProperty,
   postRender,
-  deepFreeze,
 }
 
 export default Utils

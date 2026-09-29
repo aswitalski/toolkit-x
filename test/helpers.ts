@@ -1,12 +1,8 @@
 /* Helpers and types for inspecting virtual DOM nodes in the tests. */
-import {
-  Component,
-  Template,
-  type VirtualElement,
-  type VirtualNode,
-  VirtualDOM,
-  WebComponent,
-} from '../src/index.js'
+import { Component, WebComponent } from '../src/index.js'
+import type { VirtualElement, VirtualNode } from '../src/core/nodes.js'
+import Template from '../src/core/template.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
 import type {
   ComponentDescription,
   ElementDescription,

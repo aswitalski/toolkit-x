@@ -10,7 +10,7 @@ import {
 } from './description.js'
 import { Component, type ComponentClass } from './nodes.js'
 import { runtime } from './runtime.js'
-import utils from './utils.js'
+import { deepFreeze, lowerDash } from './utils.js'
 
 export type ItemType =
   | 'component'
@@ -102,7 +102,7 @@ const Template = {
       }
 
       if (runtime().isDebug()) {
-        utils.deepFreeze(description)
+        deepFreeze(description)
       }
       return description
     }
@@ -445,7 +445,7 @@ const Template = {
     for (const [key, value] of Object.entries(object)) {
       const attr = this.getAttributeValue(value, /*= allowEmpty */ true)
       if (isDefined(attr)) {
-        const name = forComponent ? utils.lowerDash(key) : key
+        const name = forComponent ? lowerDash(key) : key
         attrs[name] = attr
       }
     }

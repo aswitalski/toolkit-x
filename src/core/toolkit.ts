@@ -18,19 +18,88 @@ export interface Options {
   plugins?: PluginManifest[]
 }
 
+/*
+ * The state used by the core modules through the runtime, kept out of
+ * the public Toolkit instance.
+ */
+
+/* The root components rendered in containers, tracking their subroots. */
+const roots = new Set<WebComponent>()
+
+/* The plugins configured for all root components. */
+let plugins: Plugins | null = null
+
 /* Function to Component mapping. */
 const pureComponentClassRegistry = new Map<PureComponent, ComponentClass>()
 
+const createPlugins = (manifests: PluginManifest[] = []): Plugins => {
+  const plugins = new Plugins(null)
+  for (const manifest of manifests) {
+    plugins.register(manifest)
+  }
+  return plugins
+}
+
+/**
+ * Returns a PureComponent class rendering the template
+ * provided by the specified function.
+ */
+const resolvePureComponentClass = (fn: PureComponent): ComponentClass => {
+  let ComponentClass = pureComponentClassRegistry.get(fn)
+  if (ComponentClass) {
+    return ComponentClass
+  }
+  ComponentClass = class PureComponent extends Component {
+    static renderer = fn
+
+    render(): RenderResult {
+      // the props type of a pure component is not known here
+      return fn.call(this, this.props as never)
+    }
+  }
+  pureComponentClassRegistry.set(fn, ComponentClass)
+  return ComponentClass
+}
+
+/**
+ * Returns resolved Component class.
+ */
+const resolveComponentClass = (
+  component: unknown,
+  type: ItemType,
+): ComponentClass => {
+  switch (type) {
+    case 'component':
+      return component as ComponentClass
+    case 'function':
+      return resolvePureComponentClass(component as PureComponent)
+    default:
+      throw new Error(`Unsupported component type: ${type}`)
+  }
+}
+
+const track = (root: WebComponent) => {
+  if (root.parentNode) {
+    const parentRootNode = root.parentNode.rootNode
+    parentRootNode.subroots.add(root)
+    root.stopTracking = () => {
+      parentRootNode.subroots.delete(root)
+    }
+  } else {
+    roots.add(root)
+    root.stopTracking = () => {
+      roots.delete(root)
+    }
+  }
+}
+
 class Toolkit {
-  declare roots: Set<WebComponent>
   declare settings: Settings | null
-  declare plugins: Plugins | null
   declare ready: Promise<boolean>
   declare assert: (condition: unknown, message?: string) => void;
   declare [INIT]: (value: boolean) => void
 
   constructor() {
-    this.roots = new Set()
     this.settings = null
     this.ready = new Promise(resolve => {
       this[INIT] = resolve
@@ -43,7 +112,7 @@ class Toolkit {
    */
   async configure(options: Options) {
     this.settings = Object.freeze({ debug: options.debug || false })
-    this.plugins = this.createPlugins(options.plugins)
+    plugins = createPlugins(options.plugins)
     this[INIT](true)
   }
 
@@ -52,9 +121,9 @@ class Toolkit {
    * will require new configuration to be provided first.
    */
   reset() {
-    this.plugins?.destroy()
-    this.plugins = null
-    this.roots.clear()
+    plugins?.destroy()
+    plugins = null
+    roots.clear()
     this.settings = null
     pureComponentClassRegistry.clear()
     Sandbox.clearPluginMethods()
@@ -63,67 +132,10 @@ class Toolkit {
     })
   }
 
-  createPlugins(manifests: PluginManifest[] = []): Plugins {
-    const plugins = new Plugins(null)
-    for (const manifest of manifests) {
-      plugins.register(manifest)
-    }
-    return plugins
-  }
-
-  /**
-   * Returns resolved Component class.
-   */
-  resolveComponentClass(component: unknown, type: ItemType): ComponentClass {
-    switch (type) {
-      case 'component':
-        return component as ComponentClass
-      case 'function':
-        return this.resolvePureComponentClass(component as PureComponent)
-      default:
-        throw new Error(`Unsupported component type: ${type}`)
-    }
-  }
-
-  /**
-   * Returns a PureComponent class rendering the template
-   * provided by the specified function.
-   */
-  resolvePureComponentClass(fn: PureComponent): ComponentClass {
-    let ComponentClass = pureComponentClassRegistry.get(fn)
-    if (ComponentClass) {
-      return ComponentClass
-    }
-    ComponentClass = class PureComponent extends Component {
-      static renderer = fn
-
-      render(): RenderResult {
-        // the props type of a pure component is not known here
-        return fn.call(this, this.props as never)
-      }
-    }
-    pureComponentClassRegistry.set(fn, ComponentClass)
-    return ComponentClass
-  }
-
-  track(root: WebComponent) {
-    if (root.parentNode) {
-      const parentRootNode = root.parentNode.rootNode
-      parentRootNode.subroots.add(root)
-      root.stopTracking = () => {
-        parentRootNode.subroots.delete(root)
-      }
-    } else {
-      this.roots.add(root)
-      root.stopTracking = () => {
-        this.roots.delete(root)
-      }
-    }
-  }
-
+  /* The rendered root components, with their subroots. */
   get tracked(): WebComponent[] {
     const tracked: WebComponent[] = []
-    for (const root of this.roots) {
+    for (const root of roots) {
       tracked.push(root, ...root.tracked)
     }
     return tracked
@@ -164,6 +176,17 @@ class Toolkit {
 /* The Toolkit singleton, exposed globally as opr.Toolkit. */
 export const toolkit = new Toolkit()
 
-provideRuntime(toolkit)
+// asserts, debug mode and warnings are read from the instance, which
+// can be configured, e.g. with the assert function throwing in tests
+provideRuntime({
+  get plugins() {
+    return plugins
+  },
+  assert: (condition, message) => toolkit.assert(condition, message),
+  isDebug: () => toolkit.isDebug(),
+  warn: (...messages) => toolkit.warn(...messages),
+  track,
+  resolveComponentClass,
+})
 
 export default Toolkit

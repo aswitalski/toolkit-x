@@ -1,5 +1,10 @@
 import type { NodeDescription } from '../src/core/description.js'
-import toolkit, { type Template, type VirtualNode } from '../src/index.js'
+import toolkit from '../src/index.js'
+import Diff from '../src/core/diff.js'
+import Patch from '../src/core/patch.js'
+import Template from '../src/core/template.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
+import { type VirtualNode } from '../src/core/nodes.js'
 import {
   type AnyComponent,
   type AnyDescription,
@@ -9,8 +14,6 @@ import {
 } from './helpers.js'
 
 describe('Diff => calculate patches', () => {
-  const { Diff, Patch, Template, VirtualDOM } = toolkit
-
   class Root extends toolkit.Root {
     render(): Template {
       return null
@@ -57,7 +60,7 @@ describe('Diff => calculate patches', () => {
   }
 
   const assertUpdatesNode = (patch: TestPatch, node: VirtualNode) => {
-    assert.equal(patch.type, toolkit.Patch.Type.UPDATE_NODE)
+    assert.equal(patch.type, Patch.Type.UPDATE_NODE)
     assert.equal(patch.node, node)
   }
 

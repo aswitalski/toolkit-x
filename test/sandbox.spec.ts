@@ -1,9 +1,8 @@
 import toolkit, { type Component } from '../src/index.js'
+import Sandbox from '../src/core/sandbox.js'
 import { createComponent, createFromTemplate, createRoot } from './helpers.js'
 
 describe('Sandbox', () => {
-  const Sandbox = toolkit.Sandbox
-
   /* The sandbox with the component methods and arbitrary properties. */
   const create = <T extends object>(component: T) =>
     Sandbox.create(component as unknown as Component) as ReturnType<

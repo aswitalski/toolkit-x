@@ -1,9 +1,8 @@
 import toolkit from '../src/index.js'
+import Template from '../src/core/template.js'
 import { type AnyDescription } from './helpers.js'
 
 describe('Template => describe', () => {
-  const Template = toolkit.Template
-
   /* Describes a template expected to produce a node. */
   const describeNode = (template: unknown) =>
     Template.describe(template) as AnyDescription

@@ -1,9 +1,9 @@
-import toolkit, { type ComponentType, type Template } from '../src/index.js'
+import toolkit, { type ComponentType } from '../src/index.js'
+import Template from '../src/core/template.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
 import { type AnyNode } from './helpers.js'
 
 describe('Virtual DOM', () => {
-  const { VirtualDOM, Template } = toolkit
-
   const render = (ComponentClass: ComponentType, props: object = {}) => {
     const description = Template.describe([ComponentClass, props])
     return VirtualDOM.createFromDescription(description) as AnyNode

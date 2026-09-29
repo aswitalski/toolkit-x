@@ -1,8 +1,6 @@
-import toolkit from '../src/index.js'
+import Diff from '../src/core/diff.js'
 
 describe('Diff => deep equal', () => {
-  const Diff = toolkit.Diff
-
   describe('not equal', () => {
     const notEqual: [unknown, unknown, string?, string?][] = [
       [undefined, null],

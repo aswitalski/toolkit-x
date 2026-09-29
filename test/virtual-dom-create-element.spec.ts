@@ -1,9 +1,9 @@
-import toolkit from '../src/index.js'
+import Template from '../src/core/template.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
+import { VirtualElement } from '../src/core/nodes.js'
 import { type AnyNode, createFromTemplate } from './helpers.js'
 
 describe('Virtual DOM => create element', () => {
-  const { VirtualElement, VirtualDOM, Template } = toolkit
-
   describe('=> create from template', () => {
     it('supports nested markup', () => {
       // given

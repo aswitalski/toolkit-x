@@ -1,9 +1,7 @@
 import type { ElementDescription } from '../src/core/description.js'
-import toolkit from '../src/index.js'
+import Template from '../src/core/template.js'
 
 describe('Template', () => {
-  const Template = toolkit.Template
-
   describe('get class name', () => {
     it('supports strings', () => {
       // given

@@ -1,8 +1,9 @@
 import toolkit from '../src/index.js'
+import Description from '../src/core/description.js'
+import Template from '../src/core/template.js'
 
 describe('Description', () => {
-  const Template = toolkit.Template
-  const { ComponentDescription, ElementDescription } = toolkit.Description
+  const { ComponentDescription, ElementDescription } = Description
 
   describe('is compatible', () => {
     it('returns false for different types', () => {

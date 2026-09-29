@@ -131,9 +131,19 @@ export const render = (container: Element) =>
 
 export { FirstChild, Misspelled }
 
-// The Toolkit instance exposes the modules
+// The Toolkit instance exposes the classes and helpers, not the internals
 
-export const description = toolkit.Template.describe(['div', 'text'])
+export class SomeService extends toolkit.Service {
+  static events = ['change']
+}
+export const throttled = toolkit.utils.throttle(() => {}, 100)
+export const classes = [toolkit.Component, toolkit.WebComponent]
 
-// @ts-expect-error unknown modules
-export const unknownModule = toolkit.Templates
+// @ts-expect-error internal modules
+export const templateModule = toolkit.Template
+
+// @ts-expect-error internal modules
+export const diffModule = toolkit.Diff
+
+// @ts-expect-error internal helpers
+export const attributeName = toolkit.utils.getAttributeName

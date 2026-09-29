@@ -1,9 +1,6 @@
 import type { ComponentElement } from '../../src/core/custom-element.js'
-import toolkit, {
-  type Template,
-  type VirtualElement,
-  type WebComponent,
-} from '../../src/index.js'
+import toolkit, { type Template, type WebComponent } from '../../src/index.js'
+import { type VirtualElement } from '../../src/core/nodes.js'
 
 describe('Custom element', () => {
   let container: HTMLElement

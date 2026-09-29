@@ -1,8 +1,7 @@
 import toolkit, { type Props } from '../src/index.js'
+import Template from '../src/core/template.js'
 
 describe('Template => normalize props', () => {
-  const { Template } = toolkit
-
   const createComponentClass = (defaultProps?: Props) =>
     class Component extends toolkit.Component {
       static defaultProps = defaultProps

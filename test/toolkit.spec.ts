@@ -1,7 +1,57 @@
 import toolkit, { type Template } from '../src/index.js'
+import Sandbox from '../src/core/sandbox.js'
 import { createFromTemplate, createRootInstance } from './helpers.js'
 
 describe('Toolkit', () => {
+  it('exposes only the public API', async () => {
+    // given
+    const index = await import('../src/index.js')
+    // the members of the instance and its prototype chain
+    const members = new Set<string>()
+    for (
+      let object: object | null = toolkit;
+      object && object !== Object.prototype;
+      object = Object.getPrototypeOf(object) as object | null
+    ) {
+      Object.getOwnPropertyNames(object).forEach(name => members.add(name))
+    }
+    members.delete('constructor')
+
+    // then
+    assert.deepEqual(Object.keys(index).sort(), [
+      'Component',
+      'Root',
+      'Service',
+      'WebComponent',
+      'default',
+      'utils',
+    ])
+    assert.deepEqual(Object.keys(toolkit.utils).sort(), [
+      'createUUID',
+      'debounce',
+      'postRender',
+      'throttle',
+    ])
+    assert.deepEqual([...members].sort(), [
+      'Component',
+      'Root',
+      'Service',
+      'WebComponent',
+      'assert',
+      'configure',
+      'createRoot',
+      'isDebug',
+      'noop',
+      'ready',
+      'render',
+      'reset',
+      'settings',
+      'tracked',
+      'utils',
+      'warn',
+    ])
+  })
+
   it('calls lifecycle methods in proper order', async () => {
     // given
     const lifecycle: string[] = []
@@ -110,7 +160,7 @@ describe('Toolkit', () => {
     Object.assign(root, { getValue: 'root value' })
     const component = createFromTemplate([Component], root)
     const sandbox = component.sandbox as unknown as Record<string, unknown>
-    toolkit.Sandbox.registerPluginMethod('getValue')
+    Sandbox.registerPluginMethod('getValue')
 
     // then
     assert.equal(sandbox.getValue, 'root value')

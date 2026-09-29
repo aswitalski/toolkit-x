@@ -1,64 +1,28 @@
-import Browser from './core/browser.js'
-import Description from './core/description.js'
-import Diff from './core/diff.js'
-import Dispatcher from './core/dispatcher.js'
-import Lifecycle from './core/lifecycle.js'
-import nodes from './core/nodes.js'
-import Patch from './core/patch.js'
-import Plugins from './core/plugins.js'
-import Reconciler from './core/reconciler.js'
-import Renderer from './core/renderer.js'
-import Sandbox from './core/sandbox.js'
+import { Component, Root, WebComponent } from './core/nodes.js'
 import Service from './core/service.js'
-import Template from './core/template.js'
 import Toolkit, { toolkit } from './core/toolkit.js'
 import utils from './core/utils.js'
-import VirtualDOM from './core/virtual-dom.js'
 
-/* The modules and node classes available on the Toolkit instance. */
-type ToolkitModules = typeof nodes & {
-  Browser: typeof Browser
-  Description: typeof Description
-  Diff: typeof Diff
-  Dispatcher: typeof Dispatcher
-  Lifecycle: typeof Lifecycle
-  Patch: typeof Patch
-  Plugins: typeof Plugins
-  Reconciler: typeof Reconciler
-  Renderer: typeof Renderer
-  Sandbox: typeof Sandbox
+/* The classes and helpers available on the Toolkit instance. */
+type ToolkitClasses = {
+  Component: typeof Component
+  WebComponent: typeof WebComponent
+  Root: typeof Root
   Service: typeof Service
-  Template: typeof Template
-  VirtualDOM: typeof VirtualDOM
   utils: typeof utils
   noop: () => void
 }
 
-Object.assign(Toolkit.prototype, nodes, {
-  Browser,
-  Description,
-  Diff,
-  Dispatcher,
-  Lifecycle,
-  Patch,
-  Plugins,
-  Reconciler,
-  Renderer,
-  Sandbox,
-  Service,
-  Template,
-  VirtualDOM,
-  utils,
-  noop: () => {},
-})
-
-export {
+const classes: ToolkitClasses = {
   Component,
   WebComponent,
   Root,
-  VirtualElement,
-  VirtualNode,
-} from './core/nodes.js'
+  Service,
+  utils,
+  noop: () => {},
+}
+
+Object.assign(Toolkit.prototype, classes)
 
 export type {
   AttributeValue,
@@ -74,6 +38,7 @@ export type {
   RenderResult,
   Style,
   TagName,
+  Template,
 } from './core/bragi.js'
 export type { AttributeName, EventName } from './core/browser.js'
 export type { Props } from './core/description.js'
@@ -89,25 +54,9 @@ export type { PluginManifest, PluginSandbox } from './core/plugins.js'
 export type { Update } from './core/renderer.js'
 export type { Options, Settings } from './core/toolkit.js'
 
-export {
-  Browser,
-  Description,
-  Diff,
-  Dispatcher,
-  Lifecycle,
-  Patch,
-  Plugins,
-  Reconciler,
-  Renderer,
-  Sandbox,
-  Service,
-  Template,
-  Toolkit,
-  VirtualDOM,
-  utils,
-}
+export { Component, Root, Service, WebComponent, utils }
 
-/* The Toolkit instance, with the modules and node classes assigned above. */
-export type ToolkitAPI = Toolkit & ToolkitModules
+/* The Toolkit instance, with the classes and helpers assigned above. */
+export type ToolkitAPI = Toolkit & ToolkitClasses
 
 export default toolkit as ToolkitAPI

@@ -1,4 +1,8 @@
-import toolkit, { type Template, type VirtualNode } from '../src/index.js'
+import toolkit from '../src/index.js'
+import Description from '../src/core/description.js'
+import Template from '../src/core/template.js'
+import VirtualDOM from '../src/core/virtual-dom.js'
+import { Comment, type VirtualNode } from '../src/core/nodes.js'
 import {
   type AnyNode,
   createFromTemplate,
@@ -6,8 +10,6 @@ import {
 } from './helpers.js'
 
 describe('Nodes', () => {
-  const { VirtualDOM, Template } = toolkit
-
   class Root extends toolkit.Root {
     render(): Template {
       return null
@@ -55,12 +57,12 @@ describe('Nodes', () => {
       parentNode,
     ) as AnyNode
 
-  const { ComponentDescription, CommentDescription } = toolkit.Description
+  const { ComponentDescription, CommentDescription } = Description
   const component = new toolkit.Component(
     new ComponentDescription(toolkit.Component),
   )
   const element = createElement('section')
-  const comment = new toolkit.Comment(new CommentDescription('Dummy'))
+  const comment = new Comment(new CommentDescription('Dummy'))
 
   describe('get node type', () => {
     it('returns "root" for a root', () => {

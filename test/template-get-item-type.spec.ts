@@ -1,9 +1,8 @@
 import toolkit from '../src/index.js'
+import Template from '../src/core/template.js'
 import { createFromTemplate } from './helpers.js'
 
 describe('Template => get item type', () => {
-  const { Template } = toolkit
-
   it('returns "string" for a string', () => {
     assert.equal(Template.getItemType('foo'), 'string')
   })
