@@ -57,6 +57,21 @@ describe('DOM', () => {
       assert.equal(element.getAttribute('ariaLabel'), 'custom')
       expect(listener).toHaveBeenCalledTimes(2)
     })
+
+    it('maps the DOM names', () => {
+      // given
+      const element = document.createElement('label')
+      const listener = vi.fn()
+
+      // when
+      DOM.setAttribute(element, 'htmlFor', 'name', false)
+      DOM.addListener(element, 'onpointerdown', listener, false)
+      element.dispatchEvent(new Event('pointerdown'))
+
+      // then
+      assert.equal(element.getAttribute('for'), 'name')
+      expect(listener).toHaveBeenCalledOnce()
+    })
   })
 
   describe('create element', () => {

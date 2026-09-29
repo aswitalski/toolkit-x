@@ -1,339 +1,423 @@
-const SUPPORTED_EVENTS = [
-  // mouse events
-  'onAuxClick',
-  'onClick',
-  'onContextMenu',
-  'onDoubleClick',
-  'onDrag',
-  'onDragEnd',
-  'onDragEnter',
-  'onDragExit',
-  'onDragLeave',
-  'onDragOver',
-  'onDragStart',
-  'onDrop',
-  'onMouseDown',
-  'onMouseEnter',
-  'onMouseLeave',
-  'onMouseMove',
-  'onMouseOut',
-  'onMouseOver',
-  'onMouseUp',
-  // keyboard events
-  'onKeyDown',
-  'onKeyPress',
-  'onKeyUp',
-  // focus events
-  'onFocus',
-  'onBlur',
-  // form events
-  'onChange',
-  'onInput',
-  'onInvalid',
-  'onSubmit',
-  // clipboard events
-  'onCopy',
-  'onCut',
-  'onPaste',
-  // composition events
-  'onCompositionEnd',
-  'onCompositionStart',
-  'onCompositionUpdate',
-  // selection events
-  'onSelect',
-  // touch events
-  'onTouchCancel',
-  'onTouchEnd',
-  'onTouchMove',
-  'onTouchStart',
-  // UI events
-  'onScroll',
-  // wheel events
-  'onWheel',
-  // media events
-  'onAbort',
-  'onCanPlay',
-  'onCanPlayThrough',
-  'onDurationChange',
-  'onEmptied',
-  'onEncrypted',
-  'onEnded',
-  'onError',
-  'onLoadedData',
-  'onLoadedMetadata',
-  'onLoadStart',
-  'onPause',
-  'onPlay',
-  'onPlaying',
-  'onProgress',
-  'onRateChange',
-  'onSeeked',
-  'onSeeking',
-  'onStalled',
-  'onSuspend',
-  'onTimeUpdate',
-  'onVolumeChange',
-  'onWaiting',
-  // image events, besides the error event above
-  'onLoad',
-  // animation events
-  'onAnimationStart',
-  'onAnimationEnd',
-  'onAnimationIteration',
-  // transition events
-  'onTransitionEnd',
-  // search event
-  'onSearch',
-  // toogle event
-  'onToggle',
-] as const
+import { getEventName } from './utils.js'
 
-/* Attribute names with the elements they are valid on, all when omitted. */
-const SUPPORTED_ATTRIBUTES = [
-  ['accept', ['form', 'input']],
-  ['acceptCharset', ['form']],
-  ['accessKey'],
-  ['action', ['form']],
-  [
-    'align',
-    [
-      'caption',
-      'col',
-      'colgroup',
-      'hr',
-      'iframe',
-      'img',
-      'table',
-      'tbody',
-      'td',
-      'tfoot',
-      'th',
-      'thead',
-      'tr',
-    ],
-  ],
-  ['allow', ['iframe']],
-  ['allowFullScreen', ['iframe']],
-  ['alt', ['area', 'img', 'input']],
-  ['async', ['script']],
-  ['autoCapitalize'],
-  ['autoComplete', ['form', 'input', 'textarea']],
-  ['autoFocus', ['button', 'input', 'keygen', 'select', 'textarea']],
-  ['autoPlay', ['audio', 'video']],
-  ['buffered', ['audio', 'video']],
-  ['capture', ['input']],
-  ['challenge', ['keygen']],
-  ['charset', ['meta', 'script']],
-  ['checked', ['command', 'input']],
-  ['cite', ['blockquote', 'del', 'ins', 'q']],
-  ['class'],
-  ['cols', ['textarea']],
-  ['colSpan', ['td', 'th']],
-  ['content', ['meta']],
-  ['contentEditable'],
-  ['contextMenu'],
-  ['controls', ['audio', 'video']],
-  ['coords', ['area']],
-  ['crossOrigin', ['audio', 'img', 'link', 'script', 'video']],
-  ['csp', ['iframe']],
-  ['data', ['object']],
-  ['dateTime', ['del', 'ins', 'time']],
-  ['decoding', ['img']],
-  ['default', ['track']],
-  ['defer', ['script']],
-  ['dir'],
-  [
-    'disabled',
-    [
-      'button',
-      'command',
-      'fieldset',
-      'input',
-      'keygen',
-      'optgroup',
-      'option',
-      'select',
-      'textarea',
-    ],
-  ],
-  ['download', ['a', 'area']],
-  ['draggable'],
-  ['dropZone'],
-  ['encType', ['form']],
-  ['for', ['label', 'output']],
-  [
-    'form',
-    [
-      'button',
-      'fieldset',
-      'input',
-      'keygen',
-      'label',
-      'meter',
-      'object',
-      'output',
-      'progress',
-      'select',
-      'textarea',
-    ],
-  ],
-  ['formAction', ['input', 'button']],
-  ['headers', ['td', 'th']],
-  ['height', ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video']],
-  ['hidden'],
-  ['high', ['meter']],
-  ['href', ['a', 'area', 'base', 'link']],
-  ['hrefLang', ['a', 'area', 'link']],
-  ['httpEquiv', ['meta']],
-  ['icon', ['command']],
-  ['id'],
-  ['incremental', ['input']],
-  ['inputMode', ['input']],
-  ['integrity', ['link', 'script']],
-  ['is'],
-  ['isMap', ['img']],
-  ['itemProp'],
-  ['keyType', ['keygen']],
-  ['kind', ['track']],
-  ['label', ['track']],
-  ['lang'],
-  ['language', ['script']],
-  ['list', ['input']],
-  ['loop', ['audio', 'bgsound', 'marquee', 'video']],
-  ['low', ['meter']],
-  ['manifest', ['html']],
-  ['max', ['input', 'meter', 'progress']],
-  ['maxLength', ['input', 'textarea']],
-  ['media', ['a', 'area', 'link', 'source', 'style']],
-  ['method', ['form']],
-  ['min', ['input', 'meter']],
-  ['minLength', ['input', 'textarea']],
-  ['multiple', ['input', 'select']],
-  ['muted', ['audio', 'video']],
-  [
-    'name',
-    [
-      'button',
-      'form',
-      'fieldset',
-      'iframe',
-      'input',
-      'keygen',
-      'object',
-      'output',
-      'select',
-      'textarea',
-      'map',
-      'meta',
-      'param',
-      'slot',
-    ],
-  ],
-  ['noValidate', ['form']],
-  ['open', ['details']],
-  ['optimum', ['meter']],
-  ['pattern', ['input']],
-  ['ping', ['a', 'area']],
-  ['placeholder', ['input', 'textarea']],
-  ['poster', ['video']],
-  ['preload', ['audio', 'video']],
-  ['radioGroup', ['command']],
-  ['readOnly', ['input', 'textarea']],
-  ['rel', ['a', 'area', 'link']],
-  ['required', ['input', 'select', 'textarea']],
-  ['reversed', ['ol']],
-  ['role'],
-  ['rows', ['textarea']],
-  ['rowSpan', ['td', 'th']],
-  ['sandbox', ['iframe']],
-  ['scope', ['th']],
-  ['scoped', ['style']],
-  ['selected', ['option']],
-  ['shape', ['a', 'area']],
-  ['size', ['input', 'select']],
-  ['sizes', ['link', 'img', 'source']],
-  ['slot'],
-  ['span', ['col', 'colgroup']],
-  ['spellCheck'],
-  [
-    'src',
-    [
-      'audio',
-      'embed',
-      'iframe',
-      'img',
-      'input',
-      'script',
-      'source',
-      'track',
-      'video',
-    ],
-  ],
-  ['srcDoc', ['iframe']],
-  ['srcLang', ['track']],
-  ['srcSet', ['img', 'source']],
-  ['start', ['ol']],
-  ['step', ['input']],
-  ['summary', ['table']],
-  ['tabIndex'],
-  ['target', ['a', 'area', 'base', 'form']],
-  ['title'],
-  ['translate'],
-  [
-    'type',
-    [
-      'button',
-      'input',
-      'command',
-      'embed',
-      'object',
-      'script',
-      'source',
-      'style',
-      'menu',
-    ],
-  ],
-  ['useMap', ['img', 'input', 'object']],
-  ['value', ['button', 'option', 'input', 'li', 'meter', 'progress', 'param']],
-  ['width', ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video']],
-  ['wrap', ['textarea']],
-  ['ariaActiveDescendant'],
-  ['ariaAtomic'],
-  ['ariaAutoComplete'],
-  ['ariaBusy'],
-  ['ariaChecked'],
-  ['ariaControls'],
-  ['ariaDescribedBy'],
-  ['ariaDisabled'],
-  ['ariaDropEffect'],
-  ['ariaExpanded'],
-  ['ariaFlowTo'],
-  ['ariaGrabbed'],
-  ['ariaHasPopup'],
-  ['ariaHidden'],
-  ['ariaInvalid'],
-  ['ariaLabel'],
-  ['ariaLabelLedBy'],
-  ['ariaLevel'],
-  ['ariaLive'],
-  ['ariaMultiLine'],
-  ['ariaMultiSelectable'],
-  ['ariaOrientation'],
-  ['ariaOwns'],
-  ['ariaPosInSet'],
-  ['ariaPressed'],
-  ['ariaReadOnly'],
-  ['ariaRelevant'],
-  ['ariaRequired'],
-  ['ariaSelected'],
-  ['ariaSetSize'],
-  ['ariaSort'],
-  ['ariaValueMax'],
-  ['ariaValueMin'],
-  ['ariaValueNow'],
-  ['ariaValueText'],
-] as const
+/*
+ * Names of the event listeners supported in templates, in camel case, e.g.
+ * onPointerDown, generated from the events of Chromium 153, with the alias
+ * onDoubleClick of onDblClick. Only a type, as the events are checked
+ * against the browser in debug mode.
+ */
+export type EventName =
+  | 'onAbort'
+  | 'onAfterPrint'
+  | 'onAnimationCancel'
+  | 'onAnimationEnd'
+  | 'onAnimationIteration'
+  | 'onAnimationStart'
+  | 'onAppInstalled'
+  | 'onAuxClick'
+  | 'onBeforeCopy'
+  | 'onBeforeCut'
+  | 'onBeforeInput'
+  | 'onBeforeInstallPrompt'
+  | 'onBeforeMatch'
+  | 'onBeforePaste'
+  | 'onBeforePrint'
+  | 'onBeforeToggle'
+  | 'onBeforeUnload'
+  | 'onBeforeXRSelect'
+  | 'onBlur'
+  | 'onCancel'
+  | 'onCanPlay'
+  | 'onCanPlayThrough'
+  | 'onChange'
+  | 'onClick'
+  | 'onClose'
+  | 'onCommand'
+  | 'onCompositionEnd'
+  | 'onCompositionStart'
+  | 'onCompositionUpdate'
+  | 'onContentVisibilityAutoStateChange'
+  | 'onContextLost'
+  | 'onContextMenu'
+  | 'onContextRestored'
+  | 'onCopy'
+  | 'onCueChange'
+  | 'onCut'
+  | 'onDblClick'
+  | 'onDeviceMotion'
+  | 'onDeviceOrientation'
+  | 'onDeviceOrientationAbsolute'
+  | 'onDoubleClick'
+  | 'onDrag'
+  | 'onDragEnd'
+  | 'onDragEnter'
+  | 'onDragLeave'
+  | 'onDragOver'
+  | 'onDragStart'
+  | 'onDrop'
+  | 'onDurationChange'
+  | 'onEmptied'
+  | 'onEncrypted'
+  | 'onEnded'
+  | 'onEnterPictureInPicture'
+  | 'onError'
+  | 'onFocus'
+  | 'onFormData'
+  | 'onFreeze'
+  | 'onFullscreenChange'
+  | 'onFullscreenError'
+  | 'onGamepadConnected'
+  | 'onGamepadDisconnected'
+  | 'onGotPointerCapture'
+  | 'onHashChange'
+  | 'onInput'
+  | 'onInvalid'
+  | 'onKeyDown'
+  | 'onKeyPress'
+  | 'onKeyUp'
+  | 'onLanguageChange'
+  | 'onLeavePictureInPicture'
+  | 'onLoad'
+  | 'onLoadedData'
+  | 'onLoadedMetadata'
+  | 'onLoadStart'
+  | 'onLostPointerCapture'
+  | 'onMessage'
+  | 'onMessageError'
+  | 'onMouseDown'
+  | 'onMouseEnter'
+  | 'onMouseLeave'
+  | 'onMouseMove'
+  | 'onMouseOut'
+  | 'onMouseOver'
+  | 'onMouseUp'
+  | 'onMouseWheel'
+  | 'onOffline'
+  | 'onOnline'
+  | 'onPageHide'
+  | 'onPageReveal'
+  | 'onPageShow'
+  | 'onPageSwap'
+  | 'onPaste'
+  | 'onPause'
+  | 'onPlay'
+  | 'onPlaying'
+  | 'onPointerCancel'
+  | 'onPointerDown'
+  | 'onPointerEnter'
+  | 'onPointerLeave'
+  | 'onPointerLockChange'
+  | 'onPointerLockError'
+  | 'onPointerMove'
+  | 'onPointerOut'
+  | 'onPointerOver'
+  | 'onPointerRawUpdate'
+  | 'onPointerUp'
+  | 'onPopState'
+  | 'onPrerenderingChange'
+  | 'onProgress'
+  | 'onRateChange'
+  | 'onReadyStateChange'
+  | 'onRejectionHandled'
+  | 'onReset'
+  | 'onResize'
+  | 'onResume'
+  | 'onScroll'
+  | 'onScrollEnd'
+  | 'onScrollSnapChange'
+  | 'onScrollSnapChanging'
+  | 'onSearch'
+  | 'onSecurityPolicyViolation'
+  | 'onSeeked'
+  | 'onSeeking'
+  | 'onSelect'
+  | 'onSelectionChange'
+  | 'onSelectStart'
+  | 'onSlotChange'
+  | 'onStalled'
+  | 'onStorage'
+  | 'onSubmit'
+  | 'onSuspend'
+  | 'onTimeUpdate'
+  | 'onToggle'
+  | 'onTouchCancel'
+  | 'onTouchEnd'
+  | 'onTouchMove'
+  | 'onTouchStart'
+  | 'onTransitionCancel'
+  | 'onTransitionEnd'
+  | 'onTransitionRun'
+  | 'onTransitionStart'
+  | 'onUnhandledRejection'
+  | 'onUnload'
+  | 'onVisibilityChange'
+  | 'onVolumeChange'
+  | 'onWaiting'
+  | 'onWaitingForKey'
+  | 'onWebkitAnimationEnd'
+  | 'onWebkitAnimationIteration'
+  | 'onWebkitAnimationStart'
+  | 'onWebkitFullscreenChange'
+  | 'onWebkitFullscreenError'
+  | 'onWebkitTransitionEnd'
+  | 'onWheel'
 
+/*
+ * Names of the element attributes supported in templates, in camel case,
+ * e.g. tabIndex, generated from the attributes of Chromium 153, with the
+ * names supported before, e.g. allowFullScreen. Only a type, as the
+ * attributes are checked against the browser in debug mode.
+ */
+export type AttributeName =
+  | 'abbr'
+  | 'accept'
+  | 'acceptCharset'
+  | 'accessKey'
+  | 'action'
+  | 'adAuctionHeaders'
+  | 'align'
+  | 'aLink'
+  | 'allow'
+  | 'allowFullscreen'
+  | 'allowFullScreen'
+  | 'allowPaymentRequest'
+  | 'alt'
+  | 'archive'
+  | 'ariaActions'
+  | 'ariaActiveDescendant'
+  | 'ariaAtomic'
+  | 'ariaAutoComplete'
+  | 'ariaBrailleLabel'
+  | 'ariaBrailleRoleDescription'
+  | 'ariaBusy'
+  | 'ariaChecked'
+  | 'ariaColCount'
+  | 'ariaColIndex'
+  | 'ariaColIndexText'
+  | 'ariaColSpan'
+  | 'ariaControls'
+  | 'ariaCurrent'
+  | 'ariaDescribedBy'
+  | 'ariaDescription'
+  | 'ariaDetails'
+  | 'ariaDisabled'
+  | 'ariaErrorMessage'
+  | 'ariaExpanded'
+  | 'ariaFlowTo'
+  | 'ariaHasPopup'
+  | 'ariaHidden'
+  | 'ariaInvalid'
+  | 'ariaKeyShortcuts'
+  | 'ariaLabel'
+  | 'ariaLabelledBy'
+  | 'ariaLabelLedBy'
+  | 'ariaLevel'
+  | 'ariaLive'
+  | 'ariaModal'
+  | 'ariaMultiLine'
+  | 'ariaMultiSelectable'
+  | 'ariaOrientation'
+  | 'ariaOwns'
+  | 'ariaPlaceholder'
+  | 'ariaPosInSet'
+  | 'ariaPressed'
+  | 'ariaReadOnly'
+  | 'ariaRelevant'
+  | 'ariaRequired'
+  | 'ariaRoleDescription'
+  | 'ariaRowCount'
+  | 'ariaRowIndex'
+  | 'ariaRowIndexText'
+  | 'ariaRowSpan'
+  | 'ariaSelected'
+  | 'ariaSetSize'
+  | 'ariaSort'
+  | 'ariaValueMax'
+  | 'ariaValueMin'
+  | 'ariaValueNow'
+  | 'ariaValueText'
+  | 'as'
+  | 'async'
+  | 'attributionSrc'
+  | 'autoCapitalize'
+  | 'autoComplete'
+  | 'autoCorrect'
+  | 'autoFocus'
+  | 'autoPlay'
+  | 'axis'
+  | 'background'
+  | 'bgColor'
+  | 'blocking'
+  | 'border'
+  | 'browsingTopics'
+  | 'cellPadding'
+  | 'cellSpacing'
+  | 'charset'
+  | 'checked'
+  | 'cite'
+  | 'clear'
+  | 'closedBy'
+  | 'code'
+  | 'codeBase'
+  | 'codeType'
+  | 'color'
+  | 'cols'
+  | 'colSpan'
+  | 'command'
+  | 'commandFor'
+  | 'compact'
+  | 'content'
+  | 'contentEditable'
+  | 'controls'
+  | 'coords'
+  | 'credentialless'
+  | 'crossOrigin'
+  | 'csp'
+  | 'data'
+  | 'dateTime'
+  | 'declare'
+  | 'decoding'
+  | 'default'
+  | 'defer'
+  | 'dir'
+  | 'dirName'
+  | 'disabled'
+  | 'disablePictureInPicture'
+  | 'disableRemotePlayback'
+  | 'download'
+  | 'draggable'
+  | 'elementTiming'
+  | 'encoding'
+  | 'encType'
+  | 'enterKeyHint'
+  | 'event'
+  | 'fetchPriority'
+  | 'focusGroupStart'
+  | 'for'
+  | 'form'
+  | 'formAction'
+  | 'formEnctype'
+  | 'formMethod'
+  | 'formNoValidate'
+  | 'formTarget'
+  | 'frame'
+  | 'frameBorder'
+  | 'headers'
+  | 'height'
+  | 'hidden'
+  | 'high'
+  | 'href'
+  | 'hrefLang'
+  | 'hspace'
+  | 'httpEquiv'
+  | 'id'
+  | 'imageSizes'
+  | 'imageSrcset'
+  | 'incremental'
+  | 'inert'
+  | 'inputMode'
+  | 'integrity'
+  | 'interestFor'
+  | 'is'
+  | 'isMap'
+  | 'itemProp'
+  | 'kind'
+  | 'label'
+  | 'lang'
+  | 'link'
+  | 'list'
+  | 'loading'
+  | 'longDesc'
+  | 'loop'
+  | 'low'
+  | 'lowSrc'
+  | 'marginHeight'
+  | 'marginWidth'
+  | 'max'
+  | 'maxLength'
+  | 'media'
+  | 'method'
+  | 'min'
+  | 'minLength'
+  | 'multiple'
+  | 'muted'
+  | 'name'
+  | 'noHref'
+  | 'noModule'
+  | 'nonce'
+  | 'noShade'
+  | 'noValidate'
+  | 'noWrap'
+  | 'open'
+  | 'optimum'
+  | 'part'
+  | 'pattern'
+  | 'ping'
+  | 'placeholder'
+  | 'playsInline'
+  | 'popover'
+  | 'popoverTarget'
+  | 'popoverTargetAction'
+  | 'poster'
+  | 'preload'
+  | 'privateToken'
+  | 'readOnly'
+  | 'referrerPolicy'
+  | 'rel'
+  | 'required'
+  | 'rev'
+  | 'reversed'
+  | 'role'
+  | 'rows'
+  | 'rowSpan'
+  | 'rules'
+  | 'sandbox'
+  | 'scheme'
+  | 'scope'
+  | 'scrolling'
+  | 'selected'
+  | 'shadowRootClonable'
+  | 'shadowRootCustomElementRegistry'
+  | 'shadowRootDelegatesFocus'
+  | 'shadowRootMode'
+  | 'shadowRootReferenceTarget'
+  | 'shadowRootSerializable'
+  | 'shadowRootSlotAssignment'
+  | 'shape'
+  | 'size'
+  | 'sizes'
+  | 'slot'
+  | 'span'
+  | 'spellCheck'
+  | 'src'
+  | 'srcDoc'
+  | 'srcLang'
+  | 'srcSet'
+  | 'standby'
+  | 'start'
+  | 'step'
+  | 'summary'
+  | 'tabIndex'
+  | 'target'
+  | 'title'
+  | 'translate'
+  | 'type'
+  | 'useMap'
+  | 'vAlign'
+  | 'value'
+  | 'version'
+  | 'virtualKeyboardPolicy'
+  | 'vLink'
+  | 'vspace'
+  | 'webkitDirectory'
+  | 'width'
+  | 'wrap'
+  | 'writingSuggestions'
+
+/*
+ * The filter functions of Chromium 153, in camel case, e.g. dropShadow for
+ * drop-shadow in CSS.
+ */
 const SUPPORTED_FILTERS = [
   'blur',
   'brightness',
@@ -343,10 +427,12 @@ const SUPPORTED_FILTERS = [
   'hueRotate',
   'invert',
   'opacity',
-  'sepia',
   'saturate',
+  'sepia',
+  'url',
 ] as const
 
+/* The transform functions of Chromium 153, as named in CSS. */
 const SUPPORTED_TRANSFORMS = [
   'matrix',
   'matrix3d',
@@ -371,12 +457,41 @@ const SUPPORTED_TRANSFORMS = [
   'perspective',
 ] as const
 
-const supportedAttributes = new Map<string, readonly string[] | '*'>()
-for (const [key, whitelist] of SUPPORTED_ATTRIBUTES) {
-  supportedAttributes.set(key, whitelist || '*')
+/* Attributes set by other names than those of the element properties. */
+const ATTRIBUTE_PROPERTIES: Record<string, string> = { for: 'htmlFor' }
+
+/* Attributes valid on all elements, not reflected as element properties. */
+const UNREFLECTED_ATTRIBUTES = new Set(['ariaOwns', 'is', 'itemProp'])
+
+/* The lower-cased property names of the elements, read when first needed. */
+const elementProperties = new Map<string, Set<string>>()
+
+const getElementProperties = (tagName: string) => {
+  let properties = elementProperties.get(tagName)
+  if (!properties) {
+    properties = new Set()
+    // the attributes are reflected as properties, in the prototype chain
+    for (const name in document.createElement(tagName)) {
+      properties.add(name.toLowerCase())
+    }
+    elementProperties.set(tagName, properties)
+  }
+  return properties
 }
 
-const supportedEvents = new Set<string>(SUPPORTED_EVENTS)
+/*
+ * Events without handler properties, e.g. oncompositionend, or with them
+ * only on touch devices, e.g. ontouchstart.
+ */
+const EVENTS_WITHOUT_HANDLERS = new Set([
+  'compositionstart',
+  'compositionupdate',
+  'compositionend',
+  'touchstart',
+  'touchmove',
+  'touchend',
+  'touchcancel',
+])
 
 /* The style properties of the browser, read when first needed. */
 let supportedStyles: Set<string> | null = null
@@ -384,27 +499,36 @@ const getSupportedStyles = () =>
   (supportedStyles ??= new Set(Object.keys(document.documentElement.style)))
 
 const Browser = {
-  isAttributeSupported(this: void, key: string): boolean {
-    return supportedAttributes.has(key)
-  },
-
-  isAttributeValid(this: void, key: string, element: string): boolean {
-    const whitelist = supportedAttributes.get(key)
-    if (whitelist) {
-      return whitelist === '*' || whitelist.includes(element)
+  /**
+   * Checks if the browser supports the attribute on the element, as
+   * a property of the element in any letter case, e.g. tabIndex. Meant
+   * for debug mode, as the check creates an element of each tag name.
+   */
+  isAttributeSupported(this: void, key: string, tagName: string): boolean {
+    if (UNREFLECTED_ATTRIBUTES.has(key)) {
+      return true
     }
-    return false
+    const properties = getElementProperties(tagName)
+    const name = (ATTRIBUTE_PROPERTIES[key] ?? key).toLowerCase()
+    // the ARIA relations are reflected as the related elements
+    return (
+      properties.has(name) ||
+      properties.has(`${name}element`) ||
+      properties.has(`${name}elements`)
+    )
   },
 
-  getValidElementNamesFor(
-    this: void,
-    key: string,
-  ): readonly string[] | '*' | undefined {
-    return supportedAttributes.get(key)
-  },
-
-  isEventSupported(this: void, key: string): boolean {
-    return supportedEvents.has(key)
+  /**
+   * Checks if the browser supports the event of the listener, e.g. onClick,
+   * on the element, as its handler property, e.g. onclick. Meant for debug
+   * mode, as the check creates an element of each tag name.
+   */
+  isEventSupported(this: void, key: string, tagName: string): boolean {
+    const event = getEventName(key)
+    return (
+      EVENTS_WITHOUT_HANDLERS.has(event) ||
+      getElementProperties(tagName).has(`on${event}`)
+    )
   },
 
   isStyleSupported(this: void, key: string): boolean {
@@ -422,12 +546,6 @@ const Browser = {
   SUPPORTED_FILTERS,
   SUPPORTED_TRANSFORMS,
 }
-
-/* Names of the element attributes supported in templates. */
-export type AttributeName = (typeof SUPPORTED_ATTRIBUTES)[number][0]
-
-/* Names of the event listeners supported in templates, e.g. onClick. */
-export type EventName = (typeof SUPPORTED_EVENTS)[number]
 
 export type FilterName = (typeof SUPPORTED_FILTERS)[number]
 

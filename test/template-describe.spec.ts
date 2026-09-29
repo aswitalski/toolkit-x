@@ -694,4 +694,142 @@ describe('Template => describe', () => {
       )
     })
   })
+
+  describe('Element attributes', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
+    })
+
+    const attributes: [string, string, string][] = [
+      ['div', 'tabIndex', 'a property'],
+      ['input', 'autoComplete', 'a property in another letter case'],
+      ['label', 'for', 'the htmlFor property'],
+      ['div', 'ariaLabel', 'an ARIA property'],
+      ['div', 'ariaControls', 'the related ARIA elements'],
+      ['div', 'itemProp', 'a global attribute not reflected'],
+      ['div', 'popover', 'an attribute not listed in the toolkit'],
+      ['label', 'htmlFor', 'the DOM name of the for attribute'],
+      ['input', 'autocomplete', 'the DOM name of the attribute'],
+    ]
+
+    attributes.forEach(([element, name, reason]) => {
+      it(`accepts "${name}" on "${element}" elements, as ${reason}`, () => {
+        // when
+        const description = describeNode([element, { [name]: 'value' }])
+
+        // then
+        assert.deepEqual(description.attrs, { [name]: 'value' })
+        expect(console.warn).not.toHaveBeenCalled()
+      })
+    })
+
+    it('warns about an attribute the element does not support', () => {
+      // when
+      const description = describeNode(['div', { href: 'value' }])
+
+      // then
+      assert.deepEqual(description.attrs, { href: 'value' })
+      expect(console.warn).toHaveBeenCalledWith(
+        'The "href" attribute is not supported on "div" elements.',
+      )
+    })
+
+    it('does not check the attributes of custom elements', () => {
+      // when
+      describeNode(['custom-element', { anything: 'value' }])
+
+      // then
+      expect(console.warn).not.toHaveBeenCalled()
+    })
+
+    it('does not check the attributes in production mode', async () => {
+      // given
+      toolkit.reset()
+      await toolkit.configure({ debug: false })
+
+      // when
+      try {
+        const description = describeNode(['div', { href: 'value' }])
+
+        // then
+        assert.deepEqual(description.attrs, { href: 'value' })
+        expect(console.warn).not.toHaveBeenCalled()
+      } finally {
+        toolkit.reset()
+        await toolkit.configure({ debug: true })
+      }
+    })
+  })
+
+  describe('Element event listeners', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
+    })
+
+    const listeners: [string, string, string][] = [
+      ['div', 'onClick', 'a handler property'],
+      ['div', 'onDoubleClick', 'the dblclick handler property'],
+      ['video', 'onPlay', 'a media handler property'],
+      ['input', 'onCompositionEnd', 'an event without a handler property'],
+      ['div', 'onTouchStart', 'a handler property on touch devices'],
+      ['div', 'onPointerDown', 'an event not listed in the toolkit'],
+      ['div', 'onpointerdown', 'the DOM name of the listener'],
+    ]
+
+    listeners.forEach(([element, name, reason]) => {
+      it(`accepts "${name}" on "${element}" elements, as ${reason}`, () => {
+        // given
+        const listener = () => {}
+
+        // when
+        const description = describeNode([element, { [name]: listener }])
+
+        // then
+        assert.deepEqual(description.listeners, { [name]: listener })
+        expect(console.warn).not.toHaveBeenCalled()
+      })
+    })
+
+    it('adds and warns about a listener of an unknown event', () => {
+      // given
+      const listener = () => {}
+
+      // when
+      const description = describeNode(['div', { onUnknown: listener }])
+
+      // then
+      assert.deepEqual(description.listeners, { onUnknown: listener })
+      assert.equal(description.attrs, undefined)
+      expect(console.warn).toHaveBeenCalledWith(
+        'The "onUnknown" listener is not supported on "div" elements.',
+      )
+    })
+
+    it('does not check the listeners of custom elements', () => {
+      // when
+      describeNode(['custom-element', { onAnything: () => {} }])
+
+      // then
+      expect(console.warn).not.toHaveBeenCalled()
+    })
+
+    it('does not check the listeners in production mode', async () => {
+      // given
+      toolkit.reset()
+      await toolkit.configure({ debug: false })
+
+      // when
+      try {
+        const listener = () => {}
+        const description = describeNode(['div', { onUnknown: listener }])
+
+        // then
+        assert.deepEqual(description.listeners, { onUnknown: listener })
+        expect(console.warn).not.toHaveBeenCalled()
+      } finally {
+        toolkit.reset()
+        await toolkit.configure({ debug: true })
+      }
+    })
+  })
 })

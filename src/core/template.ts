@@ -208,49 +208,47 @@ const Template = {
           description.custom = description.custom || {}
           description.custom.listeners = customListeners
         }
-      } else {
-        const {
-          isAttributeSupported,
-          isAttributeValid,
-          getValidElementNamesFor,
-          isEventSupported,
-        } = Browser
-
-        if (isAttributeSupported(key)) {
-          const attr = this.getAttributeValue(value)
-          if (isDefined(attr)) {
-            description.attrs = description.attrs || {}
-            description.attrs[key] = attr
-          }
-          if (runtime().isDebug()) {
-            const element = description.name
-            if (attr === undefined) {
-              console.warn(
-                `Invalid undefined value for attribute "${key}"`,
-                `on element "${element}".`,
-              )
-            }
-            if (!element.includes('-') && !isAttributeValid(key, element)) {
-              const names = (getValidElementNamesFor(key) as readonly string[])
-                .map(key => `"${key}"`)
-                .join(', ')
-              const message = `The "${key}" attribute is not supported on "${
-                element
-              }" elements.`
-              const hint = `Use one of ${names}.`
-              console.warn(message, hint)
-            }
-          }
-        } else if (isEventSupported(key)) {
-          const listener = this.getListener(value, key)
-          if (listener) {
-            description.listeners = description.listeners || {}
-            description.listeners[key] = value as Listener
-          }
-        } else {
+      } else if (/^on[a-zA-Z]/.test(key)) {
+        // both onClick and the DOM name onclick
+        const listener = this.getListener(value, key)
+        if (listener) {
+          description.listeners = description.listeners || {}
+          description.listeners[key] = value as Listener
+        }
+        const element = description.name
+        // custom elements define their events themselves
+        if (
+          runtime().isDebug() &&
+          !element.includes('-') &&
+          !Browser.isEventSupported(key, element)
+        ) {
           console.warn(
-            `Unsupported property "${key}" on element "${description.name}".`,
+            `The "${key}" listener is not supported on "${element}" elements.`,
           )
+        }
+      } else {
+        const attr = this.getAttributeValue(value)
+        if (isDefined(attr)) {
+          description.attrs = description.attrs || {}
+          description.attrs[key] = attr
+        }
+        if (runtime().isDebug()) {
+          const element = description.name
+          if (attr === undefined) {
+            console.warn(
+              `Invalid undefined value for attribute "${key}"`,
+              `on element "${element}".`,
+            )
+          }
+          // custom elements define their attributes themselves
+          if (
+            !element.includes('-') &&
+            !Browser.isAttributeSupported(key, element)
+          ) {
+            console.warn(
+              `The "${key}" attribute is not supported on "${element}" elements.`,
+            )
+          }
         }
       }
     }
@@ -344,15 +342,21 @@ const Template = {
     } else if (typeof value === 'number') {
       return String(value)
     } else if (typeof value === 'object') {
-      let whitelist
       if (name === 'filter') {
-        whitelist = Browser.SUPPORTED_FILTERS
+        // named in camel case, e.g. dropShadow for drop-shadow
+        return this.getFunctionList(
+          value as Props,
+          Browser.SUPPORTED_FILTERS,
+          lowerDash,
+        )
       } else if (name === 'transform') {
-        whitelist = Browser.SUPPORTED_TRANSFORMS
-      } else {
-        throw new Error(`Unknown function list: ${JSON.stringify(value)}`)
+        // named in camel case in CSS too, e.g. translateX
+        return this.getFunctionList(
+          value as Props,
+          Browser.SUPPORTED_TRANSFORMS,
+        )
       }
-      return this.getFunctionList(value as Props, whitelist)
+      throw new Error(`Unknown function list: ${JSON.stringify(value)}`)
     }
     throw new Error(`Invalid style property value: ${JSON.stringify(value)}`)
   },
@@ -360,16 +364,19 @@ const Template = {
   /**
    * Returns a multi-property string value.
    */
-  getFunctionList(object: Props, whitelist?: readonly string[]): string {
+  getFunctionList(
+    object: Props,
+    whitelist?: readonly string[],
+    getCSSName: (name: string) => string = name => name,
+  ): string {
     const composite: Record<string, string> = {}
-    let entries = Object.entries(object)
-    if (whitelist) {
-      entries = entries.filter(([key, value]) => whitelist.includes(key))
-    }
-    for (const [key, value] of entries) {
+    for (const [key, value] of Object.entries(object)) {
+      if (whitelist && !whitelist.includes(key)) {
+        continue
+      }
       const stringValue = this.getAttributeValue(value, /*= allowEmpty */ false)
       if (isDefined(stringValue)) {
-        composite[key] = stringValue
+        composite[getCSSName(key)] = stringValue
       }
     }
     return Object.entries(composite)

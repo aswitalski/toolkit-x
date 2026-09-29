@@ -199,6 +199,9 @@ describe('Utils', () => {
       ['ariaSetSize', 'aria-setsize'],
       ['ariaRequired', 'aria-required'],
       ['ariaAutoComplete', 'aria-autocomplete'],
+      ['htmlFor', 'for'],
+      ['autocomplete', 'autocomplete'],
+      ['popoverTargetAction', 'popovertargetaction'],
     ]
 
     convertions.forEach(([from, to]) => {

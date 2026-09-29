@@ -147,3 +147,67 @@ export const diffModule = toolkit.Diff
 
 // @ts-expect-error internal helpers
 export const attributeName = toolkit.utils.getAttributeName
+
+// The attribute and listener names are those of Chromium, in camel case
+
+export const domNames: Template[] = [
+  ['div', { popover: 'auto', inert: true }],
+  ['img', { loading: 'lazy', fetchPriority: 'high' }],
+  ['label', { for: 'name' }],
+  ['div', { ariaDescription: 'text', ariaControls: 'id', role: 'button' }],
+]
+
+// the camel case names supported before are still accepted
+export const camelCaseNames: Template[] = [
+  ['input', { autoComplete: 'off', spellCheck: true, onChange: () => {} }],
+  ['img', { srcSet: 'image.png 2x', onDoubleClick: () => {} }],
+  ['div', { ariaLabelLedBy: 'id' }],
+]
+
+// the events and attributes of Chromium, also in camel case
+export const chromiumNames: Template[] = [
+  ['div', { onPointerDown: (event: PointerEvent) => event.pointerId }],
+  ['input', { onBeforeInput: (event: InputEvent) => event.data }],
+  ['div', { onBeforeXRSelect: () => {}, onBeforeMatch: () => {} }],
+  ['div', { onScrollSnapChange: () => {} }],
+  ['input', { webkitDirectory: true, virtualKeyboardPolicy: 'manual' }],
+  ['img', { attributionSrc: '', lowSrc: 'low.png' }],
+  ['input', { autoCorrect: 'on' }],
+]
+
+// the filter and transform functions, in camel case
+export const functions: Template[] = [
+  ['div', { style: { filter: { dropShadow: '2px 2px', hueRotate: 90 } } }],
+  ['div', { style: { filter: { url: '#filter', blur: '4px' } } }],
+  [
+    'div',
+    { style: { transform: { translateX: '10px', rotate3d: '1,1,1,5deg' } } },
+  ],
+]
+
+// @ts-expect-error unknown filter functions
+export const glow: Template = ['div', { style: { filter: { glow: 1 } } }]
+
+// @ts-expect-error filter functions named in kebab case
+export const dash: Template = ['p', { style: { filter: { 'hue-rotate': 9 } } }]
+
+// @ts-expect-error obsolete attributes
+export const obsoleteAttribute: Template = ['div', { contextMenu: 'menu' }]
+
+// @ts-expect-error attributes named in lower case
+export const lowerCaseAttribute: Template = ['input', { autocomplete: 'on' }]
+
+// @ts-expect-error the DOM name of the for attribute
+export const domName: Template = ['label', { htmlFor: 'name' }]
+
+// @ts-expect-error listeners named in lower case
+export const lowerCase: Template = ['div', { onclick: () => {} }]
+
+// @ts-expect-error removed events
+export const removedEvent: Template = ['div', { onDragExit: () => {} }]
+
+// @ts-expect-error properties not reflecting attributes
+export const content: Template = ['div', { innerHTML: '<b>bold</b>' }]
+
+// @ts-expect-error read-only properties
+export const readOnly: Template = ['div', { clientWidth: 100 }]

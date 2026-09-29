@@ -99,7 +99,10 @@ export const lowerDash = (name: string) =>
   name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 
 export const getAttributeName = (key: string) => {
-  if (key === 'acceptCharset' || key === 'httpEquiv') {
+  if (key === 'htmlFor') {
+    // the DOM name of the for attribute
+    return 'for'
+  } else if (key === 'acceptCharset' || key === 'httpEquiv') {
     return lowerDash(key)
   } else if (key.startsWith('aria')) {
     return `aria-${key.slice(4).toLowerCase()}`

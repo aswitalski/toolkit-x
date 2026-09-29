@@ -262,6 +262,48 @@ describe('Template', () => {
       // then
       assert.deepEqual(value, { filter: 'contrast(10) blur(4px)' })
     })
+
+    it('converts the filter functions to their CSS names', () => {
+      // given
+      const filter = {
+        dropShadow: '2px 2px red',
+        hueRotate: '90deg',
+        url: '#shadow',
+      }
+
+      // when
+      const value = Template.getStyle({ filter })
+
+      // then
+      assert.deepEqual(value, {
+        filter: 'drop-shadow(2px 2px red) hue-rotate(90deg) url(#shadow)',
+      })
+      assert(CSS.supports('filter', value!.filter))
+    })
+
+    it('ignores the filter functions named in kebab case', () => {
+      // when
+      const value = Template.getStyle({
+        filter: { 'drop-shadow': '1px 1px', blur: '2px' },
+      })
+
+      // then
+      assert.deepEqual(value, { filter: 'blur(2px)' })
+    })
+
+    it('names the transform functions as CSS does', () => {
+      // given
+      const transform = { translateX: '10px', rotate3d: '1, 1, 1, 45deg' }
+
+      // when
+      const value = Template.getStyle({ transform })
+
+      // then
+      assert.deepEqual(value, {
+        transform: 'translateX(10px) rotate3d(1, 1, 1, 45deg)',
+      })
+      assert(CSS.supports('transform', value!.transform))
+    })
   })
 
   describe('get listeners', () => {
@@ -278,14 +320,14 @@ describe('Template', () => {
       }
 
       // when
-      const element = {} as ElementDescription
+      const element = { name: 'div' } as ElementDescription
       Template.assignPropsToElement(props, element)
 
       // then
-      assert.deepEqual<object>(element, { listeners: props })
+      assert.deepEqual<object>(element, { name: 'div', listeners: props })
     })
 
-    it('warns on unknown events', () => {
+    it('adds and warns on unknown events', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {})
       try {
         // given
@@ -295,12 +337,18 @@ describe('Template', () => {
         }
 
         // when
-        const element = {} as ElementDescription
+        const element = { name: 'div' } as ElementDescription
         Template.assignPropsToElement(unknownListeners, element)
 
         // then
-        assert.deepEqual<object>(element, {})
+        assert.deepEqual<object>(element, {
+          name: 'div',
+          listeners: unknownListeners,
+        })
         expect(console.warn).toHaveBeenCalledOnce()
+        expect(console.warn).toHaveBeenCalledWith(
+          'The "onMyEvent" listener is not supported on "div" elements.',
+        )
       } finally {
         vi.mocked(console.warn).mockRestore()
       }
