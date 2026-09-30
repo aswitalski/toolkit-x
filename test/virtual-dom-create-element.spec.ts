@@ -553,13 +553,12 @@ describe('Virtual DOM => create element', () => {
           return VirtualDOM.createFromDescription(description) as AnyNode
         }
 
-        it('supports known filters', () => {
+        it('supports filters', () => {
           // given
           const filter = {
             blur: '5px',
             saturate: [2],
             brightness: null,
-            unknown: 10,
           }
 
           // when

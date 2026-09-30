@@ -179,7 +179,7 @@ describe('Template', () => {
       )
     })
 
-    it('warns on unknown properties', () => {
+    it('keeps and warns on unknown properties', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {})
       try {
         // given
@@ -192,14 +192,14 @@ describe('Template', () => {
         const style = Template.getStyle(value)
 
         // then
-        assert.equal(style, null)
+        assert.deepEqual(style, { time: '420' })
         expect(console.warn).toHaveBeenCalledTimes(2)
       } finally {
         vi.mocked(console.warn).mockRestore()
       }
     })
 
-    it('handles only known style properties', () => {
+    it('keeps unknown style properties', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {})
       try {
         // given
@@ -212,8 +212,8 @@ describe('Template', () => {
         const style = Template.getStyle(value)
 
         // then
-        assert.deepEqual(style, { color: 'green' })
-        expect(console.warn).toHaveBeenCalled()
+        assert.deepEqual(style, { color: 'green', time: '420' })
+        expect(console.warn).toHaveBeenCalledOnce()
       } finally {
         vi.mocked(console.warn).mockRestore()
       }
@@ -245,7 +245,7 @@ describe('Template', () => {
       assert.deepEqual(value, { transform: 'translate(10px)' })
     })
 
-    it('handles only valid filter functions', () => {
+    it('skips the filter functions without values', () => {
       // given
       const filter = {
         contrast: [10],
@@ -253,7 +253,6 @@ describe('Template', () => {
         opacity: undefined,
         sepia: null,
         blur: '4px',
-        unknown: 666,
       }
 
       // when
@@ -281,14 +280,20 @@ describe('Template', () => {
       assert(CSS.supports('filter', value!.filter))
     })
 
-    it('ignores the filter functions named in kebab case', () => {
-      // when
-      const value = Template.getStyle({
-        filter: { 'drop-shadow': '1px 1px', blur: '2px' },
-      })
+    it('warns about unsupported filter functions', () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
+      try {
+        // when
+        const value = Template.getStyle({ filter: { glow: 1, blur: '2px' } })
 
-      // then
-      assert.deepEqual(value, { filter: 'blur(2px)' })
+        // then
+        assert.deepEqual(value, { filter: 'glow(1) blur(2px)' })
+        expect(console.warn).toHaveBeenCalledWith(
+          'Unsupported filter functions: glow(1) blur(2px)',
+        )
+      } finally {
+        vi.mocked(console.warn).mockRestore()
+      }
     })
 
     it('names the transform functions as CSS does', () => {

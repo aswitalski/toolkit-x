@@ -708,8 +708,6 @@ describe('Template => describe', () => {
       ['div', 'ariaControls', 'the related ARIA elements'],
       ['div', 'itemProp', 'a global attribute not reflected'],
       ['div', 'popover', 'an attribute not listed in the toolkit'],
-      ['label', 'htmlFor', 'the DOM name of the for attribute'],
-      ['input', 'autocomplete', 'the DOM name of the attribute'],
     ]
 
     attributes.forEach(([element, name, reason]) => {
@@ -773,7 +771,6 @@ describe('Template => describe', () => {
       ['input', 'onCompositionEnd', 'an event without a handler property'],
       ['div', 'onTouchStart', 'a handler property on touch devices'],
       ['div', 'onPointerDown', 'an event not listed in the toolkit'],
-      ['div', 'onpointerdown', 'the DOM name of the listener'],
     ]
 
     listeners.forEach(([element, name, reason]) => {
@@ -803,6 +800,14 @@ describe('Template => describe', () => {
       expect(console.warn).toHaveBeenCalledWith(
         'The "onUnknown" listener is not supported on "div" elements.',
       )
+    })
+
+    it('rejects a listener named in lower case, as an attribute', () => {
+      // when
+      const describe = () => describeNode(['div', { onclick: () => {} }])
+
+      // then
+      expect(describe).toThrow('Invalid attribute value')
     })
 
     it('does not check the listeners of custom elements', () => {

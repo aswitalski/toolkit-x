@@ -414,49 +414,6 @@ export type AttributeName =
   | 'wrap'
   | 'writingSuggestions'
 
-/*
- * The filter functions of Chromium 153, in camel case, e.g. dropShadow for
- * drop-shadow in CSS.
- */
-const SUPPORTED_FILTERS = [
-  'blur',
-  'brightness',
-  'contrast',
-  'dropShadow',
-  'grayscale',
-  'hueRotate',
-  'invert',
-  'opacity',
-  'saturate',
-  'sepia',
-  'url',
-] as const
-
-/* The transform functions of Chromium 153, as named in CSS. */
-const SUPPORTED_TRANSFORMS = [
-  'matrix',
-  'matrix3d',
-  'translate',
-  'translate3d',
-  'translateX',
-  'translateY',
-  'translateZ',
-  'scale',
-  'scale3d',
-  'scaleX',
-  'scaleY',
-  'scaleZ',
-  'rotate',
-  'rotate3d',
-  'rotateX',
-  'rotateY',
-  'rotateZ',
-  'skew',
-  'skewX',
-  'skewY',
-  'perspective',
-] as const
-
 /* Attributes set by other names than those of the element properties. */
 const ATTRIBUTE_PROPERTIES: Record<string, string> = { for: 'htmlFor' }
 
@@ -534,21 +491,48 @@ const Browser = {
   isStyleSupported(this: void, key: string): boolean {
     return key.startsWith('--') || getSupportedStyles().has(key)
   },
-
-  isFilterSupported(this: void, key: string): boolean {
-    return (SUPPORTED_FILTERS as readonly string[]).includes(key)
-  },
-
-  isTransformSupported(this: void, key: string): boolean {
-    return (SUPPORTED_TRANSFORMS as readonly string[]).includes(key)
-  },
-
-  SUPPORTED_FILTERS,
-  SUPPORTED_TRANSFORMS,
 }
 
-export type FilterName = (typeof SUPPORTED_FILTERS)[number]
+/*
+ * The filter functions of Chromium 153, in camel case, e.g. dropShadow for
+ * drop-shadow in CSS. Only a type, as the functions are checked against
+ * the browser in debug mode.
+ */
+export type FilterName =
+  | 'blur'
+  | 'brightness'
+  | 'contrast'
+  | 'dropShadow'
+  | 'grayscale'
+  | 'hueRotate'
+  | 'invert'
+  | 'opacity'
+  | 'saturate'
+  | 'sepia'
+  | 'url'
 
-export type TransformName = (typeof SUPPORTED_TRANSFORMS)[number]
+/* The transform functions of Chromium 153, as named in CSS, e.g. translateX. */
+export type TransformName =
+  | 'matrix'
+  | 'matrix3d'
+  | 'translate'
+  | 'translate3d'
+  | 'translateX'
+  | 'translateY'
+  | 'translateZ'
+  | 'scale'
+  | 'scale3d'
+  | 'scaleX'
+  | 'scaleY'
+  | 'scaleZ'
+  | 'rotate'
+  | 'rotate3d'
+  | 'rotateX'
+  | 'rotateY'
+  | 'rotateZ'
+  | 'skew'
+  | 'skewX'
+  | 'skewY'
+  | 'perspective'
 
 export default Browser

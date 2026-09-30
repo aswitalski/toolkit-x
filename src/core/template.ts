@@ -208,8 +208,7 @@ const Template = {
           description.custom = description.custom || {}
           description.custom.listeners = customListeners
         }
-      } else if (/^on[a-zA-Z]/.test(key)) {
-        // both onClick and the DOM name onclick
+      } else if (/^on[A-Z]/.test(key)) {
         const listener = this.getListener(value, key)
         if (listener) {
           description.listeners = description.listeners || {}
@@ -315,14 +314,8 @@ const Template = {
 
     const style: Record<string, string> = {}
     for (const [name, value] of Object.entries(object)) {
-      if (!Browser.isStyleSupported(name)) {
-        if (runtime().isDebug()) {
-          console.warn(
-            `Unsupported style property, key: ${name}, value:`,
-            value,
-          )
-        }
-        continue
+      if (runtime().isDebug() && !Browser.isStyleSupported(name)) {
+        console.warn(`Unsupported style property, key: ${name}, value:`, value)
       }
       const string = this.getStyleProperty(value, name)
       if (isDefined(string)) {
@@ -342,21 +335,19 @@ const Template = {
     } else if (typeof value === 'number') {
       return String(value)
     } else if (typeof value === 'object') {
-      if (name === 'filter') {
-        // named in camel case, e.g. dropShadow for drop-shadow
-        return this.getFunctionList(
-          value as Props,
-          Browser.SUPPORTED_FILTERS,
-          lowerDash,
-        )
-      } else if (name === 'transform') {
-        // named in camel case in CSS too, e.g. translateX
-        return this.getFunctionList(
-          value as Props,
-          Browser.SUPPORTED_TRANSFORMS,
-        )
+      if (name !== 'filter' && name !== 'transform') {
+        throw new Error(`Unknown function list: ${JSON.stringify(value)}`)
       }
-      throw new Error(`Unknown function list: ${JSON.stringify(value)}`)
+      // the filter functions are named in camel case, e.g. dropShadow for
+      // drop-shadow, the transform functions are in CSS too, e.g. translateX
+      const functions = this.getFunctionList(
+        value as Props,
+        name === 'filter' ? lowerDash : undefined,
+      )
+      if (runtime().isDebug() && functions && !CSS.supports(name, functions)) {
+        console.warn(`Unsupported ${name} functions: ${functions}`)
+      }
+      return functions
     }
     throw new Error(`Invalid style property value: ${JSON.stringify(value)}`)
   },
@@ -366,14 +357,10 @@ const Template = {
    */
   getFunctionList(
     object: Props,
-    whitelist?: readonly string[],
     getCSSName: (name: string) => string = name => name,
   ): string {
     const composite: Record<string, string> = {}
     for (const [key, value] of Object.entries(object)) {
-      if (whitelist && !whitelist.includes(key)) {
-        continue
-      }
       const stringValue = this.getAttributeValue(value, /*= allowEmpty */ false)
       if (isDefined(stringValue)) {
         composite[getCSSName(key)] = stringValue
