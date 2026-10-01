@@ -26,28 +26,10 @@ const callIgnoringCommands = (component: Component, hook: () => void) => {
   }
 }
 
-/*
- * Calls the hook of a component, queueing the commands it issues
- * until the current update has completed. The mode is restored
- * also when the hook throws, not to leave the commands queued.
- */
-const callQueueingCommands = (component: Component, hook: () => void) => {
-  const { dispatcher } = component
-  const { mode } = dispatcher
-  dispatcher.queueIncoming()
-  try {
-    hook()
-  } finally {
-    dispatcher.mode = mode
-  }
-}
-
 const Lifecycle = {
   onComponentCreated(component: Component) {
     if (component.hasOwnMethod('onCreated')) {
-      callQueueingCommands(component, () =>
-        component.onCreated!.call(component.sandbox),
-      )
+      component.onCreated!.call(component.sandbox)
     }
     if (component.content) {
       this.onNodeCreated(component.content)
@@ -72,7 +54,7 @@ const Lifecycle = {
 
   onRootCreated(root: WebComponent) {
     if (root.hasOwnMethod('onCreated')) {
-      callQueueingCommands(root, () => root.onCreated!.call(root.sandbox))
+      root.onCreated!.call(root.sandbox)
     }
     const { childNodes } = root
     if (childNodes) {
@@ -87,9 +69,7 @@ const Lifecycle = {
       this.onNodeAttached(component.content)
     }
     if (component.hasOwnMethod('onAttached')) {
-      callQueueingCommands(component, () =>
-        component.onAttached!.call(component.sandbox),
-      )
+      component.onAttached!.call(component.sandbox)
     }
   },
 
@@ -141,17 +121,13 @@ const Lifecycle = {
 
   onComponentReceivedProps(component: Component, nextProps: Props = {}) {
     if (component.hasOwnMethod('onPropsReceived')) {
-      callQueueingCommands(component, () =>
-        component.onPropsReceived!.call(component.sandbox, nextProps),
-      )
+      component.onPropsReceived!.call(component.sandbox, nextProps)
     }
   },
 
   onComponentUpdated(component: Component, prevProps: Props = {}) {
     if (component.hasOwnMethod('onUpdated')) {
-      callQueueingCommands(component, () =>
-        component.onUpdated!.call(component.sandbox, prevProps),
-      )
+      component.onUpdated!.call(component.sandbox, prevProps)
     }
   },
 

@@ -15,7 +15,7 @@ import type Patch from './patch.js'
 
 /* Information about a root component update, passed to plugin listeners. */
 export interface Update {
-  command: Command
+  commands: Command[]
   root: WebComponent
   state: {
     from: State | undefined
@@ -45,10 +45,10 @@ const Renderer = {
     root: WebComponent,
     from: State | undefined,
     to: State,
-    command: Command,
+    commands: Command[],
   ) {
     const update: Update = {
-      command,
+      commands,
       root,
       state: {
         from,

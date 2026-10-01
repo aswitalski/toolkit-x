@@ -113,10 +113,10 @@ class Stack extends WebComponent<
   }
 
   onAttached() {
-    this.commands.push(1)
-    this.commands.update({ items: [] })
+    void (this.commands.push(1) satisfies Promise<boolean>)
+    void this.commands.update({ items: [] })
     // @ts-expect-error commands take the arguments of the API
-    this.commands.push('1')
+    void this.commands.push('1')
     // @ts-expect-error unknown commands
     this.commands.pop()
   }

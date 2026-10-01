@@ -14,23 +14,28 @@ export type CommandsAPI = Record<string, (...args: any[]) => StateUpdate<any>>
 
 /* The core commands available on every component. */
 export type Commands<S = State> = {
-  setState(state: S): unknown
-  update(overrides: Partial<S>): unknown
+  setState(state: S): Promise<boolean>
+  update(overrides: Partial<S>): Promise<boolean>
 }
 
-/* The commands of an API, called with the arguments of the API methods. */
+/*
+ * The commands of an API, called with the arguments of the API methods.
+ * They resolve with true once rendered, or with false when ignored.
+ */
 export type BoundCommands<C extends CommandsAPI> = {
-  [K in keyof C]: (...args: Parameters<C[K]>) => unknown
+  [K in keyof C]: (...args: Parameters<C[K]>) => Promise<boolean>
 }
 
 const Mode = {
-  QUEUE: Symbol('queue-commands'),
   EXECUTE: Symbol('execute-commands'),
   IGNORE: Symbol('ignore-commands'),
 }
 
-/* The limit of lifecycle methods queueing commands in response to others. */
-const MAX_FLUSH_CYCLES = 3
+/*
+ * The limit of updates in a row, the one with the commands issued together
+ * followed by the ones with the commands issued in lifecycle methods.
+ */
+const MAX_FLUSH_CYCLES = 4
 
 const coreAPI = {
   setState(state: State): StateUpdate {
@@ -48,7 +53,8 @@ class Command {
   declare name: string
   declare args: unknown[]
   declare method: AnyFunction
-  declare done?: (value?: unknown) => void
+  declare resolve?: (executed: boolean) => void
+  declare reject?: (error: unknown) => void
 
   constructor(name: string, args: unknown[], method: AnyFunction) {
     this.name = name
@@ -77,33 +83,28 @@ const createCommandsAPI = (...apis: CommandsAPI[]) => {
 
 export type { Command }
 
+/*
+ * Queues the issued commands and executes the ones issued together
+ * in a single update, once the current task has completed.
+ */
 class Dispatcher {
   declare mode: symbol
   declare queue: Command[]
+  declare isFlushing: boolean
+  declare root: WebComponent
+  declare api: CommandsAPI
   declare commands: Commands & Record<string, AnyFunction>
   declare names: string[]
-
-  queueIncoming() {
-    this.mode = Mode.QUEUE
-  }
-
-  executeIncoming() {
-    this.mode = Mode.EXECUTE
-  }
 
   ignoreIncoming() {
     this.mode = Mode.IGNORE
   }
 
-  execute(command: Command, root: WebComponent) {
-    const prevState = root.state as State | undefined
-    const nextState = command.invoke(prevState)
-    Renderer.update(root, prevState, nextState, command)
-  }
-
   constructor(root: WebComponent) {
     this.mode = Mode.EXECUTE
     this.queue = []
+    this.isFlushing = false
+    this.root = root
     this.commands = {} as Commands & Record<string, AnyFunction>
 
     const customAPIs: CommandsAPI[] = []
@@ -115,69 +116,87 @@ class Dispatcher {
       }
       customAPIs.push(...(Array.isArray(customAPI) ? customAPI : [customAPI]))
     }
-    const api = createCommandsAPI(...customAPIs)
-
-    this.names = Object.keys(api)
-    const createCommand = (name: string, args: unknown[]) =>
-      new Command(name, args, api[name]!)
+    this.api = createCommandsAPI(...customAPIs)
+    this.names = Object.keys(this.api)
 
     for (const name of this.names) {
-      this.commands[name] = (...args: unknown[]) => {
-        const command = createCommand(name, args)
-
-        if (this.mode === Mode.QUEUE) {
-          const donePromise = new Promise(resolve => {
-            command.done = resolve
-          })
-          this.queue.push(command)
-          return donePromise
-        }
-
-        if (this.mode === Mode.IGNORE) {
-          return false
-        }
-
-        this.execute(command, root)
-
-        if (!this.queue.length) {
-          return true
-        }
-        const tasks = this.queue.splice(0)
-        setTimeout(() => this.flush(tasks, root))
-      }
+      this.commands[name] = (...args: unknown[]) => this.issue(name, args)
     }
   }
 
+  createCommand(name: string, args: unknown[]) {
+    return new Command(name, args, this.api[name]!)
+  }
+
+  issue(name: string, args: unknown[]): Promise<boolean> {
+    if (this.mode === Mode.IGNORE) {
+      return Promise.resolve(false)
+    }
+    const command = this.createCommand(name, args)
+    const done = new Promise<boolean>((resolve, reject) => {
+      command.resolve = resolve
+      command.reject = reject
+    })
+    this.queue.push(command)
+    // the commands issued while flushing are executed in the next cycle
+    if (this.queue.length === 1 && !this.isFlushing) {
+      queueMicrotask(() => this.flush())
+    }
+    return done
+  }
+
   /**
-   * Executes the commands queued by lifecycle methods, followed by the ones
-   * these commands queue in turn, until there are none left.
+   * Sets the state right away, when the root is rendered or receives
+   * new props from its parent.
    */
-  flush(tasks: Command[], root: WebComponent) {
-    let command: Command | undefined
+  setState(state: State) {
+    if (this.mode === Mode.IGNORE) {
+      return
+    }
+    this.execute([this.createCommand('setState', [state])])
+  }
+
+  /**
+   * Updates the root with the state calculated by the commands in turn.
+   */
+  execute(commands: Command[]) {
+    const prevState = this.root.state as State | undefined
+    const nextState = commands.reduce<State | undefined>(
+      (state, command) => command.invoke(state),
+      prevState,
+    )!
+    Renderer.update(this.root, prevState, nextState, commands)
+  }
+
+  /**
+   * Executes the queued commands, followed by the ones issued in lifecycle
+   * methods in turn, until there are none left. When an update fails,
+   * its commands reject and the ones not executed resolve with false.
+   */
+  flush() {
+    this.isFlushing = true
+    let commands: Command[] = []
     try {
-      for (let cycle = 1; tasks.length; cycle++) {
+      for (let cycle = 1; this.queue.length; cycle++) {
+        commands = this.queue.splice(0)
+        // the root can be destroyed before the queued commands are executed
+        if (this.mode === Mode.IGNORE) {
+          commands.forEach(command => command.resolve!(false))
+          continue
+        }
         if (cycle > MAX_FLUSH_CYCLES) {
           throw new Error(
             'Too many cycles updating state in lifecycle methods!',
           )
         }
-        while ((command = tasks.shift())) {
-          // the root can be destroyed before the queued commands are executed
-          if (this.mode === Mode.IGNORE) {
-            command.done!(false)
-            continue
-          }
-          this.execute(command, root)
-          command.done!()
-        }
-        tasks = this.queue.splice(0)
+        this.execute(commands)
+        commands.forEach(command => command.resolve!(true))
       }
     } catch (error) {
-      // the commands not executed resolve as ignored ones return
-      for (const pending of [command, ...tasks, ...this.queue.splice(0)]) {
-        pending?.done!(false)
-      }
-      throw error
+      commands.forEach(command => command.reject!(error))
+      this.queue.splice(0).forEach(command => command.resolve!(false))
+    } finally {
+      this.isFlushing = false
     }
   }
 }

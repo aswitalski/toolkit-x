@@ -30,13 +30,13 @@ class Demo extends WebComponent<object, DemoState, typeof DemoCommands> {
     const target = event.target as HTMLElement
     const x = event.offsetX / target.offsetWidth
     const y = event.offsetY / target.offsetHeight
-    this.commands.create(service.createLogo(id, x, y))
+    void this.commands.create(service.createLogo(id, x, y))
   }
 
   onDoubleClick(event: MouseEvent) {
     const target = event.target as HTMLElement
     const id = parseInt((target.parentNode as HTMLElement).id)
-    this.commands.destroy(id)
+    void this.commands.destroy(id)
   }
 
   render(): Template {

@@ -62,7 +62,7 @@ describe('Commands API', () => {
     assert.equal(typeof component.commands.setState, 'function')
     assert.equal(typeof component.commands.update, 'function')
     assert.equal(
-      typeof (component.commands as CommandsAPI).doNothing,
+      typeof (component.commands as Record<string, unknown>).doNothing,
       'function',
     )
   })
@@ -139,10 +139,10 @@ describe('Commands API', () => {
       }
     }
     const component = await toolkit.render(CommandsComponent, container)
-    component.commands.update({ count: 1 })
+    await component.commands.update({ count: 1 })
 
     // when
-    component.commands.update({ count: 2 })
+    await component.commands.update({ count: 2 })
 
     // then
     assert.equal(component.shadow!.querySelector('div')!.textContent, '2')
@@ -177,7 +177,7 @@ describe('Commands API', () => {
     component.ref.remove()
     // the removed custom element destroys the root after 50 ms
     await new Promise(resolve => setTimeout(resolve, 100))
-    const result = component.commands.update({ count: 1 })
+    const result = await component.commands.update({ count: 1 })
 
     // then
     assert.isFalse(result)

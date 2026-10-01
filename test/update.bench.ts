@@ -72,7 +72,7 @@ describe('Root update', () => {
 
     await bench('reverse', () => {
       isReversed = !isReversed
-      list.commands.update({ keys: isReversed ? reversed : keys })
+      return list.commands.update({ keys: isReversed ? reversed : keys })
     }).run()
   })
 
@@ -82,7 +82,7 @@ describe('Root update', () => {
 
     await bench('rotate', () => {
       keys = [...keys.slice(1), keys[0]]
-      list.commands.update({ keys })
+      return list.commands.update({ keys })
     }).run()
   })
 
@@ -90,18 +90,18 @@ describe('Root update', () => {
     const root = await render(createTree(path => path === '0000000'))
     let counter = 0
 
-    await bench('leaf', () => {
-      root.commands.update({ counter: ++counter })
-    }).run()
+    await bench('leaf', () =>
+      root.commands.update({ counter: ++counter }),
+    ).run()
   })
 
   test('updates 1458 leaves of a tree of 3280 nodes', async ({ bench }) => {
     const root = await render(createTree(path => !path.startsWith('1')))
     let counter = 0
 
-    await bench('leaves', () => {
-      root.commands.update({ counter: ++counter })
-    }).run()
+    await bench('leaves', () =>
+      root.commands.update({ counter: ++counter }),
+    ).run()
   })
 
   test('recreates 1000 components', async ({ bench }) => {
@@ -111,7 +111,7 @@ describe('Root update', () => {
 
     await bench('recreate', () => {
       isEmpty = !isEmpty
-      list.commands.update({ keys: isEmpty ? [] : keys })
+      return list.commands.update({ keys: isEmpty ? [] : keys })
     }).run()
   })
 })

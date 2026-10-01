@@ -53,9 +53,16 @@ Since the state comparison checks the deep equality of the objects, all the used
 
 ### Execution
 
-Commands are usually issued on either user actions or underlying data changes. In such circumstances the invocation of the command is synchronous, once it's completed, both virtual and the actual DOM are updated.
+Commands are usually issued on either user actions or underlying data changes. They are queued and the ones issued together, in the same synchronous run of code, are executed in a single update once it has completed. The commands issued after an `await` or in a separate event listener are executed in a separate update.
 
-They may also be called from the component's lifecycle methods, in the middle of the state transition. In such case all invocations are queued and performed atomically once the original cycle has completed. Toolkit also detects if such cycles do not cause infinite update loops.
+Every command returns a promise, resolved with `true` once both virtual and the actual DOM are updated, or with `false` when the command is ignored, as after the component is destroyed. When the update fails, the promise is rejected with the error.
+
+```js
+await this.commands.update({ selected: id })
+// the DOM shows the selected item
+```
+
+They may also be called from the component's lifecycle methods, in the middle of the state transition. In such case they are executed in the next update, once the current one has completed. Toolkit also detects if such cycles do not cause infinite update loops.
 
 ### Example
 
@@ -97,8 +104,8 @@ export default class Stack extends WebComponent {
     this.commands.push(item)
   }
 
-  popItem() {
-    this.commands.pop()
+  async popItem() {
+    await this.commands.pop()
     console.log('Removed item:', this.props.removed)
   }
 }

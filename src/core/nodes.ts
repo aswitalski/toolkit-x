@@ -386,11 +386,11 @@ class WebComponent<
     if (state.constructor !== Object) {
       throw new Error('Web Component state must be a plain object!')
     }
-    this.commands.setState(
+    this.dispatcher.setState(
       Template.normalizeComponentProps(
         state as State,
         this.constructor as typeof WebComponent,
-      ) as S,
+      ),
     )
   }
 

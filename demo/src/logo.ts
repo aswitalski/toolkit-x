@@ -24,7 +24,7 @@ class Logo extends WebComponent<LogoProps, LogoState> {
   }
 
   onClick(event: MouseEvent) {
-    this.commands.update({
+    void this.commands.update({
       channel: getNextChannel(this.props.channel),
     })
     event.stopImmediatePropagation()

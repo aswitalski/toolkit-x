@@ -115,10 +115,10 @@ describe('Custom element', () => {
     const destroy = vi.spyOn(Nested.prototype, 'destroy')
 
     // when
-    const update = () => app.commands.update({ failing: true })
+    const update = app.commands.update({ failing: true })
 
     // then
-    expect(update).toThrow('Failed to render')
+    await expect(update).rejects.toThrow('Failed to render')
     expect(destroy).toHaveBeenCalledOnce()
     const nested = destroy.mock.contexts[0] as WebComponent
     assert.equal(nested.plugins, null)
@@ -154,10 +154,10 @@ describe('Custom element', () => {
     const destroy = vi.spyOn(Nested.prototype, 'destroy')
 
     // when
-    const update = () => app.commands.update({ failing: true })
+    const update = app.commands.update({ failing: true })
 
     // then
-    expect(update).toThrow('Failed to render')
+    await expect(update).rejects.toThrow('Failed to render')
     expect(destroy).toHaveBeenCalledOnce()
     assert.equal(toolkit.tracked.length, tracked)
   })
@@ -188,7 +188,7 @@ describe('Custom element', () => {
     assert.equal(nested.shadow!.textContent, '1')
 
     // when
-    app.commands.update({ value: 2 })
+    await app.commands.update({ value: 2 })
 
     // then
     assert.deepEqual(nested.state, { value: 2 })
@@ -223,10 +223,10 @@ describe('Custom element', () => {
     await nested.ready
 
     // when
-    const update = () => app.commands.update({ value: -1 })
+    const update = app.commands.update({ value: -1 })
 
     // then
-    expect(update).toThrow('Negative value')
+    await expect(update).rejects.toThrow('Negative value')
     // the patches after the nested root are applied
     assert.equal(main.ref.querySelector('output')!.textContent, '-1')
     // the nested root keeps its description and its content
@@ -234,7 +234,7 @@ describe('Custom element', () => {
     assert.equal(nested.shadow!.textContent, '1')
 
     // when
-    app.commands.update({ value: 2 })
+    await app.commands.update({ value: 2 })
 
     // then
     assert.equal(nested.shadow!.textContent, '2')
@@ -270,7 +270,7 @@ describe('Custom element', () => {
     // when
     let error: unknown
     try {
-      app.commands.update({ value: -1 })
+      await app.commands.update({ value: -1 })
     } catch (thrown) {
       error = thrown
     }
@@ -318,14 +318,14 @@ describe('Custom element', () => {
     assert.equal(list.childNodes!.length, 2)
 
     // when
-    app.commands.update({ items: ['b', 'c', 'a'] })
+    await app.commands.update({ items: ['b', 'c', 'a'] })
 
     // then
     assert.deepEqual(texts(), ['b', 'c', 'a'])
     assert.equal(list.childNodes!.length, 3)
 
     // when
-    app.commands.update({ items: ['c'] })
+    await app.commands.update({ items: ['c'] })
 
     // then
     assert.deepEqual(texts(), ['c'])

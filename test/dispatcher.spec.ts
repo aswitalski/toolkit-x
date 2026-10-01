@@ -5,17 +5,15 @@ describe('Dispatcher', () => {
   describe('=> Executes commands', () => {
     class Root extends toolkit.Root {}
 
-    it('calls "set-state" upon initialization', async () => {
+    it('sets the state upon initialization', async () => {
       // given
       const root = createRootInstance(Root)
-
-      vi.spyOn(root.commands, 'setState')
 
       // when
       await root.init()
 
       // then
-      expect(root.commands.setState).toHaveBeenCalled()
+      expect(root.state).toEqual({})
     })
 
     it('calls "set-state" on direct request', async () => {
@@ -25,7 +23,7 @@ describe('Dispatcher', () => {
 
       // when
       vi.spyOn(root.commands, 'setState')
-      root.commands.setState(state)
+      void root.commands.setState(state)
 
       // then
       expect(root.commands.setState).toHaveBeenCalled()
@@ -39,11 +37,71 @@ describe('Dispatcher', () => {
 
       // when
       vi.spyOn(root.commands, 'update')
-      root.commands.update(state)
+      void root.commands.update(state)
 
       // then
       expect(root.commands.update).toHaveBeenCalled()
       expect(root.commands.update).toHaveBeenCalledWith(state)
+    })
+  })
+
+  describe('Batches commands', () => {
+    let renders = 0
+    class Root extends toolkit.Root<object, { value: number; other?: number }> {
+      getInitialState() {
+        return { value: 1 }
+      }
+      render(): Template {
+        renders++
+        return ['span', String(this.props.value)]
+      }
+    }
+
+    it('resolves with true once rendered', async () => {
+      // given
+      const root = await createWebComponent(Root)
+
+      // when
+      const result = root.commands.update({ value: 2 })
+
+      // then
+      expect(root.state).toEqual({ value: 1 })
+      await expect(result).resolves.toBe(true)
+      expect(root.state).toEqual({ value: 2 })
+      expect(root.content!.ref.textContent).toBe('2')
+    })
+
+    it('renders the commands issued together in a single update', async () => {
+      // given
+      const root = await createWebComponent(Root)
+      const rendered = renders
+
+      // when
+      const results = await Promise.all([
+        root.commands.update({ value: 2 }),
+        root.commands.update({ other: 3 }),
+        root.commands.update({ value: 4 }),
+      ])
+
+      // then
+      expect(results).toEqual([true, true, true])
+      expect(renders).toBe(rendered + 1)
+      expect(root.state).toEqual({ value: 4, other: 3 })
+      expect(root.content!.ref.textContent).toBe('4')
+    })
+
+    it('resolves with false when the root is destroyed', async () => {
+      // given
+      const root = await createWebComponent(Root)
+
+      // when
+      const queued = root.commands.update({ value: 2 })
+      root.destroy()
+
+      // then
+      await expect(queued).resolves.toBe(false)
+      await expect(root.commands.update({ value: 3 })).resolves.toBe(false)
+      expect(root.state).toEqual({ value: 1 })
     })
   })
 
@@ -52,7 +110,7 @@ describe('Dispatcher', () => {
       // given
       class Root extends toolkit.Root {
         onCreated() {
-          this.commands.update({
+          void this.commands.update({
             number: 19,
           })
         }
@@ -84,15 +142,14 @@ describe('Dispatcher', () => {
         }
         onUpdated() {
           if (this.props.step === 1 || this.props.step === 2) {
-            this.commands.update({ step: this.props.step + 1 })
+            void this.commands.update({ step: this.props.step + 1 })
           }
         }
       }
       const root = await createWebComponent(Root)
 
       // when
-      root.commands.update({ step: 1 })
-      await new Promise(resolve => setTimeout(resolve))
+      await root.commands.update({ step: 1 })
 
       // then
       expect(root.state).toEqual({ step: 3 })
@@ -100,7 +157,7 @@ describe('Dispatcher', () => {
 
     it('stops executing commands queued in an endless cycle', async () => {
       // given
-      const queued: unknown[] = []
+      const queued: Promise<boolean>[] = []
       class Root extends toolkit.Root<
         object,
         { endless: boolean; count: number }
@@ -115,57 +172,48 @@ describe('Dispatcher', () => {
         }
       }
       const root = await createWebComponent(Root)
-      const { dispatcher } = root
-      dispatcher.queueIncoming()
-      void root.commands.update({ endless: true })
-      dispatcher.executeIncoming()
-      const tasks = dispatcher.queue.splice(0)
 
       // when
-      const flush = () => dispatcher.flush(tasks, root)
+      const result = root.commands.update({ endless: true })
 
       // then
-      expect(flush).toThrow(
-        'Too many cycles updating state in lifecycle methods!',
+      await expect(result).resolves.toBe(true)
+      const results = await Promise.allSettled(queued)
+      // the commands of the update exceeding the limit reject
+      expect(results.map(({ status }) => status)).toEqual([
+        'fulfilled',
+        'fulfilled',
+        'fulfilled',
+        'rejected',
+      ])
+      expect((results.at(-1) as PromiseRejectedResult).reason).toEqual(
+        new Error('Too many cycles updating state in lifecycle methods!'),
       )
-      expect(dispatcher.queue).toEqual([])
-      // the last queued command is not executed, but still resolves
-      const results = await Promise.all(queued)
-      expect(results.at(-1)).toBe(false)
-      expect(results.slice(0, -1)).toEqual(
-        Array(queued.length - 1).fill(undefined),
-      )
+      expect(root.dispatcher.queue).toEqual([])
+      expect(root.state).toEqual({ endless: true, count: 3 })
     })
 
-    it('resolves the queued commands not executed when one throws', async () => {
+    it('resolves the queued commands not executed when an update fails', async () => {
       // given
+      let skipped: Promise<boolean> | undefined
       class Root extends toolkit.Root<object, { value: number }> {
         getInitialState() {
           return { value: 1 }
         }
-        render(): Template {
-          if (this.props.value < 0) {
-            throw new Error('Negative value')
+        onUpdated() {
+          if (this.props.value === 2) {
+            skipped = this.commands.update({ value: 3 })
+            throw new Error('Failed!')
           }
-          return ['span', String(this.props.value)]
         }
       }
       const root = await createWebComponent(Root)
-      const { dispatcher } = root
-      dispatcher.queueIncoming()
-      const executed = root.commands.update({ value: 2 })
-      const failing = root.commands.update({ value: -1 })
-      const skipped = root.commands.update({ value: 3 })
-      dispatcher.executeIncoming()
-      const tasks = dispatcher.queue.splice(0)
 
       // when
-      const flush = () => dispatcher.flush(tasks, root)
+      const failing = root.commands.update({ value: 2 })
 
       // then
-      expect(flush).toThrow('Negative value')
-      await expect(executed).resolves.toBeUndefined()
-      await expect(failing).resolves.toBe(false)
+      await expect(failing).rejects.toThrow('Failed!')
       await expect(skipped).resolves.toBe(false)
       expect(root.state).toEqual({ value: 2 })
     })
@@ -186,14 +234,14 @@ describe('Dispatcher', () => {
       const root = await createWebComponent(Root)
 
       // when
-      const update = () => root.commands.update({ value: -1 })
+      const update = root.commands.update({ value: -1 })
 
       // then
-      expect(update).toThrow('Negative value')
+      await expect(update).rejects.toThrow('Negative value')
       expect(root.state).toEqual({ value: 1 })
 
       // when
-      root.commands.update({ value: 2 })
+      await root.commands.update({ value: 2 })
 
       // then
       expect(root.state).toEqual({ value: 2 })
@@ -213,13 +261,15 @@ describe('Dispatcher', () => {
         }
       }
       const root = await createWebComponent(Root)
-      expect(() => root.commands.update({ fail: true })).toThrow('Failed!')
+      await expect(root.commands.update({ fail: true })).rejects.toThrow(
+        'Failed!',
+      )
 
       // when
       const result = root.commands.update({ fail: false })
 
       // then
-      expect(result).toBe(true)
+      await expect(result).resolves.toBe(true)
       expect(root.state).toEqual({ fail: false })
     })
   })

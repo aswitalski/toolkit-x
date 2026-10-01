@@ -71,7 +71,7 @@ describe('Keyed children', () => {
       )
 
       // when
-      list.commands.update({ keys: nextKeys, version })
+      await list.commands.update({ keys: nextKeys, version })
 
       // then
       const rendered = [...ul.ref.children]

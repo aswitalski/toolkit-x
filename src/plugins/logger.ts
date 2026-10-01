@@ -14,7 +14,10 @@ const Logger: PluginManifest = {
 
   onBeforeUpdate(update: Update) {
     console.group(title(update))
-    console.log('Command:', update.command.name)
+    console.log(
+      'Commands:',
+      update.commands.map(command => command.name),
+    )
     console.time(RENDER_TIME)
   },
 

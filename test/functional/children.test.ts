@@ -38,7 +38,7 @@ describe('Children', () => {
     const list = await toolkit.render(List, container)
 
     // when
-    list.commands.update({ items: ['d', 'a', 'c', 'b'] })
+    await list.commands.update({ items: ['d', 'a', 'c', 'b'] })
 
     // then
     const ul = list.shadow!.querySelector('ul')!
