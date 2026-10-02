@@ -1,5 +1,5 @@
 import type { Props } from './description.js'
-import { Component, type WebComponent } from './nodes.js'
+import type { Component, WebComponent } from './nodes.js'
 import type { AnyFunction } from './utils.js'
 
 /*
@@ -50,10 +50,14 @@ class Sandbox {
     pluginMethods.clear()
   }
 
-  static create(component: Component): ComponentSandbox {
-    const blacklist: PropertyKey[] = Object.getOwnPropertyNames(
-      Component.prototype,
-    )
+  /**
+   * Creates the sandbox of a component, hiding the given properties
+   * of the Component class from the component methods.
+   */
+  static create(
+    component: Component,
+    hidden: readonly PropertyKey[],
+  ): ComponentSandbox {
     const state: { props?: Props; children?: unknown[] } = {}
     const autobound: Record<PropertyKey, BoundListener> = {}
     return new Proxy(component, {
@@ -91,7 +95,7 @@ class Sandbox {
         if (pluginMethods.has(property)) {
           return get(target.rootNode, property)
         }
-        if (blacklist.includes(property)) {
+        if (hidden.includes(property)) {
           return undefined
         }
         if (isFunction(autobound, property)) {

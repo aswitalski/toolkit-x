@@ -1,5 +1,5 @@
 import type { WebComponent } from './nodes.js'
-import Renderer from './renderer.js'
+import { runtime } from './runtime.js'
 import type { AnyFunction } from './utils.js'
 
 /* The state of a root component. */
@@ -165,7 +165,7 @@ class Dispatcher {
       (state, command) => command.invoke(state),
       prevState,
     )!
-    Renderer.update(this.root, prevState, nextState, commands)
+    runtime().update(this.root, prevState, nextState, commands)
   }
 
   /**

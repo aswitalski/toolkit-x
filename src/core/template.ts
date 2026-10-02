@@ -8,7 +8,7 @@ import {
   type Props,
   TextDescription,
 } from './description.js'
-import { Component, type ComponentClass } from './nodes.js'
+import type { ComponentClass } from './nodes.js'
 import { runtime } from './runtime.js'
 import { deepFreeze, lowerDash } from './utils.js'
 
@@ -260,7 +260,11 @@ const Template = {
     const type = typeof item
     switch (type) {
       case 'function':
-        if ((item as ComponentClass).prototype instanceof Component) {
+        // the node type is inherited from the Component or Root class
+        if (
+          (item as ComponentClass).NodeType === 'component' ||
+          (item as ComponentClass).NodeType === 'root'
+        ) {
           return 'component'
         }
         return 'function'

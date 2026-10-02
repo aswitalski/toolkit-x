@@ -4,6 +4,7 @@ import type {
   Listener,
   NodeDescription,
 } from './description.js'
+import CreatedRoots from './created-roots.js'
 import Lifecycle from './lifecycle.js'
 import type {
   Component,
@@ -56,7 +57,7 @@ class Diff {
     this.root = root
     this.patches = []
     // nothing is applied when the calculation fails, e.g. when rendering
-    VirtualDOM.destroyingRootsOnError(() =>
+    CreatedRoots.destroyingRootsOnError(() =>
       this.calculate(currentState, nextState),
     )
   }

@@ -2,6 +2,7 @@ import type { PureComponent, RenderResult } from './bragi.js'
 import type { ComponentDescription, Props } from './description.js'
 import { Component, type ComponentClass, WebComponent } from './nodes.js'
 import Plugins, { type PluginManifest } from './plugins.js'
+import Renderer from './renderer.js'
 import { provideRuntime } from './runtime.js'
 import Sandbox from './sandbox.js'
 import Template, { type ItemType } from './template.js'
@@ -187,6 +188,8 @@ provideRuntime({
   warn: (...messages) => toolkit.warn(...messages),
   track,
   resolveComponentClass,
+  update: (root, from, to, commands) =>
+    Renderer.update(root, from, to, commands),
 })
 
 export default Toolkit

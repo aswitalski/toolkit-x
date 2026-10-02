@@ -14,13 +14,13 @@ import Dispatcher, {
   type CommandsAPI,
   type State,
 } from './dispatcher.js'
+import CreatedRoots from './created-roots.js'
 import DOM from './dom.js'
 import Plugins from './plugins.js'
 import { runtime } from './runtime.js'
 import Sandbox, { type ComponentSandbox } from './sandbox.js'
 import Template from './template.js'
 import { type AnyFunction, invariant } from './utils.js'
-import VirtualDOM from './virtual-dom.js'
 
 /* The DOM node rendered for a virtual node. */
 export type NodeRef = Element | CharacterData
@@ -93,23 +93,24 @@ abstract class VirtualNode {
   }
 
   isRoot(): this is WebComponent {
-    return this instanceof WebComponent
+    return this.nodeType === 'root'
   }
 
   isComponent(): this is Component {
-    return this instanceof Component
+    const { nodeType } = this
+    return nodeType === 'component' || nodeType === 'root'
   }
 
   isElement(): this is VirtualElement {
-    return this instanceof VirtualElement
+    return this.nodeType === 'element'
   }
 
   isComment(): this is Comment {
-    return this instanceof Comment
+    return this.nodeType === 'comment'
   }
 
   isText(): this is Text {
-    return this instanceof Text
+    return this.nodeType === 'text'
   }
 
   isCompatible(node: VirtualNode | null | undefined) {
@@ -159,7 +160,7 @@ class Component<P extends object = object> extends VirtualNode {
     attachDOM = true,
   ) {
     super(description, parent, context)
-    this.sandbox = Sandbox.create(this)
+    this.sandbox = Sandbox.create(this, COMPONENT_PROPERTIES)
     this.cleanUpTasks = []
     this.isInitialized = attachDOM
     if (attachDOM) {
@@ -277,6 +278,9 @@ class Component<P extends object = object> extends VirtualNode {
   }
 }
 
+/* The properties of the Component class hidden from the sandbox. */
+const COMPONENT_PROPERTIES = Object.getOwnPropertyNames(Component.prototype)
+
 const CONTAINER = Symbol('container')
 const CUSTOM_ELEMENT = Symbol('custom-element')
 const DISPATCHER = Symbol('dispatcher')
@@ -325,7 +329,7 @@ class WebComponent<
   ) {
     super(description, parent, context, /*= attachDOM */ false)
     // before being tracked, to be destroyed when rendering it fails
-    VirtualDOM.collectRoot(this)
+    CreatedRoots.collectRoot(this)
     this.subroots = new Set()
     this.dispatcher = new Dispatcher(this)
     this.ready = new Promise((resolve, reject) => {
@@ -342,10 +346,6 @@ class WebComponent<
     if ((this.constructor as typeof WebComponent).elementName) {
       this.ref = createComponentElement(this)
       this.plugins!.installAll()
-      if (this.description.children) {
-        ChildNodes.create(this)
-        ChildNodes.attach(this)
-      }
     } else {
       this.plugins!.installAll()
       super.attachDOM()
@@ -353,11 +353,11 @@ class WebComponent<
   }
 
   createPlaceholder(): VirtualNode {
-    return VirtualDOM.createFromDescription(
+    return new Comment(
       new CommentDescription(
         (this.constructor as typeof WebComponent).displayName,
       ),
-    )!
+    )
   }
 
   /**
@@ -522,6 +522,10 @@ class WebComponent<
     this.parentNode = null
   }
 
+  setChildNodes(nodes: VirtualNode[]) {
+    ChildNodes.set(this, nodes)
+  }
+
   insertChild(child: VirtualNode, index?: number) {
     ChildNodes.insert(this, child, index)
   }
@@ -556,9 +560,6 @@ class VirtualElement extends VirtualNode {
     context?: WebComponent | null,
   ) {
     super(description, parent, context)
-    if (description.children) {
-      ChildNodes.create(this)
-    }
     this.attachDOM()
   }
 
@@ -586,6 +587,10 @@ class VirtualElement extends VirtualNode {
     )
   }
 
+  setChildNodes(nodes: VirtualNode[]) {
+    ChildNodes.set(this, nodes)
+  }
+
   insertChild(child: VirtualNode, index?: number) {
     ChildNodes.insert(this, child, index)
   }
@@ -604,7 +609,6 @@ class VirtualElement extends VirtualNode {
 
   attachDOM() {
     this.ref = DOM.createElement(this.description)
-    ChildNodes.attach(this)
   }
 }
 
@@ -653,14 +657,9 @@ class Text extends VirtualNode {
  * as `children` of an element or `childNodes` of a Web Component.
  */
 const ChildNodes = {
-  create(parent: ParentVirtualNode) {
-    parent.childNodes = parent.description.children!.map(description =>
-      VirtualDOM.createFromDescription(description, parent, parent.context)!,
-    )
-  },
-
-  attach(parent: ParentVirtualNode) {
-    for (const child of parent.childNodes ?? []) {
+  set(parent: ParentVirtualNode, nodes: VirtualNode[]) {
+    parent.childNodes = nodes
+    for (const child of nodes) {
       parent.ref.appendChild(child.ref)
     }
   },

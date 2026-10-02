@@ -1,3 +1,4 @@
+import type { Command, State } from './dispatcher.js'
 import type { ComponentClass, WebComponent } from './nodes.js'
 import type Plugins from './plugins.js'
 import type { ItemType } from './template.js'
@@ -14,6 +15,13 @@ export interface Runtime {
   warn(...messages: unknown[]): void
   track(root: WebComponent): void
   resolveComponentClass(component: unknown, type: ItemType): ComponentClass
+  /* Renders the state of the root, see Renderer.update(). */
+  update(
+    root: WebComponent,
+    from: State | undefined,
+    to: State,
+    commands: Command[],
+  ): void
 }
 
 let provided: Runtime | null = null

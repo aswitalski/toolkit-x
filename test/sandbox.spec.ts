@@ -5,9 +5,10 @@ import { createComponent, createFromTemplate, createRoot } from './helpers.js'
 describe('Sandbox', () => {
   /* The sandbox with the component methods and arbitrary properties. */
   const create = <T extends object>(component: T) =>
-    Sandbox.create(component as unknown as Component) as ReturnType<
-      typeof Sandbox.create
-    > &
+    Sandbox.create(
+      component as unknown as Component,
+      Object.getOwnPropertyNames(toolkit.Component.prototype),
+    ) as ReturnType<typeof Sandbox.create> &
       Omit<T, 'children' | 'props'> &
       Record<string, unknown>
 
