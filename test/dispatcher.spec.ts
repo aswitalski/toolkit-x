@@ -193,16 +193,16 @@ describe('Dispatcher', () => {
       expect(root.state).toEqual({ endless: true, count: 3 })
     })
 
-    it('resolves the queued commands not executed when an update fails', async () => {
+    it('executes the commands issued in lifecycle methods of a failed update', async () => {
       // given
-      let skipped: Promise<boolean> | undefined
+      let issued: Promise<boolean> | undefined
       class Root extends toolkit.Root<object, { value: number }> {
         getInitialState() {
           return { value: 1 }
         }
         onUpdated() {
           if (this.props.value === 2) {
-            skipped = this.commands.update({ value: 3 })
+            issued = this.commands.update({ value: 3 })
             throw new Error('Failed!')
           }
         }
@@ -214,8 +214,49 @@ describe('Dispatcher', () => {
 
       // then
       await expect(failing).rejects.toThrow('Failed!')
-      await expect(skipped).resolves.toBe(false)
-      expect(root.state).toEqual({ value: 2 })
+      await expect(issued).resolves.toBe(true)
+      expect(root.state).toEqual({ value: 3 })
+    })
+
+    it('stops a cycle of failing updates issuing commands', async () => {
+      // given
+      const issued: Promise<boolean>[] = []
+      class Root extends toolkit.Root<
+        object,
+        { failing: boolean; count: number }
+      > {
+        getInitialState() {
+          return { failing: false, count: 0 }
+        }
+        onUpdated() {
+          const { failing, count } = this.props
+          if (failing) {
+            issued.push(this.commands.update({ count: count + 1 }))
+            throw new Error(`Failed at ${count}`)
+          }
+        }
+      }
+      const root = await createWebComponent(Root)
+
+      // when
+      const failing = root.commands.update({ failing: true, count: 1 })
+
+      // then
+      await expect(failing).rejects.toThrow('Failed at 1')
+      const results = await Promise.allSettled(issued)
+      // the commands of the update exceeding the limit are not executed
+      expect(
+        results.map(
+          result => (result as PromiseRejectedResult).reason as unknown,
+        ),
+      ).toEqual([
+        new Error('Failed at 2'),
+        new Error('Failed at 3'),
+        new Error('Failed at 4'),
+        new Error('Too many cycles updating state in lifecycle methods!'),
+      ])
+      expect(root.dispatcher.queue).toEqual([])
+      expect(root.state).toEqual({ failing: true, count: 4 })
     })
 
     it('keeps the state when rendering it fails', async () => {

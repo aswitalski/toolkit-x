@@ -62,7 +62,7 @@ await this.commands.update({ selected: id })
 // the DOM shows the selected item
 ```
 
-They may also be called from the component's lifecycle methods, in the middle of the state transition. In such case they are executed in the next update, once the current one has completed. Toolkit also detects if such cycles do not cause infinite update loops.
+They may also be called from the component's lifecycle methods, in the middle of the state transition. In such case they are executed in the next update, once the current one has completed, also when it fails. Toolkit also detects if such cycles do not cause infinite update loops.
 
 ### Example
 

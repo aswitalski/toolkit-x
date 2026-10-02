@@ -170,31 +170,33 @@ class Dispatcher {
 
   /**
    * Executes the queued commands, followed by the ones issued in lifecycle
-   * methods in turn, until there are none left. When an update fails,
-   * its commands reject and the ones not executed resolve with false.
+   * methods in turn, until there are none left. When an update fails, its
+   * commands reject, and the ones issued in its lifecycle methods are still
+   * executed, as the update is completed.
    */
   flush() {
     this.isFlushing = true
-    let commands: Command[] = []
     try {
       for (let cycle = 1; this.queue.length; cycle++) {
-        commands = this.queue.splice(0)
+        const commands = this.queue.splice(0)
         // the root can be destroyed before the queued commands are executed
         if (this.mode === Mode.IGNORE) {
           commands.forEach(command => command.resolve!(false))
           continue
         }
-        if (cycle > MAX_FLUSH_CYCLES) {
-          throw new Error(
-            'Too many cycles updating state in lifecycle methods!',
-          )
+        try {
+          if (cycle > MAX_FLUSH_CYCLES) {
+            throw new Error(
+              'Too many cycles updating state in lifecycle methods!',
+            )
+          }
+          this.execute(commands)
+        } catch (error) {
+          commands.forEach(command => command.reject!(error))
+          continue
         }
-        this.execute(commands)
         commands.forEach(command => command.resolve!(true))
       }
-    } catch (error) {
-      commands.forEach(command => command.reject!(error))
-      this.queue.splice(0).forEach(command => command.resolve!(false))
     } finally {
       this.isFlushing = false
     }
