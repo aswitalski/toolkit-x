@@ -1,15 +1,6 @@
-import type {
-  ElementDescription,
-  NodeDescription,
-  Props,
-} from './description.js'
-import {
-  type ComponentElement,
-  createComponentElement,
-} from './custom-element.js'
+import type { NodeDescription, Props } from './description.js'
 import Diff from './diff.js'
 import type { Command, State } from './dispatcher.js'
-import DOM from './dom.js'
 import type { Component, WebComponent } from './nodes.js'
 import type Patch from './patch.js'
 
@@ -78,20 +69,6 @@ const Renderer = {
    */
   onAfterUpdate(update: Update, root: WebComponent) {
     root.plugins!.notify('after-update', update)
-  },
-
-  /**
-   * Creates a new Custom Element instance assigned to specified Web Component.
-   */
-  createCustomElement(root: WebComponent): ComponentElement {
-    return createComponentElement(root)
-  },
-
-  /**
-   * Creates a new DOM Element based on the specified description.
-   */
-  createElement(description: ElementDescription): HTMLElement {
-    return DOM.createElement(description)
   },
 }
 
