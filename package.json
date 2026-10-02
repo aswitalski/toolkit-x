@@ -90,7 +90,7 @@
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",
-    "pre-push": "npm run lint && npm run typecheck && npm test"
+    "pre-push": "npm run typecheck && npm test && npm run build && npm run lint"
   },
   "lint-staged": {
     "*.{js,ts}": [
