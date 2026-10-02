@@ -11,6 +11,24 @@ import type {
 } from './nodes.js'
 import Patch from './patch.js'
 
+/* The errors of the hooks called while collecting them, if collecting. */
+let hookErrors: unknown[] | null = null
+
+/*
+ * Calls a hook, collecting its error if collecting, so that a throwing hook
+ * does not stop the other hooks from being called.
+ */
+const callHook = (hook: () => void) => {
+  if (!hookErrors) {
+    return hook()
+  }
+  try {
+    hook()
+  } catch (error) {
+    hookErrors.push(error)
+  }
+}
+
 /*
  * Calls the hook of a component being removed, ignoring the commands it
  * issues. The dispatcher is shared with the root, so its mode is restored.
@@ -20,16 +38,40 @@ const callIgnoringCommands = (component: Component, hook: () => void) => {
   const { mode } = dispatcher
   dispatcher.ignoreIncoming()
   try {
-    hook()
+    callHook(hook)
   } finally {
     dispatcher.mode = mode
   }
 }
 
+/* Throws the errors, aggregated when there are more of them. */
+export const throwErrors = (errors: unknown[], message: string) => {
+  if (errors.length === 1) {
+    throw errors[0]
+  }
+  if (errors.length > 1) {
+    throw new AggregateError(errors, message)
+  }
+}
+
 const Lifecycle = {
+  /**
+   * Calls the hooks in the callback, collecting the errors they throw in
+   * the given list instead of stopping at the first one.
+   */
+  collectingErrors(errors: unknown[], callback: () => void) {
+    const prevErrors = hookErrors
+    hookErrors = errors
+    try {
+      callback()
+    } finally {
+      hookErrors = prevErrors
+    }
+  },
+
   onComponentCreated(component: Component) {
     if (component.hasOwnMethod('onCreated')) {
-      component.onCreated!.call(component.sandbox)
+      callHook(() => component.onCreated!.call(component.sandbox))
     }
     if (component.content) {
       this.onNodeCreated(component.content)
@@ -54,7 +96,7 @@ const Lifecycle = {
 
   onRootCreated(root: WebComponent) {
     if (root.hasOwnMethod('onCreated')) {
-      root.onCreated!.call(root.sandbox)
+      callHook(() => root.onCreated!.call(root.sandbox))
     }
     const { childNodes } = root
     if (childNodes) {
@@ -69,7 +111,7 @@ const Lifecycle = {
       this.onNodeAttached(component.content)
     }
     if (component.hasOwnMethod('onAttached')) {
-      component.onAttached!.call(component.sandbox)
+      callHook(() => component.onAttached!.call(component.sandbox))
     }
   },
 
@@ -115,19 +157,21 @@ const Lifecycle = {
       }
     }
     if (root.hasOwnMethod('onAttached')) {
-      root.onAttached!.call(root.sandbox)
+      callHook(() => root.onAttached!.call(root.sandbox))
     }
   },
 
   onComponentReceivedProps(component: Component, nextProps: Props = {}) {
     if (component.hasOwnMethod('onPropsReceived')) {
-      component.onPropsReceived!.call(component.sandbox, nextProps)
+      callHook(() =>
+        component.onPropsReceived!.call(component.sandbox, nextProps),
+      )
     }
   },
 
   onComponentUpdated(component: Component, prevProps: Props = {}) {
     if (component.hasOwnMethod('onUpdated')) {
-      component.onUpdated!.call(component.sandbox, prevProps)
+      callHook(() => component.onUpdated!.call(component.sandbox, prevProps))
     }
   },
 

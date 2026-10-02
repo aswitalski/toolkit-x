@@ -1,5 +1,5 @@
 import DOM from './dom.js'
-import Lifecycle from './lifecycle.js'
+import Lifecycle, { throwErrors } from './lifecycle.js'
 import type { WebComponent } from './nodes.js'
 import Plugins, { type Plugin, type PluginManifest } from './plugins.js'
 
@@ -69,10 +69,15 @@ export class ComponentElement extends HTMLElement {
       // already destroyed, e.g. directly before the scheduled destruction
       return
     }
-    Lifecycle.onComponentDestroyed(root)
-    Lifecycle.onComponentDetached(root)
+    // the hooks of all the components are called when some of them throw
+    const errors: unknown[] = []
+    Lifecycle.collectingErrors(errors, () => {
+      Lifecycle.onComponentDestroyed(root)
+      Lifecycle.onComponentDetached(root)
+    })
     root.ref = null
     this.$root = null
+    throwErrors(errors, 'Errors destroying the component')
   }
 }
 

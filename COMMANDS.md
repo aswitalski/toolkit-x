@@ -55,7 +55,7 @@ Since the state comparison checks the deep equality of the objects, all the used
 
 Commands are usually issued on either user actions or underlying data changes. They are queued and the ones issued together, in the same synchronous run of code, are executed in a single update once it has completed. The commands issued after an `await` or in a separate event listener are executed in a separate update.
 
-Every command returns a promise, resolved with `true` once both virtual and the actual DOM are updated, or with `false` when the command is ignored, as after the component is destroyed. When the update fails, the promise is rejected with the error.
+Every command returns a promise, resolved with `true` once both virtual and the actual DOM are updated, or with `false` when the command is ignored, as after the component is destroyed. When the update fails, the promise is rejected with the error. An update is still completed when lifecycle methods throw, and when more of them throw, the promise is rejected with an `AggregateError` of all their errors.
 
 ```js
 await this.commands.update({ selected: id })

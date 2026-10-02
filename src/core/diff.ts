@@ -5,7 +5,7 @@ import type {
   NodeDescription,
 } from './description.js'
 import CreatedRoots from './created-roots.js'
-import Lifecycle from './lifecycle.js'
+import Lifecycle, { throwErrors } from './lifecycle.js'
 import type {
   Component,
   ParentVirtualNode,
@@ -74,39 +74,37 @@ class Diff {
    */
   apply(): Patch[] {
     if (this.patches.length) {
-      Lifecycle.beforeUpdate(this.patches)
-      // a nested root failing to render its props keeps its description,
-      // to render them on the next update, and its error is thrown only
-      // when the remaining patches are applied
+      // the update is completed when hooks or patches throw, as stopping
+      // would leave the DOM, the virtual nodes and the hooks called out of
+      // sync, and the errors are thrown once it is applied
       const errors: unknown[] = []
+      Lifecycle.collectingErrors(errors, () =>
+        Lifecycle.beforeUpdate(this.patches),
+      )
+      // a nested root failing to render its props keeps its description,
+      // to render them on the next update
       const failedRoots = new Set<VirtualNode>()
       const applied: Patch[] = []
       for (const patch of this.patches) {
-        if (patch.type === Patch.Type.UPDATE_ROOT) {
-          try {
-            Patch.apply(patch)
-          } catch (error) {
-            errors.push(error)
-            failedRoots.add(patch.root)
-            continue
-          }
-        } else if (
+        if (
           patch.type === Patch.Type.UPDATE_NODE &&
           failedRoots.has(patch.node)
         ) {
           continue
-        } else {
+        }
+        try {
           Patch.apply(patch)
+        } catch (error) {
+          errors.push(error)
+          if (patch.type === Patch.Type.UPDATE_ROOT) {
+            failedRoots.add(patch.root)
+          }
+          continue
         }
         applied.push(patch)
       }
-      Lifecycle.afterUpdate(applied)
-      if (errors.length === 1) {
-        throw errors[0]
-      }
-      if (errors.length > 1) {
-        throw new AggregateError(errors, 'Nested roots failed to render')
-      }
+      Lifecycle.collectingErrors(errors, () => Lifecycle.afterUpdate(applied))
+      throwErrors(errors, 'Errors applying the update')
     }
     return this.patches
   }
