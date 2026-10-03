@@ -9,7 +9,7 @@ import { invariant } from './utils.js'
  * provided by the instance, so that the modules do not import it.
  */
 export interface Runtime {
-  readonly plugins: Plugins | null
+  readonly plugins: Plugins
   assert(condition: unknown, message?: string): void
   isDebug(): boolean
   warn(...messages: unknown[]): void

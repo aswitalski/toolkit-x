@@ -1,4 +1,6 @@
 import type { PureComponent, RenderResult } from './bragi.js'
+import CreatedRoots from './created-roots.js'
+import { updateStylesheets } from './custom-element.js'
 import type { ComponentDescription, Props } from './description.js'
 import { Component, type ComponentClass, WebComponent } from './nodes.js'
 import Plugins, { type PluginManifest } from './plugins.js'
@@ -6,12 +8,11 @@ import Renderer from './renderer.js'
 import { provideRuntime } from './runtime.js'
 import Sandbox from './sandbox.js'
 import Template, { type ItemType } from './template.js'
+import { isSameList } from './utils.js'
 import VirtualDOM from './virtual-dom.js'
 
-const INIT = Symbol('init')
-
 export interface Settings {
-  debug: boolean
+  readonly debug: boolean
 }
 
 export interface Options {
@@ -24,11 +25,11 @@ export interface Options {
  * the public Toolkit instance.
  */
 
-/* The root components rendered in containers, tracking their subroots. */
+/* The top-level root components, tracking their subroots. */
 const roots = new Set<WebComponent>()
 
-/* The plugins configured for all root components. */
-let plugins: Plugins | null = null
+/* The settings used until Toolkit is configured. */
+const defaultSettings: Settings = Object.freeze({ debug: false })
 
 /* Function to Component mapping. */
 const pureComponentClassRegistry = new Map<PureComponent, ComponentClass>()
@@ -40,6 +41,9 @@ const createPlugins = (manifests: PluginManifest[] = []): Plugins => {
   }
   return plugins
 }
+
+/* The plugins configured for all root components. */
+let plugins = createPlugins()
 
 /**
  * Returns a PureComponent class rendering the template
@@ -95,45 +99,64 @@ const track = (root: WebComponent) => {
 }
 
 class Toolkit {
-  declare settings: Settings | null
-  declare ready: Promise<boolean>
-  declare assert: (condition: unknown, message?: string) => void;
-  declare [INIT]: (value: boolean) => void
+  declare settings: Settings
+  declare assert: (condition: unknown, message?: string) => void
 
   constructor() {
-    this.settings = null
-    this.ready = new Promise(resolve => {
-      this[INIT] = resolve
-    })
+    this.settings = defaultSettings
     this.assert = console.assert as Toolkit['assert']
   }
 
   /**
-   * Configures Toolkit with given options object.
+   * Configures Toolkit with given options, keeping the current values
+   * of the options not provided, by default no debug mode and no plugins.
+   * Changed plugins are uninstalled from the created roots, and the new
+   * ones installed in their place, with their stylesheets loaded.
    */
-  async configure(options: Options) {
-    this.settings = Object.freeze({ debug: options.debug || false })
-    plugins = createPlugins(options.plugins)
-    this[INIT](true)
+  configure(options: Options) {
+    if (options.debug !== undefined) {
+      this.settings = Object.freeze({ debug: options.debug })
+    }
+    const manifests = options.plugins
+    const previous = [...plugins]
+    const origins = previous.map(plugin => plugin.origin)
+    if (!manifests || isSameList(origins, manifests)) {
+      return
+    }
+    // the methods of the remaining plugins are registered again below
+    Sandbox.clearPluginMethods()
+    plugins = createPlugins(manifests)
+    for (const root of this.tracked) {
+      for (const plugin of previous) {
+        root.plugins!.uninstall(plugin.name)
+      }
+      for (const plugin of root.plugins!) {
+        plugin.register?.()
+      }
+      for (const plugin of plugins) {
+        root.plugins!.register(plugin)
+        root.plugins!.install(plugin)
+      }
+      if (root.shadow) {
+        updateStylesheets(root)
+      }
+    }
   }
 
   /**
-   * Resets Toolkit to a pristine state. All future render requests
-   * will require new configuration to be provided first.
+   * Resets Toolkit to a pristine state, with the default settings
+   * and no plugins, forgetting the created roots.
    */
   reset() {
-    plugins?.destroy()
-    plugins = null
+    plugins.destroy()
+    plugins = createPlugins()
     roots.clear()
-    this.settings = null
+    this.settings = defaultSettings
     pureComponentClassRegistry.clear()
     Sandbox.clearPluginMethods()
-    this.ready = new Promise(resolve => {
-      this[INIT] = resolve
-    })
   }
 
-  /* The rendered root components, with their subroots. */
+  /* The created root components, with their subroots, until destroyed. */
   get tracked(): WebComponent[] {
     const tracked: WebComponent[] = []
     for (const root of roots) {
@@ -143,7 +166,7 @@ class Toolkit {
   }
 
   isDebug(): boolean {
-    return Boolean(this.settings && this.settings.debug)
+    return this.settings.debug
   }
 
   warn(...messages: unknown[]) {
@@ -160,7 +183,10 @@ class Toolkit {
       component,
       props,
     ]) as ComponentDescription
-    return VirtualDOM.createWebComponent(description, null)
+    // not to stay tracked, with the plugins installed, when it throws
+    return CreatedRoots.destroyingRootsOnError(() =>
+      VirtualDOM.createWebComponent(description, null),
+    )
   }
 
   async render(
@@ -168,7 +194,6 @@ class Toolkit {
     container: Element,
     props: Props = {},
   ): Promise<WebComponent> {
-    await this.ready
     const root = await this.createRoot(component, props)
     return root.mount(container)
   }

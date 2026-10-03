@@ -58,10 +58,10 @@ describe('Root update', () => {
     return toolkit.render(RootClass, container)
   }
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // measured as in production, without frozen descriptions
     toolkit.reset()
-    await toolkit.configure({ debug: false })
+    toolkit.configure({ debug: false })
   })
 
   test('reverses 1000 keyed items', async ({ bench }) => {

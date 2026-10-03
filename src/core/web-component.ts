@@ -72,6 +72,8 @@ class WebComponent<
       this.markAsFailed = reject
     })
     this.plugins = this.createPlugins()
+    // from the start, for the plugins to be replaced when reconfigured
+    runtime().track(this)
     this.content = this.createPlaceholder()
     this.shadow = null
     this.attachDOM()
@@ -99,8 +101,6 @@ class WebComponent<
    * Triggers the initial rendering of the component in given container.
    */
   async init() {
-    runtime().track(this)
-
     // props are passed from templates, which are not checked against P
     const state = await this.getInitialState.call(
       this.sandbox,

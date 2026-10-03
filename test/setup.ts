@@ -6,6 +6,6 @@ toolkit.assert = (condition, message) => {
   }
 }
 
-await toolkit.configure({
+toolkit.configure({
   debug: true,
 })

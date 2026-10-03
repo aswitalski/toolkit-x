@@ -112,7 +112,6 @@ class App extends WebComponent {
   }
 }
 
-toolkit.configure({ debug: true })
 await toolkit.render(App, document.body)
 ```
 
@@ -120,6 +119,12 @@ or as a single script, exposing the Toolkit as the `toolkit` global:
 
 ```html
 <script src="toolkit-0.69.0.js"></script>
+```
+
+Toolkit renders without the debug mode and plugins by default. Both can be configured at any time, also after rendering, keeping the current values of the options not provided. Changed plugins are uninstalled from the created roots and the new ones installed:
+
+```js
+toolkit.configure({ debug: true, plugins: [plugin] })
 ```
 
 ## Build

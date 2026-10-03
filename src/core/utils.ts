@@ -121,6 +121,10 @@ const postRender = (fn: FrameRequestCallback) => {
   /* eslint-enable prefer-arrow-callback */
 }
 
+/* Checks if the arrays have the same items, in the same order. */
+export const isSameList = (a: readonly unknown[], b: readonly unknown[]) =>
+  a.length === b.length && a.every((item, index) => item === b[index])
+
 export const deepFreeze = <T>(obj: T): T => {
   if (obj === null || typeof obj !== 'object' || Object.isFrozen(obj)) {
     // functions are intentionally not frozen

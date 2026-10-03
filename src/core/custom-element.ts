@@ -2,6 +2,7 @@ import DOM from './dom.js'
 import Lifecycle, { throwErrors } from './lifecycle.js'
 import type { WebComponent } from './nodes.js'
 import Plugins, { type Plugin, type PluginManifest } from './plugins.js'
+import { isSameList } from './utils.js'
 
 const cssImports = (paths: string[]) =>
   paths.map(path => `@import url(${path});`).join('\n')
@@ -11,6 +12,9 @@ type PluginOrManifest = Plugin | PluginManifest
 export class ComponentElement extends HTMLElement {
   declare $root: WebComponent | null
   declare pendingDestruction?: ReturnType<typeof setTimeout>
+  declare stylesheets: string[]
+  declare styleElement: HTMLStyleElement | null
+  declare stylesheetsLoaded: Promise<void>
   declare install: (plugin: PluginOrManifest, cascade?: boolean) => void
   declare uninstall: (
     plugin: PluginOrManifest | string,
@@ -20,6 +24,9 @@ export class ComponentElement extends HTMLElement {
   constructor(root: WebComponent) {
     super()
     this.$root = root
+    this.stylesheets = []
+    this.styleElement = null
+    this.stylesheetsLoaded = Promise.resolve()
 
     addPluginsAPI(this)
 
@@ -29,26 +36,55 @@ export class ComponentElement extends HTMLElement {
 
     const stylesheets = root.getStylesheets()
 
-    const onSuccess = () => {
+    const init = () => {
       root.init().catch((error: Error) => root.markAsFailed(error))
     }
 
-    if (stylesheets && stylesheets.length) {
-      const imports = cssImports(stylesheets)
-      const onError = () => {
-        // rejects mounting, as thrown errors do not leave the event handler
-        root.markAsFailed(
-          new Error(`Error loading stylesheets: ${stylesheets.join(', ')}`),
-        )
-      }
-      const style = document.createElement('style')
-      style.textContent = imports
-      style.onload = onSuccess
-      style.onerror = onError
-      root.shadow.appendChild(style)
+    if (stylesheets.length) {
+      // rejects mounting, as the errors are not thrown to the caller
+      this.loadStylesheets(stylesheets).then(init, (error: Error) =>
+        root.markAsFailed(error),
+      )
     } else {
-      onSuccess()
+      init()
     }
+  }
+
+  /**
+   * Replaces the stylesheets imported in the shadow root, keeping the
+   * previous ones until the new ones are loaded.
+   */
+  loadStylesheets(stylesheets: string[]): Promise<void> {
+    const previous = this.styleElement
+    this.stylesheets = stylesheets
+    let loaded = Promise.resolve()
+    if (stylesheets.length) {
+      const style = document.createElement('style')
+      style.textContent = cssImports(stylesheets)
+      loaded = new Promise((resolve, reject) => {
+        style.onload = () => resolve()
+        style.onerror = () =>
+          reject(
+            new Error(`Error loading stylesheets: ${stylesheets.join(', ')}`),
+          )
+      })
+      if (previous) {
+        previous.after(style)
+      } else {
+        this.shadowRoot!.prepend(style)
+      }
+      this.styleElement = style
+    } else {
+      this.styleElement = null
+    }
+    if (previous) {
+      // removed once loaded, as the root may be waiting to be initialized
+      void Promise.allSettled([this.stylesheetsLoaded, loaded]).then(() =>
+        previous.remove(),
+      )
+    }
+    this.stylesheetsLoaded = loaded
+    return loaded
   }
 
   get isComponentElement() {
@@ -110,6 +146,20 @@ const addPluginsAPI = (element: ComponentElement) => {
       }
     }
     uninstallFrom(element.$root!)
+  }
+}
+
+/**
+ * Loads the stylesheets of the root in its custom element when they
+ * changed, e.g. with the plugins reconfigured.
+ */
+export const updateStylesheets = (root: WebComponent) => {
+  const element = root.ref as ComponentElement
+  const stylesheets = root.getStylesheets()
+  if (!isSameList(stylesheets, element.stylesheets)) {
+    element
+      .loadStylesheets(stylesheets)
+      .catch((error: unknown) => console.error(error))
   }
 }
 

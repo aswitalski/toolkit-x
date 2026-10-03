@@ -6,7 +6,7 @@ import Demo from './src/demo.js'
 /* The release mode runs the demo against the bundled ESM build. */
 const debug = import.meta.env.MODE !== 'release'
 
-await toolkit.configure({
+toolkit.configure({
   debug,
   plugins: debug ? [logger] : [],
 })

@@ -740,10 +740,10 @@ describe('Template => describe', () => {
       expect(console.warn).not.toHaveBeenCalled()
     })
 
-    it('does not check the attributes in production mode', async () => {
+    it('does not check the attributes in production mode', () => {
       // given
       toolkit.reset()
-      await toolkit.configure({ debug: false })
+      toolkit.configure({ debug: false })
 
       // when
       try {
@@ -754,7 +754,7 @@ describe('Template => describe', () => {
         expect(console.warn).not.toHaveBeenCalled()
       } finally {
         toolkit.reset()
-        await toolkit.configure({ debug: true })
+        toolkit.configure({ debug: true })
       }
     })
   })
@@ -818,10 +818,10 @@ describe('Template => describe', () => {
       expect(console.warn).not.toHaveBeenCalled()
     })
 
-    it('does not check the listeners in production mode', async () => {
+    it('does not check the listeners in production mode', () => {
       // given
       toolkit.reset()
-      await toolkit.configure({ debug: false })
+      toolkit.configure({ debug: false })
 
       // when
       try {
@@ -833,7 +833,7 @@ describe('Template => describe', () => {
         expect(console.warn).not.toHaveBeenCalled()
       } finally {
         toolkit.reset()
-        await toolkit.configure({ debug: true })
+        toolkit.configure({ debug: true })
       }
     })
   })

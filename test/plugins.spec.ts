@@ -12,7 +12,7 @@ describe('Plugins', () => {
     it('installs plugin on the root component', async () => {
       // given
       toolkit.reset()
-      await toolkit.configure({
+      toolkit.configure({
         debug: true,
         plugins: [plugin],
       })
@@ -34,7 +34,7 @@ describe('Plugins', () => {
   describe('=> Install through the custom element', () => {
     const createRoot = async (elementName: string) => {
       toolkit.reset()
-      await toolkit.configure({
+      toolkit.configure({
         debug: true,
       })
 
@@ -112,7 +112,7 @@ describe('Plugins', () => {
       // given
       const uninstall = vi.fn()
       toolkit.reset()
-      await toolkit.configure({
+      toolkit.configure({
         debug: true,
         plugins: [
           {
