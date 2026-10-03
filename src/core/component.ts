@@ -34,8 +34,7 @@ class Component<P extends object = object> extends VirtualNode {
 
   declare static elementName?: string
   declare static defaultProps?: Props
-
-  static getCommands?(): CommandsAPI | CommandsAPI[]
+  declare static commands?: CommandsAPI | CommandsAPI[]
 
   static get displayName(): string {
     return this.name

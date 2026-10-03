@@ -14,32 +14,15 @@ describe('Commands API', () => {
     container.remove()
   })
 
-  const createWebComponent = async (
-    commands: CommandsAPI | CommandsAPI[] | (() => CommandsAPI),
-  ) => {
+  const createWebComponent = async (commands: CommandsAPI | CommandsAPI[]) => {
     class CommandsComponent extends toolkit.WebComponent {
       static elementName = `commands-component-${counter++}`
 
-      static getCommands() {
-        return typeof commands === 'function' ? commands() : commands
-      }
+      static commands = commands
     }
 
     return await toolkit.render(CommandsComponent, container)
   }
-
-  it('uses static getCommands() method', async () => {
-    // given
-    const getCommands = vi.fn().mockReturnValue({
-      doNothing: () => (state: object) => state,
-    })
-
-    // when
-    await createWebComponent(getCommands)
-
-    // then
-    expect(getCommands).toHaveBeenCalled()
-  })
 
   it('creates default commands object', async () => {
     // when

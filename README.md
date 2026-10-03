@@ -21,20 +21,18 @@ import toolkit, { WebComponent, type Template } from 'toolkit-x'
 type Props = { start: number }
 type State = { count: number }
 
-const CounterAPI = {
+const CounterCommands = {
   increment() {
     return (state: State) => ({ ...state, count: state.count + 1 })
   },
 }
 
-class Counter extends WebComponent<Props, State, typeof CounterAPI> {
+class Counter extends WebComponent<Props, State, typeof CounterCommands> {
   static elementName = 'my-counter'
 
   static styles = ['styles/counter.css']
 
-  static getCommands() {
-    return CounterAPI
-  }
+  static commands = CounterCommands
 
   getInitialState(props: Props): State {
     return { count: props.start }

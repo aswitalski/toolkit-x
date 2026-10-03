@@ -11,9 +11,7 @@ class Demo extends WebComponent<object, DemoState, typeof DemoCommands> {
 
   static styles = ['styles/demo.css']
 
-  static getCommands() {
-    return DemoCommands
-  }
+  static commands = DemoCommands
 
   async getInitialState(): Promise<DemoState> {
     const count = 1

@@ -26,7 +26,7 @@ const DISPATCHER = Symbol('dispatcher')
  *
  * P: props received from the parent,
  * S: state, available as `this.props` when rendering,
- * C: commands API returned by getCommands().
+ * C: commands API set as the static commands.
  */
 class WebComponent<
   P extends object = object,

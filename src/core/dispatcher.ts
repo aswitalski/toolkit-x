@@ -107,16 +107,10 @@ class Dispatcher {
     this.root = root
     this.commands = {} as Commands & Record<string, AnyFunction>
 
-    const customAPIs: CommandsAPI[] = []
-    const ComponentClass = root.constructor as typeof WebComponent
-    if (typeof ComponentClass.getCommands === 'function') {
-      const customAPI = ComponentClass.getCommands()
-      if (!customAPI) {
-        throw new Error('No API returned in getCommands() method')
-      }
-      customAPIs.push(...(Array.isArray(customAPI) ? customAPI : [customAPI]))
-    }
-    this.api = createCommandsAPI(...customAPIs)
+    const { commands = [] } = root.constructor as typeof WebComponent
+    this.api = createCommandsAPI(
+      ...(Array.isArray(commands) ? commands : [commands]),
+    )
     this.names = Object.keys(this.api)
 
     for (const name of this.names) {

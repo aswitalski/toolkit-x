@@ -27,9 +27,7 @@ Once connected to a Web Component, the command can be issued from component meth
 import { WebComponent } from 'toolkit-x'
 
 class FormComponent extends WebComponent {
-  static getCommands() {
-    return API
-  }
+  static commands = API
 
   onPersonalDataChange({ name, surname }) {
     this.commands.setPersonalData(name, surname)
@@ -88,9 +86,7 @@ const StackCommands = {
 }
 
 export default class Stack extends WebComponent {
-  static getCommands() {
-    return StackCommands
-  }
+  static commands = StackCommands
 
   getInitialState() {
     return {
@@ -114,13 +110,11 @@ export default class Stack extends WebComponent {
 ### Using multiple APIs
 
 Web Components can use multiple Command APIs at the same time.
-The static `getCommands()` method may return an array containing many command objects.
+The static `commands` property may hold an array containing many command objects.
 
 ```js
 class FormComponent extends WebComponent {
-  static getCommands() {
-    return [FooCommands, BarCommands]
-  }
+  static commands = [FooCommands, BarCommands]
 }
 ```
 
@@ -135,9 +129,7 @@ Web Components take the types of props, state and the Commands API, so the comma
 
 ```ts
 class Stack extends WebComponent<object, StackState, typeof StackCommands> {
-  static getCommands() {
-    return StackCommands
-  }
+  static commands = StackCommands
 }
 ```
 

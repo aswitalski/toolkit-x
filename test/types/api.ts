@@ -104,9 +104,7 @@ class Stack extends WebComponent<
 
   static styles = ['styles/stack.css']
 
-  static getCommands() {
-    return StackCommands
-  }
+  static commands = StackCommands
 
   getInitialState(props: { initial: number[] }): StackState {
     return { items: props.initial }
