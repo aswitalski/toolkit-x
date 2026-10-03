@@ -1,36 +1,82 @@
 # Toolkit X
 
-Toolkit X is a UI library created for rendering Opera Desktop browser's internal Web pages.
-It allows to build the user interface natively by utilising the engine's latest features.
+Toolkit X is a lightweight library for building Web user interfaces as a composition of small, self-contained apps. You describe what the UI should look like for a given state, and Toolkit keeps the page in sync with it.
 
-## Why?
+It originates from the Opera Web UI Toolkit.
 
-All JavaScript frameworks are intended for rendering Web pages which work across a variety of browsers with diversified support for latest HTML5+ features. That results in compromises and requires a number of techniques to make this possible - transpilation, polyfills, external live-reload servers to name a few.
+## In a nutshell
 
-A solution dedicated for a single browser asks for a different approach, an attempt to use as many tools provided by the browser itself as possible. Support for async/await, object spread and other syntactic sugar allows to write nifty apps without any need of transpilation. Native templating system makes possible to describe rendered DOM elements and components with arrays and objects. Single execution environment pushes away the worries of browser compatibility issues. DevTools workspaces provide built-in live reload system, neither external tools nor constant builds and browser restarts are necessary.
+- **Self-contained pieces** - each part of the UI owns its state, styles and behaviour, isolated from the rest of the page, so it can be built, tested and reused on its own.
+- **Just JavaScript** - the UI is described with plain data and functions, with no template language to learn and no build step required.
+- **Predictable state** - the state changes only in explicit, named steps, and the UI always reflects the current state.
+- **Built on the platform** - it relies on what the browser already provides, like Web Components and ES modules, rather than working around it.
+- **Mistakes caught early** - types and a debug mode point out errors in the UI while it is being written.
+- **Extensible** - plugins add behaviour across all the apps, like logging, shared styles or helper methods, without changing them.
 
-## Design principles
+## Usage
 
-- **native** - take advantage of the latest Chromium engine features,
-- **modular** - define each component, commands API, service as a separate module,
-- **dynamic** - build in discovery service, lazy-load modules for flexibility or preload for performance,
-- **fast** - utilise virtual DOM, minimise the number of DOM modifications, benchmark all operations to ensure high performance,
-- **simple** - no millions of callbacks and events, utilise one-way model-to-view binding and unidirectional data flow,
-- **encapsulated** - isolate apps as Web components, reduce usage of global variables to bare minimum,
-- **deterministic** - do not worry about race conditions, let the framework control the asynchronous operations properly,
-- **testable** - unit test all your components with little effort,
-- **debuggable** - easily inspect your apps, use live reload, instrumentation and time saving debug tools.
+```ts
+import toolkit, { WebComponent, type Template } from 'toolkit-x'
 
-## Web Apps
+type Props = { start: number }
+type State = { count: number }
 
-Toolkit renders Web Apps as a composition of Web Components encapsulated within custom elements.
-Web Components manage their own state, use isolated stylesheets, provide rendering context with Commands API and support plugins.
+const CounterAPI = {
+  increment() {
+    return (state: State) => ({ ...state, count: state.count + 1 })
+  },
+}
 
-Toolkit also encourages functional programming by utilizing pure functions and pure components.
-These components always generate the same template when given the same props object.
+class Counter extends WebComponent<Props, State, typeof CounterAPI> {
+  static elementName = 'my-counter'
 
-```js
-const Square = props => [
+  static styles = ['styles/counter.css']
+
+  static getCommands() {
+    return CounterAPI
+  }
+
+  getInitialState(props: Props): State {
+    return { count: props.start }
+  }
+
+  render(): Template {
+    return [
+      'button',
+      { onClick: () => this.commands.increment() },
+      `Clicked ${this.props.count} times`,
+    ]
+  }
+}
+
+await toolkit.render(Counter, document.body, { start: 0 })
+```
+
+The types are optional, the same component works in plain JavaScript without them.
+
+Toolkit is also available as a single script, exposing the `toolkit` global:
+
+```html
+<script src="toolkit-0.69.0.js"></script>
+```
+
+### Configuration
+
+Toolkit renders without the debug mode and plugins by default. Both can be configured at any time, also after rendering. Options not provided keep their current values. Changed plugins are uninstalled from the created roots and the new ones installed:
+
+```ts
+toolkit.configure({ debug: true, plugins: [plugin] })
+```
+
+## Components
+
+Web Components render the content of an app, managing its state. Nested Web Components are rendered in their own custom elements.
+Their state is created from the props in `getInitialState()` and updated with commands, or by the parent with `getUpdatedState()`.
+
+Components render fragments of a Web Component from props, and pure components are just functions:
+
+```ts
+const Square = (props: { color: string; size: number }): Template => [
   'section',
   {
     class: 'square',
@@ -43,32 +89,13 @@ const Square = props => [
 ]
 ```
 
-Apps need no transpilation phase, their sources are directly used by the browser in the form of ES modules.
-Toolkit itself is written in TypeScript and is used in its built form, as an ES module or a single script.
+Both can define the `onCreated()`, `onAttached()`, `onPropsReceived()`, `onUpdated()`, `onDestroyed()` and `onDetached()` lifecycle methods.
 
-## State management
-
-Instead of using the centralized state, as in Redux, Web Component manages only the view model that is necessary
-to render the particular fragment of the UI it is responsible for.
-
-There is no need to traverse and clone complex data structures in order to amend the state.
-By design Web Components are small, single-purpose nestable apps. Their state is based on the props received from the parent.
-They can fetch the additional data asynchronously and handle the data changes themselves. The ancestor Web Components are not involved when not interested in that data.
-
-Web Components use commands to make a transition between one state and another.
-
-Read more about the [Commands API](COMMANDS.md).
-
-## Templating
-
-Toolkit uses **Bragi** templates, which allow to express HTML nodes with pure JavaScript code, using only objects, arrays and primitive types.
-
-Find out more about [Bragi templates](BRAGI.md)
+Read more about [Bragi templates](BRAGI.md), the [Commands API](COMMANDS.md) and see a few [examples](EXAMPLES.md).
 
 ## TypeScript
 
-Toolkit provides types for Bragi templates and components. Templates returned from `render()` are type-checked,
-so misspelled props and attributes, unknown style properties or listeners of wrong event types are reported:
+Components are typed with their props, and their `render()` methods return a `Template`. Templates are type-checked, so misspelled props and attributes, unknown style properties or listeners of wrong event types are reported:
 
 ```ts
 import { Component, type Template } from 'toolkit-x'
@@ -80,7 +107,6 @@ class Title extends Component<{ text: string }> {
 }
 ```
 
-The `render()` methods need the `Template` return type, as TypeScript does not infer it from the base class.
 Child templates passed to a component are available as `this.children`:
 
 ```ts
@@ -93,65 +119,27 @@ class Card extends Component<{ title: string }> {
 
 Web Components take the types of props, state and the Commands API: `WebComponent<Props, State, Commands>`.
 
-## Examples
-
-Here are a few conceptual examples of [Web Components](EXAMPLES.md)
-
-## Usage
-
-Toolkit is available as an ES module:
-
-```js
-import toolkit, { WebComponent } from 'toolkit-x'
-
-class App extends WebComponent {
-  static elementName = 'my-app'
-
-  render() {
-    return ['main', 'Hello!']
-  }
-}
-
-await toolkit.render(App, document.body)
-```
-
-or as a single script, exposing the Toolkit as the `toolkit` global:
-
-```html
-<script src="toolkit-0.69.0.js"></script>
-```
-
-Toolkit renders without the debug mode and plugins by default. Both can be configured at any time, also after rendering, keeping the current values of the options not provided. Changed plugins are uninstalled from the created roots and the new ones installed:
-
-```js
-toolkit.configure({ debug: true, plugins: [plugin] })
-```
-
 ## Build
 
-To build Toolkit run:
-
-```
+```sh
 npm run build
 ```
 
 It creates:
 
 - `dist/index.js` - an ES module with type declarations in `dist/index.d.ts`,
-- `dist/toolkit-<version>.js` - a single script exposing the `toolkit` global, with no external dependencies,
+- `dist/toolkit-<version>.js` - a single script exposing the `toolkit` global,
 
 both with source maps, and a declaration map leading editors to the TypeScript sources.
 
 ## Demo
-
-A simple demo in both `debug` and `release` mode:
 
 ```sh
 npm run demo          # debug mode, using the sources
 npm run demo:release  # release mode, using the ES module build
 ```
 
-The debug mode uses the logger plugin showing all executed commands, patches applied on the DOM and time taken on each operation.
+The debug mode uses the logger plugin, showing the executed commands, the patches applied to the DOM and the time taken by each update.
 
 ## Development
 
