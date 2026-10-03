@@ -2,9 +2,9 @@ import type { ToolkitAPI } from './index.js'
 
 declare global {
   /**
-   * Global namespace exposing the Toolkit to non-module scripts.
+   * The Toolkit exposed to non-module scripts.
    */
-  var opr: { Toolkit?: ToolkitAPI } | undefined
+  var toolkit: ToolkitAPI | undefined
 }
 
 export {}

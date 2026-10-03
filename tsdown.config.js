@@ -17,7 +17,7 @@ export default defineConfig([
     attw: { profile: 'esm-only' },
   },
   {
-    // Classic script exposing the opr.Toolkit global
+    // Classic script exposing the toolkit global
     entry: { [`toolkit-${version}`]: 'src/release.ts' },
     format: 'iife',
     platform: 'browser',

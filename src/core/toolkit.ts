@@ -174,7 +174,7 @@ class Toolkit {
   }
 }
 
-/* The Toolkit singleton, exposed globally as opr.Toolkit. */
+/* The Toolkit singleton, exposed globally as toolkit. */
 export const toolkit = new Toolkit()
 
 // asserts, debug mode and warnings are read from the instance, which

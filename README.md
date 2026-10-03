@@ -116,7 +116,7 @@ toolkit.configure({ debug: true })
 await toolkit.render(App, document.body)
 ```
 
-or as a single script, exposing the Toolkit as the `opr.Toolkit` global:
+or as a single script, exposing the Toolkit as the `toolkit` global:
 
 ```html
 <script src="toolkit-0.69.0.js"></script>
@@ -133,7 +133,7 @@ npm run build
 It creates:
 
 - `dist/index.js` - an ES module with type declarations in `dist/index.d.ts`,
-- `dist/toolkit-<version>.js` - a single script exposing the `opr.Toolkit` global, with no external dependencies,
+- `dist/toolkit-<version>.js` - a single script exposing the `toolkit` global, with no external dependencies,
 
 both with source maps, and a declaration map leading editors to the TypeScript sources.
 
