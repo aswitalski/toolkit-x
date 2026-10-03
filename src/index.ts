@@ -44,10 +44,10 @@ export type { AttributeName, EventName } from './core/browser.js'
 export type { Props } from './core/description.js'
 export type {
   BoundCommands,
+  CommandMethod,
   Commands,
   CommandsAPI,
   State,
-  StateUpdate,
 } from './core/dispatcher.js'
 export type { ComponentClass, Connectable } from './core/nodes.js'
 export type { PluginManifest, PluginSandbox } from './core/plugins.js'

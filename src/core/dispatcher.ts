@@ -1,3 +1,4 @@
+import { produce } from './draft.js'
 import type { WebComponent } from './nodes.js'
 import { runtime } from './runtime.js'
 import type { AnyFunction } from './utils.js'
@@ -5,17 +6,24 @@ import type { AnyFunction } from './utils.js'
 /* The state of a root component. */
 export type State = Record<string, unknown>
 
-/* A state transformation returned by a command. */
+/* A state transformation, calculating the next state. */
 export type StateUpdate<S = State> = (state: S) => S
 
-/* A map of command names to functions creating state transformations. */
+/*
+ * A command changing a draft of the state, available as `this`,
+ * which becomes the next immutable state.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- commands take any arguments
-export type CommandsAPI = Record<string, (...args: any[]) => StateUpdate<any>>
+export type CommandMethod<S> = (this: S, ...args: any[]) => void
+
+/* A map of command names to their methods. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- commands of any state by default
+export type CommandsAPI<S = any> = Record<string, CommandMethod<S>>
 
 /* The core commands available on every component. */
 export type Commands<S = State> = {
-  setState(state: S): Promise<boolean>
   update(overrides: Partial<S>): Promise<boolean>
+  replace(state: S): Promise<boolean>
 }
 
 /*
@@ -37,42 +45,43 @@ const Mode = {
  */
 const MAX_FLUSH_CYCLES = 4
 
-const coreAPI = {
-  setState(state: State): StateUpdate {
-    return () => state
-  },
-  update(overrides: State): StateUpdate {
+/* The core commands, also setting the initial state, with no draft yet. */
+const coreAPI: Record<keyof Commands, (arg: State) => StateUpdate> = {
+  update(overrides) {
     return state => ({
       ...state,
       ...overrides,
     })
+  },
+  replace(state) {
+    return () => state
   },
 }
 
 class Command {
   declare name: string
   declare args: unknown[]
-  declare method: AnyFunction
+  declare update: StateUpdate
   declare resolve?: (executed: boolean) => void
   declare reject?: (error: unknown) => void
 
-  constructor(name: string, args: unknown[], method: AnyFunction) {
+  constructor(name: string, args: unknown[], update: StateUpdate) {
     this.name = name
     this.args = args
-    this.method = method
+    this.update = update
   }
 
   invoke(state: State | undefined): State {
-    return (this.method(...this.args) as StateUpdate)(state as State)
+    return this.update(state as State)
   }
 }
 
 const createCommandsAPI = (...apis: CommandsAPI[]) => {
   const commandsAPI: CommandsAPI = {}
-  for (const api of [coreAPI, ...apis]) {
-    const defined = Object.keys(commandsAPI)
-    const incoming = Object.keys(api)
-    const overridden = incoming.find(key => defined.includes(key))
+  for (const api of apis) {
+    const overridden = Object.keys(api).find(
+      key => Object.hasOwn(coreAPI, key) || Object.hasOwn(commandsAPI, key),
+    )
     if (overridden) {
       throw new Error(`The "${overridden}" command is already defined!`)
     }
@@ -111,7 +120,7 @@ class Dispatcher {
     this.api = createCommandsAPI(
       ...(Array.isArray(commands) ? commands : [commands]),
     )
-    this.names = Object.keys(this.api)
+    this.names = [...Object.keys(coreAPI), ...Object.keys(this.api)]
 
     for (const name of this.names) {
       this.commands[name] = (...args: unknown[]) => this.issue(name, args)
@@ -119,7 +128,19 @@ class Dispatcher {
   }
 
   createCommand(name: string, args: unknown[]) {
-    return new Command(name, args, this.api[name]!)
+    const method = this.api[name]
+    const update: StateUpdate = method
+      ? state =>
+          produce(state, draft => {
+            const result: unknown = method.apply(draft, args)
+            // the draft is revoked before the rest of an async command runs
+            if (result instanceof Promise) {
+              result.catch(() => {})
+              throw new Error(`The "${name}" command must be synchronous!`)
+            }
+          })
+      : coreAPI[name as keyof Commands](...(args as [State]))
+    return new Command(name, args, update)
   }
 
   issue(name: string, args: unknown[]): Promise<boolean> {
@@ -147,7 +168,7 @@ class Dispatcher {
     if (this.mode === Mode.IGNORE) {
       return
     }
-    this.execute([this.createCommand('setState', [state])])
+    this.execute([this.createCommand('replace', [state])])
   }
 
   /**

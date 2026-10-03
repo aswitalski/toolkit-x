@@ -3,6 +3,7 @@
  * Each @ts-expect-error marks a mistake the types must reject.
  */
 import toolkit, {
+  type CommandsAPI,
   Component,
   type Template,
   WebComponent,
@@ -90,10 +91,28 @@ interface StackState {
 }
 
 const StackCommands = {
-  push: (item: number) => (state: StackState) => ({
-    items: [...state.items, item],
-  }),
-}
+  push(item: number) {
+    this.items.push(item)
+  },
+} satisfies CommandsAPI<StackState>
+
+const OtherCommands = {
+  rename(name: string) {
+    this.name = name
+  },
+} satisfies CommandsAPI<{ name: string }>
+
+// @ts-expect-error commands change the state of the component
+class Other extends WebComponent<object, StackState, typeof OtherCommands> {}
+void [Other, OtherCommands]
+
+const InvalidCommands = {
+  push(item: number) {
+    // @ts-expect-error commands change the state they are typed with
+    this.missing = item
+  },
+} satisfies CommandsAPI<StackState>
+void InvalidCommands
 
 class Stack extends WebComponent<
   { initial: number[] },

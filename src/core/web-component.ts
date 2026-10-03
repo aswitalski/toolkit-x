@@ -26,13 +26,13 @@ const DISPATCHER = Symbol('dispatcher')
  *
  * P: props received from the parent,
  * S: state, available as `this.props` when rendering,
- * C: commands API set as the static commands.
+ * C: commands API set as the static commands, changing the state.
  */
 class WebComponent<
   P extends object = object,
   S extends object = P,
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- no commands besides the core ones
-  C extends CommandsAPI = {},
+  C extends CommandsAPI<S> = {},
 > extends Component<S> {
   static NodeType = 'root'
 

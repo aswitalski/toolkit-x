@@ -1,3 +1,5 @@
+import type { CommandsAPI } from 'toolkit'
+
 import type { LogoProps, Positions } from './service.js'
 
 export interface DemoState {
@@ -6,20 +8,19 @@ export interface DemoState {
 }
 
 const DemoCommands = {
-  create: (logo: LogoProps) => (state: DemoState) => ({
-    ...state,
-    logos: [...state.logos, { ...logo, highlighted: false }],
-  }),
+  create(logo: LogoProps) {
+    this.logos.push({ ...logo, highlighted: false })
+  },
 
-  move: (positions: Positions) => (state: DemoState) => ({
-    ...state,
-    logos: state.logos.map(logo => ({ ...logo, ...positions[logo.id] })),
-  }),
+  move(positions: Positions) {
+    for (const logo of this.logos) {
+      Object.assign(logo, positions[logo.id])
+    }
+  },
 
-  destroy: (id: number) => (state: DemoState) => ({
-    ...state,
-    logos: state.logos.filter(logo => logo.id !== id),
-  }),
-}
+  destroy(id: number) {
+    this.logos = this.logos.filter(logo => logo.id !== id)
+  },
+} satisfies CommandsAPI<DemoState>
 
 export default DemoCommands

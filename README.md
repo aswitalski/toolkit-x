@@ -16,16 +16,20 @@ It originates from the Opera Web UI Toolkit.
 ## Usage
 
 ```ts
-import toolkit, { WebComponent, type Template } from 'toolkit-x'
+import toolkit, {
+  WebComponent,
+  type CommandsAPI,
+  type Template,
+} from 'toolkit-x'
 
 type Props = { start: number }
 type State = { count: number }
 
 const CounterCommands = {
   increment() {
-    return (state: State) => ({ ...state, count: state.count + 1 })
+    this.count += 1
   },
-}
+} satisfies CommandsAPI<State>
 
 class Counter extends WebComponent<Props, State, typeof CounterCommands> {
   static elementName = 'my-counter'
@@ -115,7 +119,7 @@ class Card extends Component<{ title: string }> {
 }
 ```
 
-Web Components take the types of props, state and the Commands API: `WebComponent<Props, State, Commands>`.
+Web Components take the types of props, state and the Commands API: `WebComponent<Props, State, Commands>`. The Commands API is typed with the state it changes, using `satisfies CommandsAPI<State>`, as in the usage example above.
 
 ## Build
 

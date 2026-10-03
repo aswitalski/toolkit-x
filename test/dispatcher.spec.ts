@@ -16,18 +16,17 @@ describe('Dispatcher', () => {
       expect(root.state).toEqual({})
     })
 
-    it('calls "set-state" on direct request', async () => {
+    it('replaces the state on direct request', async () => {
       // given
       const root = await createWebComponent(Root)
-      const state = { foo: 'bar' }
+      await root.commands.update({ foo: 'bar' })
+      const state = { other: 1 }
 
       // when
-      vi.spyOn(root.commands, 'setState')
-      void root.commands.setState(state)
+      await root.commands.replace(state)
 
       // then
-      expect(root.commands.setState).toHaveBeenCalled()
-      expect(root.commands.setState).toHaveBeenCalledWith(state)
+      expect(root.state).toBe(state)
     })
 
     it('calls "update" on direct request', async () => {

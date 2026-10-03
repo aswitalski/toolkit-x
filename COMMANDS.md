@@ -1,22 +1,39 @@
 ## Commands API
 
 Commands API is a part of the dedicated state management mechanism for Toolkit.
-It allows to transition the Web Component's view model from one state to another with simple API calls.
+It allows transitioning the Web Component's view model from one state to another with simple API calls.
 
-The concept is based on reducer functions as Redux but is more focused on the API, code clarity (no boilerplate) and convenience for the client.
+As in Redux, the state is immutable and changes only in explicit, named steps, but the focus is on the API, code clarity (no boilerplate) and convenience for the client. Commands are written as if the state was mutable, and Toolkit turns the changes they make into a new immutable state, as Immer does.
 
 ### All about the API
 
-The implementation of Commands API is just a creation of a plain object declaring API methods. These methods take arbitrary domain-specific arguments and return a reducer function defining how given command call transforms the current state to the updated one.
+The implementation of Commands API is just a creation of a plain object declaring API methods. These methods take arbitrary domain-specific arguments and change the current state, available as `this`.
 
 ```js
 const API = {
   setPersonalData(name, surname) {
-    return state => ({
-      ...state,
-      name,
-      surname,
-    })
+    this.name = name
+    this.surname = surname
+  },
+}
+```
+
+The commands need to be regular methods, as arrow functions have no `this` of their own.
+
+As `this` is the state, not the API object, commands cannot call each other. The logic shared by commands can be moved to functions taking the state:
+
+```js
+const addItem = (state, item) => {
+  state.items.push(item)
+  state.count = state.items.length
+}
+
+const ListCommands = {
+  add(item) {
+    addItem(this, item)
+  },
+  addAll(items) {
+    items.forEach(item => addItem(this, item))
   },
 }
 ```
@@ -37,17 +54,69 @@ class FormComponent extends WebComponent {
 
 Such call triggers the component state update and the DOM update, if necessary.
 
+### Core commands
+
+Every Web Component has two core commands, also when it has no Commands API:
+
+- `update(overrides)` merges the given properties into the current state, keeping the other ones.
+- `replace(state)` replaces the whole state with the given object.
+
+```js
+this.commands.update({ selected: id })
+this.commands.replace({ items: [], selected: null })
+```
+
+Their names are reserved, so creating a component with a Commands API defining `update` or `replace` throws an error.
+
 ### Under the hood
 
-Issuing the command causes the returned reducer function to be invoked on the current state of the component. The reducer also has access to the arguments the command was issued with. The result of that reducer call, the newly calculated state object, is then set on the component instance.
+Issuing the command calls its method with a draft of the current state of the component as `this`, and the arguments the command was issued with. The draft is a proxy intercepting all the changes, like setting, incrementing or deleting a property, pushing an item to an array or adding one to a map or set. The nested objects get drafts of their own when accessed.
+
+The changes are recorded on shallow copies of the changed objects, so the current state is left untouched. Once the method returns, the copies become the new state object, sharing all the unchanged parts with the previous one, which is then set on the component instance.
 
 If the new state object differs from the previous one, the `render()` method is called on the component to calculate the new template and if that altered from the previously rendered one, both the virtual and actual DOM will be patched to reflect the changes.
 
-If the reducer function returns the same object or it is equal to the previous one (deep comparison) no action is taken.
+If the command changes nothing, the state object stays the same and no action is taken.
+
+When the command throws, the state stays the same as well. The commands executed in the same update, issued together with the failed one, are rejected with its error and their changes are not applied either.
 
 ### Immutable data
 
-Since the state comparison checks the deep equality of the objects, all the used data needs to be immutable. Modifying the existing state object may result in unpredictable behaviour, so the reducers should always return new objects.
+The state of the component is never modified, each change creates a new state object. It may contain only primitives and the built-in JavaScript types:
+
+- plain objects, arrays, maps, sets, dates and typed arrays are drafted, so commands can change them in place,
+- primitives and functions are kept as they are, so commands can only replace them.
+
+Commands throw when they read or assign other values, like class instances or DOM elements. Such objects should be kept outside the state, e.g. in services, with only the data they provide stored in the state.
+
+The draft is only available while the command runs, so commands are synchronous. An async command is rejected with an error and leaves the state unchanged, as the draft is closed before the code after an `await` runs.
+
+### Comparing objects
+
+The objects read from `this` are drafts, not the objects of the current state. An object passed to a command, e.g. an item from `this.props`, is the original one, so comparing it with the items of a draft fails:
+
+```js
+const TodoCommands = {
+  remove(item) {
+    // the drafts are never equal to the item
+    this.items = this.items.filter(other => other !== item)
+  },
+}
+```
+
+Commands should take ids instead and compare by them:
+
+```js
+const TodoCommands = {
+  remove(id) {
+    this.items = this.items.filter(item => item.id !== id)
+  },
+}
+```
+
+The `indexOf()`, `lastIndexOf()` and `includes()` methods of the drafted arrays match the original objects as well as the drafts, so `this.items.indexOf(item)` finds the item. The same applies to `has()` and `delete()` of the drafted sets.
+
+Changing an object passed to a command changes the current state, which needs to stay immutable, so the changes should always be made through `this`.
 
 ### Execution
 
@@ -69,19 +138,10 @@ import { WebComponent } from 'toolkit-x'
 
 const StackCommands = {
   push(item) {
-    return state => ({
-      items: [...state.items, item],
-    })
+    this.items.push(item)
   },
   pop() {
-    return state => {
-      const items = [...state.items]
-      const removed = items.pop()
-      return {
-        items,
-        removed,
-      }
-    }
+    this.removed = this.items.pop()
   },
 }
 
@@ -125,32 +185,67 @@ When responsibilities are divided correctly and command names are descriptive en
 
 ### TypeScript
 
-Web Components take the types of props, state and the Commands API, so the commands are called with the arguments of the API methods:
+The API is typed with the state it changes, using `satisfies CommandsAPI<State>`, which types `this` in its methods. Without it, `this` is the API object itself, so accessing the state is reported as an error.
+
+```ts
+import { type CommandsAPI, WebComponent } from 'toolkit-x'
+
+interface StackState {
+  items: number[]
+}
+
+const StackCommands = {
+  push(item: number) {
+    this.items.push(item)
+  },
+} satisfies CommandsAPI<StackState>
+```
+
+Misspelled state properties and values of wrong types are reported in the commands, as `this` is typed with the state.
+
+Web Components take the types of props, state and the Commands API, so the commands are called with the arguments of the API methods, and an API typed with a different state is reported:
 
 ```ts
 class Stack extends WebComponent<object, StackState, typeof StackCommands> {
   static commands = StackCommands
+
+  onAttached() {
+    this.commands.push(1) // returns Promise<boolean>
+    this.commands.push('1') // error: the argument must be a number
+  }
 }
 ```
 
 ### Testing
 
-Since all the state management logic is within the API object, it's extremely easy to debug and unit test it.
+Since all the state management logic is within the API object, it's extremely easy to debug and unit test it. The commands can be called with a plain state object as `this`, to check the changes made to it.
 
 ```js
 it('pushes the item to the stack', () => {
   // given
-  const item = 10
   const state = {
     items: [1, 2, 3],
   }
 
   // when
-  const reducer = StackCommands.push(item)
-  const result = reducer(state)
+  StackCommands.push.call(state, 10)
 
   // then
-  assert(result !== state)
-  assert.deepEqual(result.items, [1, 2, 3, 10])
+  assert.deepEqual(state.items, [1, 2, 3, 10])
+})
+```
+
+Such tests call the commands without a draft, so they check the changes, but not the rules of the drafts, like comparing the objects passed to the commands with the ones in the state. Rendering the component and issuing the commands tests them as they run in the app:
+
+```js
+it('pushes the item to the stack', async () => {
+  // given
+  const stack = await toolkit.render(Stack, container)
+
+  // when
+  await stack.commands.push(10)
+
+  // then
+  assert.deepEqual(stack.state.items, [10])
 })
 ```
